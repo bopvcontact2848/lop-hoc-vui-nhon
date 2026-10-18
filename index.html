@@ -1,0 +1,2308 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Lớp Học Vui Nhộn - Nền Tảng Trò Chơi Tương Tác Học Đường THCS</title>
+  <!-- Thư viện SheetJS đọc file Excel (CDN) -->
+  <script src="https://cdn.jsdelivr.net/npm/xlsx/dist/xlsx.full.min.js"></script>
+  <!-- Thư viện Canvas Confetti tạo hiệu ứng pháo hoa (CDN) -->
+  <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.3/dist/confetti.browser.min.js"></script>
+  <!-- Thư viện vẽ mã QR cho Remote điện thoại (CDN) -->
+  <script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js"></script>
+  <!-- Thư viện KaTeX hiển thị công thức Toán / Lý / Hóa (CDN) -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css">
+  <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js"></script>
+  <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js"></script>
+
+  <!-- Tệp CSS phong cách giao diện đã tách mô-đun -->
+  <link rel="stylesheet" href="styles/style.css">
+  <link rel="stylesheet" href="styles/seatingChart.css">
+  <link rel="stylesheet" href="styles/landing.css">
+</head>
+<body class="mode-landing">
+  <!-- Hiệu ứng nền Ambient phát sáng -->
+  <div class="ambient-bg">
+    <div class="ambient-sphere sphere-1"></div>
+    <div class="ambient-sphere sphere-2"></div>
+    <div class="ambient-sphere sphere-3"></div>
+  </div>
+
+  <div class="app-container">
+
+    <!-- ======================================================================
+         VIEW 1: TRANG CHỦ MỚI (HAPPY CLASSROOM - PLAY, LEARN & SHINE)
+         ====================================================================== -->
+    <div id="homeLandingView" class="view-screen active">
+
+      <!-- KHU VỰC 1: THANH ĐIỀU HƯỚNG TRANG CHỦ -->
+      <nav class="landing-navbar">
+        <div class="landing-brand" onclick="LandingRouter.navigateTo('home')" title="Lớp Học Vui Nhộn - Trang chủ">
+          <div class="landing-brand-logo">
+            <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path>
+              <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"></path>
+              <polygon points="12 6 13.5 9 17 9.5 14.5 12 15 15.5 12 14 9 15.5 9.5 12 7 9.5 10.5 9" fill="#facc15" stroke="#facc15" stroke-width="1"></polygon>
+            </svg>
+          </div>
+          <div class="landing-brand-text">
+            <h1>LỚP HỌC VUI NHỘN</h1>
+            <p>Học vui mỗi ngày – Tự tin tỏa sáng</p>
+          </div>
+        </div>
+
+        <ul id="landingNavLinks" class="landing-nav-links">
+          <li>
+            <button class="landing-nav-link active" data-target="home" onclick="LandingRouter.navigateTo('home')">
+              <span>🏠</span>
+              <span>Trang chủ</span>
+            </button>
+          </li>
+          <li>
+            <button class="landing-nav-link" data-target="catalog" onclick="LandingRouter.scrollToSection('gameCatalogSection')">
+              <span>🎲</span>
+              <span>Kho trò chơi</span>
+            </button>
+          </li>
+          <li>
+            <button class="landing-nav-link" data-target="guide" onclick="openHowToPlayModal()">
+              <span>📖</span>
+              <span>Cách chơi</span>
+            </button>
+          </li>
+        </ul>
+
+        <div class="landing-nav-actions">
+          <!-- Chỉ báo lớp học hiện tại -->
+          <div class="nav-class-indicator" onclick="openStudentListAction()" title="Nhấp để xem và quản lý danh sách học sinh">
+            <span>🏫</span>
+            <span id="landingNavClassName">Lớp 9A4</span>
+          </div>
+
+          <!-- Bật / Tắt âm thanh đồng bộ -->
+          <button id="landingSoundToggle" class="nav-icon-btn active" title="Bật/Tắt âm thanh (Phím M)">
+            <svg class="sound-icon-on" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon>
+              <path d="M15.54 8.46a5 5 0 0 1 0 7.07"></path>
+              <path d="M19.07 4.93a10 10 0 0 1 0 14.14"></path>
+            </svg>
+            <svg class="sound-icon-off" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display: none;">
+              <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon>
+              <line x1="23" y1="9" x2="17" y2="15"></line>
+              <line x1="17" y1="9" x2="23" y2="15"></line>
+            </svg>
+          </button>
+
+          <!-- Toàn màn hình -->
+          <button id="landingFullscreenBtn" class="nav-icon-btn" title="Toàn màn hình máy chiếu (F11)">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3"></path>
+            </svg>
+          </button>
+
+          <!-- Nút Bắt đầu chơi nổi bật -->
+          <button class="btn-nav-play" onclick="LandingRouter.playGame('wheel')">
+            <span>🚀</span>
+            <span>Bắt đầu chơi</span>
+          </button>
+
+          <!-- Mobile Hamburger -->
+          <button id="landingMobileToggle" class="landing-mobile-toggle" title="Menu">☰</button>
+        </div>
+      </nav>
+
+      <!-- KHU VỰC 2: HERO SECTION – ĐIỂM NHẤN THỊ GIÁC -->
+      <section class="hero-section">
+        <div class="hero-container">
+          <!-- Cột bên trái: Thông điệp và Nút hành động -->
+          <div class="hero-content">
+            <div class="hero-badge">
+              <span class="hero-badge-pulse"></span>
+              <span>🎮 SÂN CHƠI HỌC ĐƯỜNG CỦA BẠN</span>
+            </div>
+
+            <h1 class="hero-title">
+              MỖI TIẾT HỌC<br>
+              LÀ MỘT <span class="hero-title-highlight">CUỘC CHƠI!</span>
+            </h1>
+
+            <p class="hero-description">
+              Khám phá những trò chơi thú vị, thử vận may gọi tên bạn và cùng cả lớp chinh phục thử thách. Ai sẽ là người tỏa sáng hôm nay?
+            </p>
+
+            <div class="hero-cta-group">
+              <button class="btn-hero-primary" onclick="LandingRouter.playGame('wheel')">
+                <span>🚀 CHƠI NGAY</span>
+              </button>
+              <button class="btn-hero-secondary" onclick="LandingRouter.scrollToSection('gameCatalogSection')">
+                <span>🎲 Khám phá trò chơi</span>
+              </button>
+            </div>
+
+            <div class="hero-value-tags">
+              <div class="hero-value-tag">
+                <span>✨</span>
+                <span>Bất ngờ mỗi lượt chơi</span>
+              </div>
+              <div class="hero-value-tag">
+                <span>🏆</span>
+                <span>Cùng lớp chinh phục thử thách</span>
+              </div>
+              <div class="hero-value-tag">
+                <span>🌟</span>
+                <span>Học tập vui vẻ, tự tin tỏa sáng</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Cột bên phải: Cụm minh họa 3D chất lượng cao -->
+          <div class="hero-visual">
+            <div class="hero-image-wrapper">
+              <img src="assets/images/hero-students.jpg" alt="Nhóm học sinh THCS vui vẻ trong lớp học Lớp Học Vui Nhộn" class="hero-image" onerror="this.style.display='none'; document.getElementById('heroSvgFallback').style.display='block';">
+              
+              <!-- Phương án dự phòng đồ họa SVG tinh xảo nếu hình ảnh bị gián đoạn -->
+              <div id="heroSvgFallback" style="display:none; padding: 40px; background: linear-gradient(135deg, #dbeafe 0%, #ede9fe 100%); text-align: center;">
+                <div style="font-size: 5rem; margin-bottom: 10px;">🧑‍🎓 🏆 👩‍🎓</div>
+                <h3 style="color: #172554; font-weight: 800; font-size: 1.3rem;">Sân Chơi Học Đường Rực Rỡ</h3>
+                <p style="color: #475569; font-size: 0.95rem;">Cùng nhau thi đua, học hỏi và tỏa sáng!</p>
+              </div>
+            </div>
+
+            <!-- Các thẻ huy hiệu nổi 3D (Floating Badges) -->
+            <div class="floating-badge floating-badge-1">
+              <span>⭐</span>
+              <span>Mỗi bạn đều là một ngôi sao!</span>
+            </div>
+            <div class="floating-badge floating-badge-2">
+              <span>🚀</span>
+              <span>Sẵn sàng cất cánh!</span>
+            </div>
+            <div class="floating-badge floating-badge-3">
+              <span>🎡</span>
+              <span>Vòng quay may mắn!</span>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- KHU VỰC 3: TRÒ CHƠI NỔI BẬT (FEATURED GAME) -->
+      <section class="featured-section">
+        <div class="section-header">
+          <span class="section-label">KHỞI ĐỘNG TIẾT HỌC</span>
+          <h2 class="section-title">BẠN MUỐN THỬ THÁCH GÌ HÔM NAY?</h2>
+          <p class="section-subtitle">Một cú nhấp chuột – Mở ra niềm vui bất ngờ!</p>
+        </div>
+
+        <div class="featured-game-card">
+          <!-- Cột minh họa Vòng quay 3D sinh động -->
+          <div class="featured-wheel-col">
+            <div class="wheel-sparkle sp-1">✨</div>
+            <div class="wheel-sparkle sp-2">🌟</div>
+            <div class="wheel-sparkle sp-3">💫</div>
+            <div class="featured-wheel-graphic">
+              <div class="featured-wheel-pointer"></div>
+              <div class="featured-wheel-center">🎯</div>
+            </div>
+          </div>
+
+          <!-- Cột thông tin chi tiết -->
+          <div class="featured-info-col">
+            <div class="featured-popular-badge">⭐ ĐƯỢC YÊU THÍCH NHẤT</div>
+            <h3 class="featured-game-title">VÒNG QUAY GỌI TÊN</h3>
+            <p class="featured-game-desc">
+              Ai sẽ được gọi tên tiếp theo? Cùng khám phá nhé! Vòng quay may mắn sắc màu xoay tít, tạo khoảnh khắc hồi hộp bùng nổ, giúp cả lớp tập trung 100% vào bài học.
+            </p>
+
+            <ul class="featured-bullets">
+              <li>
+                <span class="bullet-icon">✔</span>
+                <span>Gọi tên ngẫu nhiên 100% minh bạch, công bằng tuyệt đối</span>
+              </li>
+              <li>
+                <span class="bullet-icon">✔</span>
+                <span>Chế độ thông minh: Không gọi lại bạn đã được gọi trước đó</span>
+              </li>
+              <li>
+                <span class="bullet-icon">✔</span>
+                <span>Âm thanh hồi hộp, pháo hoa chúc mừng và cộng điểm thưởng khích lệ</span>
+              </li>
+            </ul>
+
+            <div class="featured-actions-row">
+              <button class="btn-spin-try" onclick="LandingRouter.playGame('wheel')">
+                <span>🎯 THỬ VẬN MAY</span>
+                <span>➔</span>
+              </button>
+              <button class="btn-slot-alt" onclick="LandingRouter.playGame('slot')">
+                <span>🎰 Chơi kiểu Thẻ Lướt (Slot)</span>
+              </button>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- KHU VỰC 4: KHÁM PHÁ KHO TRÒ CHƠI -->
+      <section id="gameCatalogSection" class="catalog-section">
+        <div class="catalog-container">
+          <div class="section-header">
+            <span class="section-label">KHO TÀNG TRÒ CHƠI</span>
+            <h2 class="section-title">CÒN NHIỀU ĐIỀU THÚ VỊ ĐANG CHỜ!</h2>
+            <p class="section-subtitle">Tất cả trò chơi tương tác thực tế phục vụ dạy và học môn học sinh động, hào hứng.</p>
+          </div>
+
+          <!-- Thanh công cụ tìm kiếm và lọc thể loại -->
+          <div class="catalog-toolbar">
+            <div class="catalog-search-wrap">
+              <span class="catalog-search-icon">🔍</span>
+              <input type="text" id="catalogSearchInput" class="catalog-search-input" placeholder="Tìm kiếm trò chơi..." autocomplete="off">
+              <button id="catalogSearchClear" class="catalog-search-clear" title="Xóa tìm kiếm">✕</button>
+            </div>
+
+            <div class="catalog-filter-tabs">
+              <button class="filter-tab active" data-category="all">Tất cả</button>
+              <button class="filter-tab" data-category="picker">🎯 Gọi tên & May mắn</button>
+              <button class="filter-tab" data-category="quiz">🧠 Đố vui & Trắc nghiệm</button>
+              <button class="filter-tab" data-category="interactive">👥 Chia nhóm & Tương tác</button>
+              <button class="filter-tab" data-category="favorites">❤️ Yêu thích</button>
+            </div>
+          </div>
+
+          <!-- Lưới thẻ trò chơi tự động lấy dữ liệu thật -->
+          <div id="catalogGamesGrid" class="catalog-grid">
+            <!-- Sẽ được render tự động bằng scripts/landing.js -->
+          </div>
+
+          <!-- Trạng thái không tìm thấy kết quả -->
+          <div id="catalogEmptyState" class="catalog-empty-state">
+            <div class="empty-icon">🔎</div>
+            <div class="empty-title">Không tìm thấy trò chơi phù hợp</div>
+            <div class="empty-desc">Hãy thử tìm với từ khóa khác hoặc chuyển sang danh mục Tất cả.</div>
+            <button id="btnResetCatalogSearch" class="btn-hero-secondary" style="font-size: 0.9rem; padding: 10px 22px;">
+              🔄 Đặt lại bộ lọc
+            </button>
+          </div>
+        </div>
+      </section>
+
+      <!-- KHU VỰC 5: THÔNG ĐIỆP TRUYỀN CẢM HỨNG -->
+      <section class="inspiration-section">
+        <div class="inspiration-card">
+          <div class="inspiration-info-col">
+            <span class="inspiration-badge">✨ NĂNG LƯỢNG HỌC ĐƯỜNG</span>
+            <h2 class="inspiration-title">DÁM THỬ SỨC – DÁM TỎA SÁNG!</h2>
+            <p class="inspiration-text">
+              Mỗi lượt chơi là một cơ hội để khám phá bản thân, tự tin thể hiện và cùng bạn bè tiến bộ. Thầy cô và học sinh cùng nhau biến mỗi tiết học thành những trải nghiệm khó quên!
+            </p>
+            <div class="inspiration-actions">
+              <button class="btn-inspiration-action" onclick="openStudentListAction()">
+                <span>👥 Quản lý danh sách lớp</span>
+              </button>
+              <button class="btn-inspiration-alt" onclick="openQuizBankAction()">
+                <span>📚 Ngân hàng đề thi</span>
+              </button>
+            </div>
+          </div>
+
+          <div class="inspiration-metrics-col">
+            <div class="metric-box">
+              <div id="metricStudentsCount" class="metric-number">45</div>
+              <div class="metric-label">Học sinh trong lớp</div>
+            </div>
+            <div class="metric-box">
+              <div id="metricCalledCount" class="metric-number">0</div>
+              <div class="metric-label">Lượt đã gọi tên</div>
+            </div>
+            <div class="metric-box">
+              <div id="metricQuizCount" class="metric-number">10</div>
+              <div class="metric-label">Câu hỏi trắc nghiệm</div>
+            </div>
+            <div class="metric-box">
+              <div class="metric-number">100%</div>
+              <div class="metric-label">Hào hứng mỗi tiết</div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- KHU VỰC 6: CHÂN TRANG (FOOTER) -->
+      <footer class="landing-footer">
+        <div class="footer-container">
+          <div class="footer-main-grid">
+            <div class="footer-brand-col">
+              <h2>LỚP HỌC VUI NHỘN</h2>
+              <p class="footer-slogan">Học vui mỗi ngày – Tự tin tỏa sáng</p>
+              <p class="footer-desc">
+                Nền tảng trò chơi tương tác phục vụ dạy học tại các trường THCS. Tối ưu trải nghiệm cho giáo viên và học sinh lớp 6 đến lớp 9.
+              </p>
+            </div>
+
+            <div class="footer-links-col">
+              <h3>Kho trò chơi</h3>
+              <ul class="footer-links-list">
+                <li><button onclick="LandingRouter.playGame('wheel')">Vòng quay may mắn</button></li>
+                <li><button onclick="LandingRouter.playGame('slot')">Thẻ lướt hồi hộp</button></li>
+                <li><button onclick="LandingRouter.playGame('seating')">Sơ đồ lớp 4 tổ</button></li>
+                <li><button onclick="LandingRouter.playGame('quiz')">Đấu trường trắc nghiệm</button></li>
+                <li><button onclick="openAllGroupsModal()">Chia nhóm cả lớp</button></li>
+              </ul>
+            </div>
+
+            <div class="footer-links-col">
+              <h3>Hướng dẫn lớp học</h3>
+              <ul class="footer-links-list">
+                <li><button onclick="openHowToPlayModal()">Cách chơi trên lớp</button></li>
+                <li><button onclick="openHowToPlayModal()">Phím tắt trình chiếu</button></li>
+                <li><button onclick="openRemoteModal()">Điều khiển bằng điện thoại</button></li>
+                <li><button onclick="openAudioSettingsAction()">Âm thanh & Hiệu ứng</button></li>
+              </ul>
+            </div>
+
+            <div class="footer-links-col">
+              <h3>Công cụ & Dữ liệu</h3>
+              <ul class="footer-links-list">
+                <li><button onclick="openStudentListAction()">Nạp danh sách học sinh</button></li>
+                <li><button onclick="openQuizBankAction()">Tải đề thi trắc nghiệm</button></li>
+                <li><button onclick="document.getElementById('btnDownloadTemplate').click()">Tải file Excel mẫu (.xlsx)</button></li>
+                <li><button onclick="document.getElementById('btnExportBackup').click()">Sao lưu dữ liệu (.json)</button></li>
+              </ul>
+            </div>
+          </div>
+
+          <div class="footer-bottom-bar">
+            <span>© 2026 LỚP HỌC VUI NHỘN. Nền tảng trò chơi giáo dục THCS Việt Nam.</span>
+            <span>Học vui • Tự tin • Kết nối • Tỏa sáng ⭐</span>
+          </div>
+        </div>
+      </footer>
+
+    </div>
+    <!-- KẾT THÚC VIEW 1: TRANG CHỦ MỚI -->
+
+    <!-- ======================================================================
+         VIEW 2: SÂN KHẤU TRÒ CHƠI HIỆN TẠI (GAME ARENA VIEW)
+         ====================================================================== -->
+    <div id="gameArenaView" class="view-screen">
+
+      <!-- Cảm biến rê chuột mép trên & thẻ tab chỉ báo khi ở chế độ Toàn Màn Hình -->
+      <div id="fullscreenTopSensor" class="fullscreen-top-sensor" title="Rê chuột để mở Menu"></div>
+      <div id="fullscreenPeekIndicator" class="fullscreen-peek-indicator" onclick="toggleFullscreenHeaderPeek()" title="Nhấp hoặc rê chuột lên mép trên để mở Menu điều khiển">
+        <span>▼</span>
+        <span>Menu</span>
+      </div>
+
+      <!-- ==================== HEADER TRÊN CÙNG ==================== -->
+      <header class="app-header">
+        <div class="brand-group" onclick="LandingRouter.navigateTo('home')" style="cursor: pointer;" title="Nhấp để quay về Trang chủ Lớp Học Vui Nhộn">
+          <div class="brand-icon">📚</div>
+          <div class="brand-title">
+            <h1>LỚP HỌC VUI NHỘN</h1>
+            <p>Học vui mỗi ngày – Tự tin tỏa sáng</p>
+          </div>
+        </div>
+
+        <!-- Menu Trung Tâm: Chọn Lớp & Dropdown Cài Đặt (Lớp học, Danh sách lớp, Câu hỏi úp lên) -->
+        <div class="header-center-nav">
+          <!-- 1. Chọn nhanh Lớp học -->
+          <div class="header-class-box" title="Chọn lớp học hiện tại">
+            <span class="header-class-icon">🏫</span>
+            <select id="headerClassSelector" class="header-class-select" onchange="switchClass(this.value)" title="Chọn lớp để gọi tên"></select>
+            <button id="btnHeaderNewClass" class="btn-header-mini" onclick="openNewClassModal()" title="Thêm lớp học mới">➕</button>
+          </div>
+
+          <!-- 2. Menu Cài Đặt & Dữ Liệu (Dropdown gồm Lớp học, Danh sách lớp, Câu hỏi úp lên) -->
+          <div class="header-settings-wrapper">
+            <button id="btnSettingsMenu" class="btn-header btn-settings-trigger" onclick="toggleSettingsDropdown(event)" title="Cài đặt lớp học, danh sách học sinh và ngân hàng câu hỏi">
+              <span>⚙️ Cài đặt</span>
+              <span class="dropdown-chevron">▾</span>
+            </button>
+            
+            <div id="settingsDropdownMenu" class="settings-dropdown-menu">
+              <div class="dropdown-menu-header">⚙️ CÀI ĐẶT & QUẢN LÝ DỮ LIỆU</div>
+
+              <!-- Mục 1: Lớp học & Danh sách học sinh (Đã hợp nhất để loại bỏ trùng lặp) -->
+              <button class="settings-menu-item" onclick="openStudentListAction()">
+                <span class="menu-item-icon">👥</span>
+                <div class="menu-item-info">
+                  <span class="menu-item-title">Danh sách Lớp & Học sinh</span>
+                  <span class="menu-item-desc">Nạp file Excel, nhập tay, học sinh mẫu & quản lý lớp</span>
+                </div>
+              </button>
+
+              <!-- Mục 3: Câu hỏi úp lên -->
+              <button class="settings-menu-item" onclick="openQuizBankAction()">
+                <span class="menu-item-icon">📚</span>
+                <div class="menu-item-info">
+                  <span class="menu-item-title">Câu hỏi úp lên (Ngân hàng đề)</span>
+                  <span class="menu-item-desc">Tải đề thi trắc nghiệm .xlsx, tạo câu hỏi</span>
+                </div>
+              </button>
+
+              <!-- Mục 4: Cài đặt Sơ đồ lớp -->
+              <button class="settings-menu-item" onclick="closeSettingsDropdown(); SeatingChartModule.openSettingsModal()">
+                <span class="menu-item-icon">🪑</span>
+                <div class="menu-item-info">
+                  <span class="menu-item-title">Cài đặt Sơ Đồ Lớp</span>
+                  <span class="menu-item-desc">Dãy bàn, phương án xếp chỗ, 4 tổ thi đua</span>
+                </div>
+              </button>
+
+              <div class="settings-menu-divider"></div>
+
+              <!-- Mục 4: Âm thanh & Giọng AI -->
+              <button class="settings-menu-item" onclick="openAudioSettingsAction()">
+                <span class="menu-item-icon">🎵</span>
+                <div class="menu-item-info">
+                  <span class="menu-item-title">Âm điệu & Giọng đọc AI</span>
+                  <span class="menu-item-desc">Nhạc hồi hộp, pháo hoa, giọng bình luận</span>
+                </div>
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Khu vực Tiện ích Trình chiếu & Âm thanh bên phải -->
+        <div class="header-actions">
+          <!-- Nút Quay về Trang Chủ Mới -->
+          <button id="btnReturnToLanding" class="btn-return-home" onclick="LandingRouter.navigateTo('home')" title="Quay về Trang chủ Lớp Học Vui Nhộn">
+            <span>🏠</span>
+            <span>Trang chủ</span>
+          </button>
+
+          <!-- Nút âm thanh -->
+          <button id="soundToggleBtn" class="btn-header active" title="Bật/Tắt âm thanh (Phím M)">
+            <svg id="soundIconOn" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon>
+              <path d="M15.54 8.46a5 5 0 0 1 0 7.07"></path>
+              <path d="M19.07 4.93a10 10 0 0 1 0 14.14"></path>
+            </svg>
+            <svg id="soundIconOff" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:none;">
+              <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon>
+              <line x1="23" y1="9" x2="17" y2="15"></line>
+              <line x1="17" y1="9" x2="23" y2="15"></line>
+            </svg>
+            <span>Âm thanh</span>
+          </button>
+
+          <!-- Nút Trình chiếu & Điều Khiển Từ Xa (Remote Screen Sync) -->
+          <button id="btnRemoteSyncModal" class="btn-header" onclick="openRemoteModal()" title="Điều khiển từ xa bằng điện thoại hoặc chiếu 2 màn hình">
+            <span>📱 Trình chiếu & Remote</span>
+          </button>
+
+          <!-- Nút Toàn màn hình -->
+          <button id="fullscreenToggleBtn" class="btn-header" title="Toàn màn hình (F11)">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3"></path>
+            </svg>
+            <span>Toàn màn hình</span>
+          </button>
+        </div>
+      </header>
+
+    <!-- ==================== BODY (BỐ CỤC 2 CỘT CHÍNH) ==================== -->
+    <div class="app-body">
+      <!-- CỘT 1 (BÊN TRÁI): TỔNG QUAN DANH SÁCH TẤT CẢ CÁC TRÒ CHƠI -->
+      <aside id="gameNavSidebar" class="game-nav-sidebar">
+        <div class="game-nav-header">
+          <div class="game-nav-header-left">
+            <span class="game-nav-header-icon">🎮</span>
+            <span class="game-nav-header-title">DANH SÁCH TRÒ CHƠI</span>
+          </div>
+          <button id="btnToggleGameNav" class="btn-toggle-game-nav" onclick="toggleGameNavSidebar()" title="Thu gọn / Mở rộng danh sách trò chơi">
+            <svg id="gameNavCollapseIcon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="15 18 9 12 15 6"></polyline></svg>
+          </button>
+        </div>
+
+        <div class="game-nav-menu">
+          <!-- Nhóm 1: Bốc thăm & Gọi tên -->
+          <div class="game-nav-section-title">QUAY & GỌI TÊN</div>
+
+          <button id="navGameWheel" class="game-nav-btn active" onclick="selectGame('wheel')" data-game="wheel" title="Vòng quay bánh xe may mắn">
+            <span class="game-btn-icon">🎡</span>
+            <div class="game-btn-content">
+              <span class="game-btn-name">Vòng Quay May Mắn</span>
+              <span class="game-btn-desc">Bánh xe quay số sôi động</span>
+            </div>
+            <span class="game-btn-badge badge-hot">HOT</span>
+          </button>
+
+          <button id="navGameSlot" class="game-nav-btn" onclick="selectGame('slot')" data-game="slot" title="Thẻ lướt giật số hồi hộp">
+            <span class="game-btn-icon">🎰</span>
+            <div class="game-btn-content">
+              <span class="game-btn-name">Thẻ Lướt Hồi Hộp</span>
+              <span class="game-btn-desc">Giật thẻ Slot ngẫu nhiên</span>
+            </div>
+          </button>
+
+          <button id="navGameSeating" class="game-nav-btn" onclick="selectGame('seating')" data-game="seating" title="Gọi tên ngẫu nhiên theo sơ đồ chỗ ngồi lớp học">
+            <span class="game-btn-icon">🪑</span>
+            <div class="game-btn-content">
+              <span class="game-btn-name">Sơ Đồ Lớp Học</span>
+              <span class="game-btn-desc">Gọi tên theo bàn ghế thực tế</span>
+            </div>
+            <span class="game-btn-badge badge-green">4 Tổ</span>
+          </button>
+
+          <!-- Nhóm 2: Trò chơi học tập tương tác -->
+          <div class="game-nav-section-title">TRÒ CHƠI HỌC TẬP</div>
+
+          <button id="navGameQuiz" class="game-nav-btn" onclick="selectGame('quiz')" data-game="quiz" title="Đấu trường trắc nghiệm câu hỏi và bốc thăm trả lời">
+            <span class="game-btn-icon">🏆</span>
+            <div class="game-btn-content">
+              <span class="game-btn-name">Đấu Trường Trắc Nghiệm</span>
+              <span class="game-btn-desc">Hiện câu hỏi & bốc thăm trả lời</span>
+            </div>
+            <span class="game-btn-badge badge-blue">Đề thi</span>
+          </button>
+
+          <button id="navGameBonus" class="game-nav-btn" onclick="selectGame('bonus')" data-game="bonus" title="Vòng quay điểm thưởng và quà khích lệ">
+            <span class="game-btn-icon">🎁</span>
+            <div class="game-btn-content">
+              <span class="game-btn-name">Vòng Quay Điểm Thưởng</span>
+              <span class="game-btn-desc">Cộng điểm & quà may mắn</span>
+            </div>
+          </button>
+
+          <button id="navGameGroups" class="game-nav-btn" onclick="selectGame('groups')" data-game="groups" title="Chia cả lớp thành các nhóm 2, 4, 6">
+            <span class="game-btn-icon">🧩</span>
+            <div class="game-btn-content">
+              <span class="game-btn-name">Chia Nhóm Cả Lớp</span>
+              <span class="game-btn-desc">Chia ngẫu nhiên 2, 4, 6 người</span>
+            </div>
+          </button>
+
+          <button id="navGameBell" class="game-nav-btn" onclick="selectGame('golden_bell')" data-game="golden_bell" title="Rung chuông vàng trả lời câu hỏi sinh tồn">
+            <span class="game-btn-icon">🔔</span>
+            <div class="game-btn-content">
+              <span class="game-btn-name">Rung Chuông Vàng</span>
+              <span class="game-btn-desc">Sinh tồn trả lời loại dần</span>
+            </div>
+            <span class="game-btn-badge badge-gray">Sắp có</span>
+          </button>
+        </div>
+
+        <!-- Chân cột trái: Thống kê sĩ số lớp hiện tại -->
+        <div class="game-nav-footer">
+          <div class="nav-class-pill">
+            <span class="pill-icon">👨‍🎓</span>
+            <div class="pill-text">
+              <span id="navFooterClassName" class="pill-class-name">Lớp 9A4</span>
+              <span id="navFooterStudentCount" class="pill-count">Chờ gọi: 45/45</span>
+            </div>
+            <button class="pill-btn-view" onclick="openStudentListAction()" title="Xem và nạp danh sách học sinh">📋</button>
+          </div>
+        </div>
+      </aside>
+      <!-- SIDEBAR QUẢN LÝ HỌC SINH -->
+      <aside id="sidebar" class="sidebar collapsed">
+        <div class="sidebar-header">
+          <div class="sidebar-title">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+              <circle cx="9" cy="7" r="4"></circle>
+              <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
+              <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
+            </svg>
+            <span>Danh Sách Lớp</span>
+          </div>
+          <button id="closeSidebarBtn" class="modal-close" title="Thu gọn">&times;</button>
+        </div>
+
+        <div class="sidebar-content">
+          <!-- KHỐI QUẢN LÝ NHIỀU LỚP HỌC -->
+          <div class="class-manager-box">
+            <div class="class-select-row">
+              <div class="class-label">
+                <span>🏫</span>
+                <span>Lớp:</span>
+              </div>
+              <select id="classSelector" class="class-select-dropdown" title="Chọn lớp học để quay tên"></select>
+            </div>
+            <div class="class-actions-row">
+              <button id="btnNewClass" class="btn-class-action" title="Tạo thêm lớp học mới">
+                ➕ Thêm
+              </button>
+              <button id="btnRenameClass" class="btn-class-action" title="Đổi tên lớp học này">
+                ✏️ Sửa
+              </button>
+              <button id="btnDeleteClass" class="btn-class-action btn-danger-action" title="Xóa lớp học này">
+                🗑️ Xóa
+              </button>
+            </div>
+            <button id="btnOpenClassManagerAll" class="btn-secondary" style="margin-top: 6px; width: 100%; justify-content: center; font-size: 0.82rem; font-weight: 700;" onclick="openClassManagerModal()" title="Xem toàn bộ các lớp học và nạp bộ 5 lớp mẫu demo">
+              🏫 Danh sách tất cả các lớp & Lớp mẫu
+            </button>
+          </div>
+
+          <!-- Khu vực Nạp file & Mẫu -->
+          <div class="data-box">
+            <div id="dropzone" class="dropzone" title="Nhấn hoặc kéo thả file Excel vào đây">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                <polyline points="14 2 14 8 20 8"></polyline>
+                <line x1="12" y1="18" x2="12" y2="12"></line>
+                <line x1="9" y1="15" x2="15" y2="15"></line>
+              </svg>
+              <span class="dropzone-text">Tải file Excel (.xlsx, .xls)</span>
+              <span class="dropzone-subtext">Kéo thả hoặc bấm để chọn</span>
+            </div>
+            <input type="file" id="excelFileInput" accept=".xlsx, .xls">
+
+            <div class="data-btn-row">
+              <button id="btnSampleData" class="btn-secondary btn-sample" title="Nạp 45 học sinh mẫu (Chuẩn lớp 9A4)">
+                ✨ Dữ liệu mẫu (45 HS)
+              </button>
+              <button id="btnManualInput" class="btn-secondary" title="Dán danh sách dạng văn bản">
+                📝 Nhập thủ công
+              </button>
+            </div>
+
+            <!-- Nút Tải file mẫu Excel chuẩn hóa -->
+            <button id="btnDownloadTemplate" class="btn-secondary" style="margin-top: 8px; width: 100%; justify-content: center; font-size: 0.85rem;" title="Tải file Excel mẫu .xlsx có sẵn cột chuẩn">
+              📥 Tải mẫu Excel (.xlsx)
+            </button>
+
+            <!-- Các nút Sao lưu & Khôi phục JSON -->
+            <div class="data-btn-row" style="margin-top: 8px;">
+              <button id="btnExportBackup" class="btn-secondary" title="Xuất toàn bộ danh sách lớp & cấu hình ra file JSON">
+                💾 Sao lưu (.json)
+              </button>
+              <button id="btnImportBackup" class="btn-secondary" title="Khôi phục danh sách lớp từ file JSON đã sao lưu">
+                📥 Khôi phục
+              </button>
+            </div>
+            <input type="file" id="backupFileInput" accept=".json" style="display: none;">
+          </div>
+
+          <!-- Thẻ Thống kê số lượng -->
+          <div class="stats-card">
+            <div class="stat-item total">
+              <span id="statTotal" class="stat-number">0</span>
+              <span class="stat-label">Tổng số</span>
+            </div>
+            <div class="stat-item active">
+              <span id="statRemaining" class="stat-number">0</span>
+              <span class="stat-label">Chờ gọi</span>
+            </div>
+            <div class="stat-item called">
+              <span id="statCalled" class="stat-number">0</span>
+              <span class="stat-label">Đã gọi</span>
+            </div>
+          </div>
+
+          <!-- Cài đặt Chống trùng lặp -->
+          <div class="controls-box">
+            <div class="toggle-group">
+              <span class="toggle-label" title="Khi bật: Học sinh đã được gọi sẽ không bị gọi lại">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <polyline points="9 11 12 14 22 4"></polyline>
+                  <path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"></path>
+                </svg>
+                Không gọi lại đã chọn
+              </span>
+              <label class="switch">
+                <input type="checkbox" id="noRepeatToggle" checked>
+                <span class="slider"></span>
+              </label>
+            </div>
+
+            <button id="btnResetCalled" class="btn-reset-called" title="Đưa toàn bộ học sinh đã gọi trở lại vòng quay">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M3 2v6h6"></path>
+                <path d="M3 13a9 9 0 1 0 3-7.7L3 8"></path>
+              </svg>
+              Làm mới danh sách gọi lại
+            </button>
+          </div>
+
+          <!-- Danh sách học sinh -->
+          <div class="list-section">
+            <div class="list-tabs">
+              <button id="tabRemainingBtn" class="list-tab-btn active">Chờ gọi (<span id="tabCountRemaining">0</span>)</button>
+              <button id="tabCalledBtn" class="list-tab-btn">Đã gọi (<span id="tabCountCalled">0</span>)</button>
+              <button id="tabHistoryBtn" class="list-tab-btn">📜 Lịch sử (<span id="tabCountHistory">0</span>)</button>
+            </div>
+
+            <div class="search-input-wrap">
+              <svg class="search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <circle cx="11" cy="11" r="8"></circle>
+                <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+              </svg>
+              <input type="text" id="searchInput" class="search-input" placeholder="Tìm kiếm tên học sinh...">
+            </div>
+
+            <div id="studentsListView" class="students-list-view">
+              <!-- Danh sách phần tử học sinh sẽ được render bằng JS -->
+            </div>
+          </div>
+        </div>
+      </aside>
+      <div id="sidebarBackdrop" class="sidebar-backdrop"></div>
+
+      <!-- VÙNG SÂN KHẤU QUAY CHÍNH (MAIN STAGE) -->
+      <main class="main-stage">
+        <!-- ==================== THANH ĐIỀU KHIỂN PHỤ THEO CHẾ ĐỘ ==================== -->
+        <!-- 1. Thanh phụ cho Chế độ Gọi Tên thuần túy (Tự động hiển thị đúng trò chơi hiện tại) -->
+        <div id="subbarClassic" class="mode-subbar">
+          <!-- Huy hiệu tiêu đề trò chơi hiện tại -->
+          <div id="classicGameStageTag" class="current-game-stage-tag" title="Trò chơi hiện tại">
+            <span id="classicGameStageIcon">🎡</span>
+            <span id="classicGameStageTitle">Vòng Quay May Mắn</span>
+          </div>
+
+          <!-- Các nút chế độ bốc thăm Slot (Chỉ hiển thị khi chơi Thẻ Lướt) -->
+          <div id="slotModeBar" class="mode-bar" style="display: none; margin-bottom: 0;">
+            <button class="mode-pill active" data-mode="single">
+              <span>Cá nhân (1)</span>
+            </button>
+            <button class="mode-pill" data-mode="pair">
+              <span>Cặp đôi (2)</span>
+            </button>
+            <button class="mode-pill" data-mode="group4">
+              <span>Nhóm 4</span>
+            </button>
+            <button class="mode-pill" data-mode="group6">
+              <span>Nhóm 6</span>
+            </button>
+            <button id="btnDivideAllGroups" class="btn-header" style="background: rgba(139, 92, 246, 0.25); border-color: rgba(139, 92, 246, 0.45); color: #c4b5fd;">
+              <span>🧩 Chia cả lớp</span>
+            </button>
+          </div>
+
+          <!-- Các nút ẩn để duy trì tương thích các hàm JS cũ -->
+          <div class="view-switch-pills" style="display: none;">
+            <button id="viewSlotBtn" class="view-pill-btn active"></button>
+            <button id="viewWheelBtn" class="view-pill-btn"></button>
+          </div>
+        </div>
+
+        <!-- 2. Thanh phụ cho Chế độ Đấu Trường Trắc Nghiệm -->
+        <div id="subbarQuiz" class="mode-subbar" style="display: none;">
+          <div class="current-game-stage-tag theme-quiz">
+            <span>🏆</span>
+            <span>Đấu Trường Trắc Nghiệm</span>
+          </div>
+          <div class="quiz-subbar-group">
+            <button id="btnToggleQuestionVisibility" class="btn-subbar" onclick="toggleQuestionVisibility()" title="Ẩn/Hiện thẻ câu hỏi trên màn hình">
+              🙈 Tạm ẩn câu hỏi
+            </button>
+            <button id="btnOpenQuizBankModal" class="btn-subbar" onclick="openQuizManagerModal()" title="Mở danh sách câu hỏi, xuất nhập Excel/JSON">
+              ⚙️ Ngân hàng đề thi (.xlsx / .json)
+            </button>
+            <button class="btn-subbar btn-bonus-shortcut" onclick="openBonusWheelModal()" title="Mở vòng quay điểm thưởng">
+              🎁 Thưởng điểm
+            </button>
+          </div>
+          <div class="quiz-subbar-hint">
+            💡 Màn hình hiển thị <strong>ĐỒNG THỜI</strong>: Câu hỏi bên trái & Bốc thăm người trả lời bên phải!
+          </div>
+        </div>
+
+        <!-- 3. Thanh phụ cho Chế độ Trò Chơi Lớp Học -->
+        <div id="subbarMinigames" class="mode-subbar" style="display: none;">
+          <div class="quiz-subbar-group">
+            <button class="btn-subbar" onclick="openBonusWheelModal()">🎁 Vòng quay Điểm thưởng</button>
+            <button class="btn-subbar" onclick="openAllGroupsModal()">🧩 Chia cả lớp thành nhóm</button>
+          </div>
+        </div>
+
+        <!-- 4. Thanh phụ Sơ Đồ Lớp Học tích hợp trực tiếp trong seatingArenaSection -->
+
+        <!-- ==================== KHUNG SÂN KHẤU ARENA ==================== -->
+        <div id="arenaContainer" class="arena-container classic-mode">
+          <!-- CỘT TRÁI: KHU VỰC CÂU HỎI TRẮC NGHIỆM -->
+          <div id="quizArenaSection" class="quiz-arena-section" style="display: none;">
+            <div id="quizArenaContainer"></div>
+          </div>
+
+          <!-- CỘT PHẢI (HOẶC TOÀN MÀN HÌNH): SÂN KHẤU BỐC THĂM HỌC SINH -->
+          <div id="stagePickerSection" class="stage-picker-section">
+            <div class="stage-picker-header" id="stagePickerHeader" style="display: none;">
+              <span class="picker-header-title">🎯 Người Lên Bảng Trả Lời</span>
+            </div>
+
+            <!-- Màn hình 1: Thẻ lướt Slot -->
+            <div id="displayScreen" class="display-screen active">
+              <!-- Nội dung giao diện sẽ biến đổi theo chế độ quay -->
+            </div>
+
+            <!-- Màn hình 2: Vòng quay Bánh xe Lucky Wheel -->
+            <div id="wheelStage" class="wheel-stage">
+              <div class="wheel-outer-wrapper">
+                <div class="wheel-halo"></div>
+                <div class="wheel-pointer" id="wheelPointer"></div>
+                <canvas id="luckyWheelCanvas" class="wheel-canvas" width="520" height="520"></canvas>
+                <div class="wheel-center-cap" id="wheelCenterCap" title="Bấm vào đây hoặc nút QUAY để quay vòng!">🎓</div>
+              </div>
+              <div id="wheelWinnerCard" class="wheel-winner-card" style="display: none;"></div>
+            </div>
+
+            <!-- Nút hành động quay trung tâm -->
+            <div class="action-controls">
+              <button id="btnSpin" class="btn-spin-master">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                  <circle cx="12" cy="12" r="10"></circle>
+                  <polygon points="10 8 16 12 10 16 10 8"></polygon>
+                </svg>
+                <span>QUAY TÊN NGAY</span>
+              </button>
+              <div class="spin-hint">
+                <span>Ấn phím</span> <kbd>Space</kbd> <span>hoặc click chuột để quay</span>
+              </div>
+
+              <!-- Bộ Đồng Hồ Đếm Ngược Trả Lời Câu Hỏi (Countdown Timer Widget) -->
+              <div id="countdownTimerWidget" class="countdown-timer-widget">
+                <div class="timer-display-col">
+                  <div class="timer-dial-wrapper">
+                    <svg class="timer-svg" viewBox="0 0 90 90">
+                      <circle class="timer-svg-bg" cx="45" cy="45" r="40"></circle>
+                      <circle id="timerSvgProgress" class="timer-svg-progress" cx="45" cy="45" r="40"></circle>
+                    </svg>
+                    <span class="timer-dial-icon">⏱️</span>
+                  </div>
+                  <div class="timer-info-text">
+                    <span class="timer-label">Đồng hồ đếm ngược</span>
+                    <span id="timerDigits" class="timer-digits">30s</span>
+                  </div>
+                </div>
+                <div class="timer-controls-col">
+                  <button id="btnTimer15" class="timer-preset-btn" title="Đếm ngược 15 giây">15s</button>
+                  <button id="btnTimer30" class="timer-preset-btn" title="Đếm ngược 30 giây">30s</button>
+                  <button id="btnTimer60" class="timer-preset-btn" title="Đếm ngược 60 giây">60s</button>
+                  <button id="btnTimerToggle" class="timer-action-btn btn-timer-toggle" title="Bắt đầu / Tạm dừng đếm">▶️ Bắt đầu</button>
+                  <button id="btnTimerReset" class="timer-action-btn btn-timer-reset" title="Đặt lại đồng hồ">↺ Đặt lại</button>
+                </div>
+              </div>
+
+              <!-- Các nút phụ sau khi quay -->
+              <div id="postSpinActions" class="post-spin-actions">
+                <button id="btnReSpin" class="btn-header">
+                  🔄 Quay tiếp
+                </button>
+                <button id="btnOpenBonusWheel" class="btn-header" style="background: rgba(245, 158, 11, 0.25); border-color: rgba(245, 158, 11, 0.5); color: #fde68a;" title="Quay điểm số hoặc phần thưởng cho học sinh">
+                  🎁 Quay điểm thưởng
+                </button>
+                <button id="btnAbsentReturn" class="btn-header" style="color: #fca5a5;" title="Học sinh này vắng mặt, đưa lại danh sách chờ">
+                  ⚠️ Báo vắng mặt (Hoàn lại)
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <!-- KHU VỰC TRÒ CHƠI LỚP HỌC (MINIGAMES HUB) -->
+          <div id="minigamesHubSection" class="minigames-hub-section" style="display: none;">
+            <div class="minigames-card-grid">
+              <div class="minigame-card" onclick="openBonusWheelModal()">
+                <div class="minigame-icon">🎁</div>
+                <div class="minigame-title">Vòng Quay Điểm Thưởng</div>
+                <div class="minigame-desc">Tặng điểm thưởng, quà tặng khích lệ học sinh sau khi trả lời bài.</div>
+                <button class="btn-primary" style="margin-top: 12px; width: 100%;">Mở ngay</button>
+              </div>
+              <div class="minigame-card" onclick="openAllGroupsModal()">
+                <div class="minigame-icon">🧩</div>
+                <div class="minigame-title">Chia Nhóm Tự Động</div>
+                <div class="minigame-desc">Xáo trộn và chia cả lớp thành các nhóm 2, 4, 6 người ngẫu nhiên.</div>
+                <button class="btn-primary" style="margin-top: 12px; width: 100%;">Chia nhóm</button>
+              </div>
+              <div class="minigame-card coming-soon">
+                <div class="minigame-icon">🔔</div>
+                <div class="minigame-title">Rung Chuông Vàng Sinh Tồn</div>
+                <div class="minigame-desc">Học sinh trả lời sai bị loại trực tiếp cho đến khi tìm ra Quán quân.</div>
+                <span class="choice-badge badge-green" style="margin-top: 12px;">Đang phát triển</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- CỘT / VÙNG: SÂN KHẤU SƠ ĐỒ LỚP HỌC THỰC TẾ -->
+          <div id="seatingArenaSection" class="seating-stage-container" style="display: none;">
+            <!-- 1. Thanh Tiêu Đề Phụ (Đã ẩn hoàn toàn để giải phóng không gian tối đa cho lớp học) -->
+            <div id="subbarSeating" class="mode-subbar seating-compact-bar" style="display: none !important;">
+              <div class="seating-compact-left">
+                <button class="seating-btn-action btn-return-classic" onclick="switchGameMode('classic')" title="Quay lại chế độ Vòng quay bánh xe & Thẻ lướt gọi tên">
+                  <span>🎲 Về Vòng Quay</span>
+                </button>
+                <div class="seating-divider"></div>
+
+                <div class="seating-title-badge">
+                  <span class="seating-title-icon">🪑</span>
+                  <span class="seating-title-text">Sơ Đồ Lớp Học</span>
+                </div>
+
+                <div class="seating-compact-pill" title="Phương án sơ đồ đang áp dụng">
+                  <span>📐</span>
+                  <span id="seatingActivePresetLabel">Sơ đồ chính (Theo tổ)</span>
+                </div>
+
+                <div class="seating-compact-pill" title="Tình trạng chỗ ngồi">
+                  <span>👥</span>
+                  <span id="seatingStatsLabel">0 chỗ</span>
+                </div>
+              </div>
+
+              <div class="seating-compact-right">
+              </div>
+            </div>
+
+            <!-- BỐ CỤC 2 CỘT SONG SONG: SƠ ĐỒ LỚP (BÊN TRÁI) & BẢNG HỌC SINH CHƯA XẾP (BÊN PHẢI) -->
+            <div class="seating-main-workspace">
+              <!-- CỘT TRÁI: BỤC GIẢNG & LƯỚI BÀN GHẾ PHÒNG HỌC -->
+              <div class="seating-classroom-column">
+                <!-- Bục giảng & Bảng đen Trung Tâm -->
+                <div class="classroom-podium-bar" id="classroomPodiumBar">
+                  <!-- Vùng thả Bàn Giáo Viên bên Trái (Dropzone) -->
+                  <div class="podium-drop-zone zone-left" data-drop-pos="left" title="Thả hoặc bấm để đặt Bàn Giáo Viên ở bên trái">
+                    <span>📍 Đặt bàn GV (Trái)</span>
+                  </div>
+
+                  <!-- Bảng Đen Bục Giảng Trung Tâm -->
+                  <div class="blackboard-box" title="Bảng đen & Bục giảng (Hướng nhìn từ trên xuống)">
+                    <span>Tiên Học Lễ - Hậu Học Văn</span>
+                  </div>
+
+                  <!-- Vùng thả Bàn Giáo Viên bên Phải (Dropzone) -->
+                  <div class="podium-drop-zone zone-right" data-drop-pos="right" title="Thả hoặc bấm để đặt Bàn Giáo Viên ở bên phải">
+                    <span>📍 Đặt bàn GV (Phải)</span>
+                  </div>
+
+                  <!-- Cụm Bàn Giáo Viên (Có thể di chuyển sang Trái / Phải) -->
+                  <div id="podiumDeskWrapper" class="podium-desk-wrapper desk-pos-right" draggable="true" title="Bàn Giáo Viên (Kéo thả hoặc bấm nút để đổi sang trái / phải)">
+                    <div id="teacherDeskItem" class="teacher-desk" onclick="SeatingChartModule.toggleTeacherDeskPosition(event)">
+                      <button type="button" id="btnToggleTeacherDeskPos" class="btn-toggle-desk-pos" onclick="SeatingChartModule.toggleTeacherDeskPosition(event)" title="Chuyển Bàn Giáo Viên sang bên đối diện">
+                        <span id="deskPosArrow" class="desk-pos-arrow">⮜</span>
+                      </button>
+                      <span class="desk-icon">🧑‍🏫</span>
+                      <span class="desk-text">Bàn Giáo Viên</span>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- BỐ CỤC THÂN SÂN KHẤU: BỘ ĐIỀU KHIỂN CHẾ ĐỘ (CỘT TRÁI) & LƯỚI BÀN GHẾ (PHẢI) -->
+                <div class="seating-stage-body">
+                  <!-- CỘT TRÁI: CÁC CHẾ ĐỘ GỌI TÊN SƠ ĐỒ LỚP -->
+                  <aside id="seatingModesPanel" class="seating-modes-panel">
+                    <div class="seating-modes-header">
+                      <div class="modes-header-main">
+                        <span class="modes-header-icon">🎮</span>
+                        <div class="modes-header-text">
+                          <span class="modes-header-title">CHẾ ĐỘ GỌI TÊN</span>
+                          <span class="modes-header-desc">Bốc thăm theo sơ đồ</span>
+                        </div>
+                      </div>
+                      <button type="button" id="btnToggleModesPanel" class="btn-toggle-modes-panel" onclick="SeatingChartModule.toggleModesPanelCollapse()" title="Thu gọn bảng điều khiển (Chỉ hiện icon để mở rộng sơ đồ)">
+                        <span id="modesPanelToggleArrow" class="toggle-modes-panel-arrow">◀</span>
+                      </button>
+                    </div>
+
+                    <div class="seating-modes-list">
+                      <!-- Chế độ 1: Gọi Cá Nhân (Mặc định) -->
+                      <button type="button" class="seating-mode-card active" data-mode="single" onclick="SeatingChartModule.setCallingMode('single')" title="🎯 Gọi Cá Nhân: Bốc 1 học sinh may mắn ngẫu nhiên">
+                        <div class="mode-card-icon">🎯</div>
+                        <div class="mode-card-info">
+                          <div class="mode-card-top">
+                            <span class="mode-card-title">Cá Nhân</span>
+                            <span class="mode-card-badge badge-blue">Chuẩn</span>
+                          </div>
+                          <span class="mode-card-desc">Bốc 1 bạn ngẫu nhiên</span>
+                        </div>
+                      </button>
+
+                      <!-- Chế độ 2: Gọi Theo Bàn (Đôi bạn) -->
+                      <button type="button" class="seating-mode-card" data-mode="desk" onclick="SeatingChartModule.setCallingMode('desk')" title="👥 Gọi Theo Bàn: Cả 2 bạn cùng bàn lên bảng">
+                        <div class="mode-card-icon">👥</div>
+                        <div class="mode-card-info">
+                          <div class="mode-card-top">
+                            <span class="mode-card-title">Theo Cả Bàn</span>
+                            <span class="mode-card-badge badge-orange">Đôi bạn</span>
+                          </div>
+                          <span class="mode-card-desc">Cả 2 bạn cùng bàn lên bảng</span>
+                        </div>
+                      </button>
+
+                      <!-- Chế độ 3: Đối Kháng 2 Dãy (PK) -->
+                      <button type="button" class="seating-mode-card" data-mode="versus" onclick="SeatingChartModule.setCallingMode('versus')" title="⚔️ Đối Kháng 2 Dãy: 2 bạn khác dãy đối đầu (PK)">
+                        <div class="mode-card-icon">⚔️</div>
+                        <div class="mode-card-info">
+                          <div class="mode-card-top">
+                            <span class="mode-card-title">Đối Kháng 2 Dãy</span>
+                            <span class="mode-card-badge badge-red">PK 1vs1</span>
+                          </div>
+                          <span class="mode-card-desc">2 bạn khác dãy đối đầu</span>
+                        </div>
+                      </button>
+
+                      <!-- Chế độ 4: Đại Chiến 4 Tổ -->
+                      <button type="button" class="seating-mode-card" data-mode="all_groups" onclick="SeatingChartModule.setCallingMode('all_groups')" title="🏆 Đại Chiến 4 Tổ: Mỗi tổ cử 1 đại diện cùng lên bảng thi đấu">
+                        <div class="mode-card-icon">🏆</div>
+                        <div class="mode-card-info">
+                          <div class="mode-card-top">
+                            <span class="mode-card-title">Đại Chiến 4 Tổ</span>
+                            <span class="mode-card-badge badge-green">4 Tổ</span>
+                          </div>
+                          <span class="mode-card-desc">Mỗi tổ/dãy 1 đại diện</span>
+                        </div>
+                      </button>
+
+                      <!-- Chế độ 5: Gọi Hàng Ngang -->
+                      <button type="button" class="seating-mode-card" data-mode="row" onclick="SeatingChartModule.setCallingMode('row')" title="📏 Gọi Hàng Ngang: Tất cả bàn cùng hàng">
+                        <div class="mode-card-icon">📏</div>
+                        <div class="mode-card-info">
+                          <div class="mode-card-top">
+                            <span class="mode-card-title">Hàng Ngang</span>
+                            <span class="mode-card-badge badge-purple">Cả hàng</span>
+                          </div>
+                          <span class="mode-card-desc">Tất cả bàn cùng hàng</span>
+                        </div>
+                      </button>
+                    </div>
+
+                    <!-- Nút Quay Sơ Đồ Siêu Nổi Bật (Chuyển từ bục giảng về cột điều khiển) -->
+                    <div class="panel-spin-wrapper">
+                      <button id="btnSpinSeatingPodium" class="seating-spin-btn podium-spin-btn panel-spin-btn" onclick="SeatingChartModule.spin()" title="🎲 Quay Tên Sơ Đồ (Nhấn phím Space hoặc Click)">
+                        <span class="spin-dice-icon">🎲</span>
+                        <span class="spin-btn-label">QUAY TÊN SƠ ĐỒ</span>
+                        <span class="spin-hotkey-badge">Space</span>
+                      </button>
+                    </div>
+
+                    <!-- Hộp trạng thái chế độ đang chọn -->
+                    <div class="seating-mode-status-box">
+                      <div class="mode-status-label">Đang áp dụng:</div>
+                      <div id="seatingActiveModeName" class="mode-status-title">🎯 Gọi Cá Nhân</div>
+                      <div id="seatingActiveModeDesc" class="mode-status-desc">Hệ thống chọn ngẫu nhiên 1 học sinh may mắn trên toàn bộ sơ đồ lớp.</div>
+                    </div>
+
+                    <!-- Nút Mở / Thu Gọn Khay Học Sinh Chưa Xếp Chỗ (Chuyển từ bục giảng về cột điều khiển) -->
+                    <div class="panel-unassigned-wrapper">
+                      <button id="btnUnassignedExpandTab" class="unassigned-expand-tab panel-unassigned-btn" onclick="SeatingChartModule.toggleUnassignedColumn()" title="Mở rộng / Thu gọn danh sách học sinh chưa xếp chỗ">
+                        <div class="unassigned-btn-left">
+                          <span class="unassigned-btn-icon">🎒</span>
+                          <span class="unassigned-btn-title">Chưa xếp chỗ:</span>
+                        </div>
+                        <div class="unassigned-btn-right">
+                          <span id="unassignedTabBadge" class="unassigned-btn-badge">0</span>
+                          <span class="expand-tab-arrow unassigned-btn-arrow">◀</span>
+                        </div>
+                      </button>
+                    </div>
+
+                    <!-- PHẦN QUẢN LÝ LƯỢT GỌI & LÀM MỚI DANH SÁCH GỌI TÊN -->
+                    <div class="seating-round-control-box">
+                      <div class="round-control-header">
+                        <div class="round-control-title">
+                          <span class="round-title-icon">🔄</span>
+                          <span>LƯỢT GỌI TÊN</span>
+                        </div>
+                        <span id="seatingCalledStatBadge" class="round-control-badge badge-fresh">Lượt mới (0)</span>
+                      </div>
+
+                      <button type="button" id="btnSeatingResetRound" class="btn-seating-reset-round" onclick="SeatingChartModule.resetCalledRound()" title="Làm mới danh sách đã gọi để tất cả học sinh được bốc lại từ đầu">
+                        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                          <path d="M3 2v6h6"></path>
+                          <path d="M3 13a9 9 0 1 0 3-7.7L3 8"></path>
+                        </svg>
+                        <span>Làm Mới Danh Sách</span>
+                      </button>
+                      <div class="round-control-hint">Bắt đầu lượt mới (bốc lại từ đầu)</div>
+                    </div>
+                  </aside>
+
+                  <!-- Lưới Dãy Bàn Ghế Phòng Học -->
+                  <div class="classroom-grid-wrapper">
+                    <div id="classroomAislesGrid" class="classroom-aisles-grid">
+                      <!-- Render bằng JS SeatingChartModule -->
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- CỘT PHẢI: KHAY HỌC SINH CHƯA XẾP CHỖ (SONG SONG VỚI SƠ ĐỒ LỚP) -->
+              <div class="seating-unassigned-section seating-unassigned-column">
+                <div class="unassigned-header-row">
+                  <div class="unassigned-title">
+                    <span>🎒 Chưa xếp chỗ:</span>
+                    <span id="unassignedCountBadge" class="unassigned-count-badge">0 em</span>
+                  </div>
+                  <div class="unassigned-header-actions">
+                    <button id="btnQuickAutoAssign" class="btn-quick-auto-assign" onclick="SeatingChartModule.autoAssign()" title="Xếp nhanh tất cả học sinh còn lại vào ghế trống">
+                      ⚡ Xếp nhanh
+                    </button>
+                    <button id="btnCollapseUnassigned" class="btn-toggle-unassigned-col" onclick="SeatingChartModule.toggleUnassignedColumn()" title="Thu gọn danh sách (Phóng to sơ đồ)">
+                      ▶
+                    </button>
+                  </div>
+                </div>
+
+                <!-- Ô tìm kiếm học sinh chưa xếp chỗ -->
+                <div class="unassigned-search-bar">
+                  <span class="unassigned-search-icon">🔍</span>
+                  <input type="text" id="unassignedSearchInput" class="unassigned-search-input" placeholder="Tìm tên học sinh..." oninput="SeatingChartModule.filterUnassigned(this.value)">
+                </div>
+
+                <div class="unassigned-hint-row">
+                  💡 Kéo thả hoặc click chọn tên em rồi click vào ghế trên sơ đồ
+                </div>
+
+                <div id="unassignedChipsContainer" class="unassigned-chips-container">
+                  <!-- Render bằng JS SeatingChartModule -->
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </main>
+    </div>
+    </div>
+    <!-- KẾT THÚC VIEW 2: SÂN KHẤU TRÒ CHƠI -->
+
+  </div> <!-- KẾT THÚC .app-container -->
+
+  <!-- ==================== MODAL HƯỚNG DẪN CÁCH CHƠI (HOW TO PLAY MODAL) ==================== -->
+  <div id="howToPlayModal" class="help-modal-backdrop">
+    <div class="help-modal-card">
+      <div class="help-modal-header">
+        <h2>📖 Hướng Dẫn Sử Dụng & Tổ Chức Trò Chơi</h2>
+        <button class="help-modal-close" onclick="closeHowToPlayModal()">&times;</button>
+      </div>
+      <div class="help-modal-body">
+        <div class="guide-step-item">
+          <div class="step-num-bubble">1</div>
+          <div class="step-content">
+            <h4>Chuẩn Bị Danh Sách Lớp</h4>
+            <p>Chọn lớp hiện có từ thanh điều khiển hoặc nhấp <strong>"Cài đặt" → "Danh sách lớp"</strong> để nạp file Excel danh sách học sinh (hoặc dùng nhanh 45 học sinh mẫu của lớp 9A4 có sẵn).</p>
+          </div>
+        </div>
+
+        <div class="guide-step-item">
+          <div class="step-num-bubble">2</div>
+          <div class="step-content">
+            <h4>Lựa Chọn Trò Chơi Phù Hợp Hoạt Động Tiết Học</h4>
+            <p><strong>Khởi động & Tạo năng lượng:</strong> Dùng <em>Vòng Quay May Mắn</em> hoặc <em>Thẻ Lướt Slot</em>.<br>
+            <strong>Kiểm tra & Củng cố:</strong> Dùng <em>Đấu Trường Trắc Nghiệm</em> kết hợp bốc thăm người trả lời.<br>
+            <strong>Hoạt động nhóm:</strong> Dùng <em>Sơ Đồ Lớp 4 Tổ</em> hoặc công cụ <em>Chia Nhóm Cả Lớp</em>.</p>
+          </div>
+        </div>
+
+        <div class="guide-step-item">
+          <div class="step-num-bubble">3</div>
+          <div class="step-content">
+            <h4>Bắt Đầu & Tỏa Sáng</h4>
+            <p>Nhấn nút <strong>"QUAY TÊN NGAY"</strong> hoặc nhấn phím <kbd class="key-badge">Space</kbd> trên bàn phím. Hệ thống sẽ chọn ngẫu nhiên, phát nhạc hồi hộp và hiệu ứng pháo hoa rực rỡ khi tìm ra người may mắn!</p>
+          </div>
+        </div>
+
+        <h4 style="margin-top: 24px; margin-bottom: 10px; color: var(--lp-navy); font-weight: 800;">⌨️ Bảng Phím Tắt Tiện Dụng Cho Giáo Viên</h4>
+        <table class="shortcuts-table">
+          <thead>
+            <tr>
+              <th>Phím tắt</th>
+              <th>Chức năng</th>
+              <th>Ghi chú</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><kbd class="key-badge">Space</kbd></td>
+              <td>Quay tên học sinh / Bắt đầu</td>
+              <td>Dễ thao tác từ bàn giáo viên</td>
+            </tr>
+            <tr>
+              <td><kbd class="key-badge">M</kbd></td>
+              <td>Bật / Tắt âm thanh</td>
+              <td>Tùy chọn không khí lớp học</td>
+            </tr>
+            <tr>
+              <td><kbd class="key-badge">F11</kbd></td>
+              <td>Toàn màn hình máy chiếu</td>
+              <td>Mở rộng tối đa tầm nhìn</td>
+            </tr>
+            <tr>
+              <td><kbd class="key-badge">Esc</kbd></td>
+              <td>Đóng cửa sổ cài đặt / Modal</td>
+              <td>Quay lại màn hình chính nhanh chóng</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- ==================== MODAL NHẬP DỮ LIỆU THỦ CÔNG ==================== -->
+  <div id="manualModal" class="modal-overlay">
+    <div class="modal-card">
+      <div class="modal-header">
+        <div class="modal-title">
+          <span>📝 Nhập danh sách học sinh thủ công</span>
+        </div>
+        <button id="closeManualModal" class="modal-close">&times;</button>
+      </div>
+      <div class="modal-body">
+        <p style="font-size: 0.85rem; color: #94a3b8;">
+          Dán danh sách họ tên học sinh vào ô bên dưới. Mỗi dòng là một học sinh:
+        </p>
+        <textarea id="manualTextarea" class="modal-textarea" placeholder="Nguyễn Văn An&#10;Trần Thị Mai&#10;Lê Hoàng Long&#10;..."></textarea>
+      </div>
+      <div class="modal-footer">
+        <button id="cancelManualModal" class="btn-secondary">Hủy</button>
+        <button id="saveManualModal" class="btn-primary">Áp dụng danh sách</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ==================== MODAL CHIA TOÀN BỘ LỚP THÀNH CÁC NHÓM ==================== -->
+  <div id="allGroupsModal" class="modal-overlay">
+    <div class="modal-card groups-overview-modal">
+      <div class="modal-header">
+        <div class="modal-title">
+          <span>🧩 Bảng Chia Toàn Bộ Lớp Thành Các Nhóm</span>
+        </div>
+        <button id="closeAllGroupsModal" class="modal-close">&times;</button>
+      </div>
+      <div class="modal-body">
+        <div style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 10px;">
+          <div style="display: flex; align-items: center; gap: 8px;">
+            <label style="font-size: 0.9rem; color: #cbd5e1; font-weight: 600;">Số thành viên mỗi nhóm:</label>
+            <select id="groupSizeSelect" style="background: #334155; color: #fff; border: 1px solid #475569; padding: 6px 12px; border-radius: 6px; font-weight: 600;">
+              <option value="2">2 học sinh / nhóm</option>
+              <option value="3">3 học sinh / nhóm</option>
+              <option value="4" selected>4 học sinh / nhóm</option>
+              <option value="5">5 học sinh / nhóm</option>
+              <option value="6">6 học sinh / nhóm</option>
+              <option value="8">8 học sinh / nhóm</option>
+            </select>
+          </div>
+          <button id="btnRegenerateAllGroups" class="btn-secondary" style="background: var(--primary); color: #fff;">
+            🎲 Chia ngẫu nhiên lại
+          </button>
+        </div>
+
+        <div id="allGroupsContainer" class="groups-result-grid">
+          <!-- Bảng các nhóm sẽ được vẽ tại đây -->
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button id="btnCopyGroups" class="btn-secondary">📋 Sao chép danh sách nhóm</button>
+        <button id="closeAllGroupsModalBtn" class="btn-primary">Đóng</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ==================== MODAL XEM TRƯỚC & CHỌN CỘT EXCEL ==================== -->
+  <div id="excelPreviewModal" class="modal-overlay">
+    <div class="modal-card excel-preview-modal">
+      <div class="modal-header">
+        <div class="modal-title">
+          <span>📊 Xem Trước & Xác Nhận Dữ Liệu Excel</span>
+        </div>
+        <button id="closeExcelPreviewModal" class="modal-close">&times;</button>
+      </div>
+      <div class="modal-body">
+        <div class="excel-info-card">
+          <div class="file-title">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+              <polyline points="14 2 14 8 20 8"></polyline>
+            </svg>
+            <span id="excelFileName">Tên file.xlsx</span>
+          </div>
+          <span id="excelDetectedStatus" class="status-pill">✨ Tự động nhận diện chuẩn</span>
+        </div>
+
+        <div class="excel-config-grid">
+          <div class="excel-config-field" id="excelSheetField">
+            <label for="excelSheetSelect">Trang tính (Sheet):</label>
+            <select id="excelSheetSelect" class="excel-select"></select>
+          </div>
+          <div class="excel-config-field">
+            <label for="excelHoColSelect">Cột Họ & Đệm (hoặc Cả Họ Tên):</label>
+            <select id="excelHoColSelect" class="excel-select"></select>
+          </div>
+          <div class="excel-config-field">
+            <label for="excelTenColSelect">Cột Tên (nếu tách cột riêng):</label>
+            <select id="excelTenColSelect" class="excel-select"></select>
+          </div>
+        </div>
+
+        <div style="display: flex; align-items: center; gap: 14px; background: rgba(0,0,0,0.22); padding: 10px 14px; border-radius: var(--radius-sm); border: 1px solid rgba(255,255,255,0.08); flex-wrap: wrap;">
+          <span style="font-size: 0.85rem; color: #cbd5e1; font-weight: 700;">Đích nạp dữ liệu:</span>
+          <label style="display: flex; align-items: center; gap: 6px; font-size: 0.85rem; color: #fff; cursor: pointer;">
+            <input type="radio" name="excelTargetMode" value="current" checked>
+            <span>Lớp hiện tại (<b id="excelTargetCurrentName">Đang chọn</b>)</span>
+          </label>
+          <label style="display: flex; align-items: center; gap: 6px; font-size: 0.85rem; color: #fff; cursor: pointer;">
+            <input type="radio" name="excelTargetMode" value="new">
+            <span>Tạo lớp mới từ tệp này (<b id="excelTargetNewName">Lớp mới</b>)</span>
+          </label>
+        </div>
+
+        <div class="excel-preview-box">
+          <div class="excel-preview-header">
+            <span>Danh sách họ tên sau khi ghép:</span>
+            <span id="excelPreviewCountBadge" style="color: #34d399; font-weight: 700;">Tìm thấy 0 học sinh</span>
+          </div>
+          <div class="excel-preview-scroll">
+            <table class="excel-preview-table">
+              <thead>
+                <tr>
+                  <th style="width: 50px;">STT</th>
+                  <th>Họ và Tên Học Sinh</th>
+                </tr>
+              </thead>
+              <tbody id="excelPreviewTableBody">
+                <!-- Nội dung danh sách học sinh sau ghép -->
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button id="cancelExcelPreviewModal" class="btn-secondary">Hủy bỏ</button>
+        <button id="applyExcelPreviewModal" class="btn-primary">✅ Xác nhận nạp vào vòng quay</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ==================== MODAL THÊM / ĐỔI TÊN LỚP HỌC ==================== -->
+  <div id="classModal" class="modal-overlay">
+    <div class="modal-card" style="max-width: 480px;">
+      <div class="modal-header">
+        <div class="modal-title">
+          <span id="classModalTitle">➕ Thêm Lớp Học Mới</span>
+        </div>
+        <button id="closeClassModal" class="modal-close">&times;</button>
+      </div>
+      <div class="modal-body">
+        <div style="display: flex; flex-direction: column; gap: 8px;">
+          <label for="classNameInput" style="font-size: 0.88rem; color: #475569; font-weight: 700;">
+            Tên lớp học (ví dụ: Lớp 9A1, Lớp 9A2, Lớp 8A...):
+          </label>
+          <input type="text" id="classNameInput" class="excel-select" placeholder="Nhập tên lớp..." style="padding: 10px 12px; font-size: 0.95rem;">
+        </div>
+
+        <div id="classModalInitGroup" style="display: flex; flex-direction: column; gap: 6px; margin-top: 8px;">
+          <label for="classModalInitOption" style="font-size: 0.85rem; color: #475569; font-weight: 700;">
+            Khởi tạo sơ đồ & danh sách học sinh:
+          </label>
+          <select id="classModalInitOption" class="excel-select" style="padding: 9px 12px; font-size: 0.88rem;">
+            <option value="empty" selected>📄 Tạo lớp trống (0 học sinh - độc lập, tự nạp danh sách sau)</option>
+            <option value="sample_seating">🌟 Kèm 45 HS mẫu & Tự sinh sơ đồ chuẩn (để thử nghiệm)</option>
+            <option value="clone">📋 Sao chép học sinh & sơ đồ từ lớp hiện tại</option>
+          </select>
+          <span style="font-size: 0.75rem; color: var(--text-muted);">Mỗi lớp học độc lập hoàn toàn về danh sách học sinh, lượt gọi và sơ đồ chỗ ngồi.</span>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button id="cancelClassModal" class="btn-secondary">Hủy</button>
+        <button id="saveClassModal" class="btn-primary">Lưu lớp học</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ==================== MODAL QUẢN LÝ TẤT CẢ CÁC LỚP HỌC & ĐA SƠ ĐỒ ==================== -->
+  <div id="classManagerModal" class="modal-overlay">
+    <div class="modal-card class-manager-modal-card">
+      <div class="modal-header">
+        <div class="modal-title">
+          <span>🏫 QUẢN LÝ LỚP HỌC & SƠ ĐỒ CHỖ NGỒI</span>
+        </div>
+        <button id="closeClassManagerModal" class="modal-close" onclick="closeClassManagerModal()">&times;</button>
+      </div>
+      <div class="modal-body class-manager-body">
+        <!-- Banner nạp / xóa các lớp mẫu có sẵn sơ đồ -->
+        <div class="class-quick-seed-banner">
+          <div class="seed-banner-text">
+            <strong>✨ Bộ 5 lớp mẫu có sẵn sơ đồ (9A4, 9A1, 8A2, 7A3, 6A5)</strong>
+            <span>Phục vụ chạy thử nghiệm. Thầy có thể nạp lại hoặc xóa toàn bộ lớp mẫu bất kỳ lúc nào.</span>
+          </div>
+          <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+            <button class="btn-seed-classes" onclick="seedSampleClassesAction()" title="Nạp 5 lớp học mẫu để trải nghiệm thử">
+              ⚡ Nạp 5 lớp mẫu
+            </button>
+            <button class="btn-manager-action btn-danger-class" onclick="deleteSampleClasses(true)" style="padding: 7px 12px; font-weight: 700;" title="Xóa toàn bộ các lớp mẫu demo">
+              🗑️ Xóa lớp mẫu
+            </button>
+          </div>
+        </div>
+
+        <!-- Khối Thêm Lớp Mới -->
+        <div class="add-class-section">
+          <div class="section-subheading">➕ THÊM LỚP HỌC MỚI</div>
+          <div class="add-class-form-grid">
+            <input type="text" id="managerNewClassName" class="excel-select" placeholder="Tên lớp (ví dụ: Lớp 9A2, Lớp 10A1...)">
+            <select id="managerNewClassOption" class="excel-select">
+              <option value="empty" selected>📄 Lớp trống (0 học sinh - độc lập)</option>
+              <option value="sample_seating">🌟 Kèm 45 HS mẫu & sơ đồ chuẩn</option>
+              <option value="clone">📋 Sao chép từ lớp đang chọn</option>
+            </select>
+            <button class="btn-primary" style="white-space: nowrap;" onclick="submitCreateNewClassFromManager()">➕ Tạo lớp</button>
+          </div>
+        </div>
+
+        <!-- Danh sách các lớp học hiện có -->
+        <div class="existing-classes-section">
+          <div class="section-subheading">📋 DANH SÁCH LỚP HỌC HIỆN TẠI (<span id="managerClassCount">0</span>)</div>
+          <div id="managerClassesList" class="manager-classes-list">
+            <!-- Render động bằng JavaScript -->
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer" style="justify-content: space-between;">
+        <span style="font-size: 0.8rem; color: var(--text-muted);">💡 Mẹo: Chuyển đổi lớp trên thanh trên cùng để tự động đổi sang sơ đồ lớp đó.</span>
+        <button class="btn-primary" onclick="closeClassManagerModal()">Đóng</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Vùng chứa Toast thông báo -->
+  <!-- ==================== MODAL KHÔI PHỤC DỮ LIỆU SAO LƯU (BACKUP RESTORE) ==================== -->
+  <div id="backupRestoreModal" class="modal-overlay">
+    <div class="modal-card backup-modal-card">
+      <div class="modal-header">
+        <div class="modal-title">
+          <span>📥 Khôi Phục Dữ Liệu Lớp Học</span>
+        </div>
+        <button id="closeBackupRestoreModal" class="modal-close">&times;</button>
+      </div>
+      <div class="modal-body">
+        <div class="backup-summary-box">
+          <div class="backup-summary-title">
+            📄 Tệp: <span id="backupFileName">backup.json</span>
+          </div>
+          <div id="backupSummaryDetail" class="backup-summary-detail">
+            Đang đọc thông tin tệp sao lưu...
+          </div>
+        </div>
+
+        <div class="backup-options-title">
+          Chọn phương thức khôi phục:
+        </div>
+
+        <div class="backup-choice-grid">
+          <button id="btnRestoreMerge" class="backup-choice-btn merge" title="Gộp thêm vào danh sách hiện tại">
+            <span class="choice-badge badge-green">Khuyên dùng</span>
+            <span class="choice-title">🤝 Hợp nhất (Merge)</span>
+            <span class="choice-desc">Giữ nguyên các lớp hiện có, chỉ nạp thêm các lớp mới từ file sao lưu.</span>
+          </button>
+
+          <button id="btnRestoreOverwrite" class="backup-choice-btn overwrite" title="Xóa hết lớp cũ và thay bằng file này">
+            <span class="choice-badge badge-red">Cảnh báo</span>
+            <span class="choice-title">⚠️ Ghi đè (Overwrite)</span>
+            <span class="choice-desc">Xóa toàn bộ lớp hiện tại và thay thế hoàn toàn bằng dữ liệu sao lưu mới.</span>
+          </button>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button id="cancelBackupRestoreModal" class="btn-secondary">Hủy bỏ</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ==================== MODAL VÒNG QUAY ĐIỂM THƯỞNG ==================== -->
+  <div id="bonusWheelModal" class="modal-overlay">
+    <div class="modal-card bonus-modal-card">
+      <div class="modal-header">
+        <div class="modal-title">
+          <span id="bonusStudentTitle">🎁 Vòng Quay Điểm Thưởng</span>
+        </div>
+        <button id="closeBonusWheelModal" class="modal-close">&times;</button>
+      </div>
+      <div class="modal-body">
+        <div class="bonus-wheel-wrapper">
+          <div class="bonus-pointer"></div>
+          <canvas id="bonusWheelCanvas" class="bonus-canvas" width="360" height="360"></canvas>
+        </div>
+        <div id="bonusWinnerCard" class="bonus-winner-card" style="display: none;"></div>
+      </div>
+      <div class="modal-footer" style="justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;">
+        <button id="btnEditRewards" class="btn-secondary" style="font-size: 0.85rem;" title="Thêm, sửa, đổi màu danh sách quà">
+          ⚙️ Tùy chỉnh quà
+        </button>
+        <button id="btnSpinBonus" class="btn-primary" style="background: linear-gradient(135deg, #f59e0b, #ec4899); border: none; padding: 12px 28px; font-size: 1.05rem; font-weight: 700;">
+          🎲 QUAY PHẦN THƯỞNG NGAY
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ==================== MODAL TÙY CHỈNH PHẦN THƯỞNG ==================== -->
+  <div id="rewardsEditorModal" class="modal-overlay">
+    <div class="modal-card rewards-editor-card">
+      <div class="modal-header">
+        <div class="modal-title">
+          <span>🎁 Tùy Chỉnh Danh Sách Phần Thưởng</span>
+        </div>
+        <button id="closeRewardsEditorModal" class="modal-close">&times;</button>
+      </div>
+      <div class="modal-body">
+        <p class="rewards-editor-desc">
+          Thầy cô có thể thêm các phần thưởng thiết thực trong lớp, sửa tên, đổi icon (Emoji) và chọn màu cho từng ô của Vòng Quay Điểm Thưởng:
+        </p>
+        <div id="rewardsEditorList" class="rewards-editor-list">
+          <!-- Render động bởi scripts/wheel.js -->
+        </div>
+        <div class="rewards-editor-actions">
+          <button id="btnAddRewardRow" class="btn-add-reward-row">
+            <span>➕ Thêm ô phần thưởng mới</span>
+          </button>
+          <button id="btnResetDefaultRewards" class="btn-secondary" style="font-size: 0.82rem;">
+            ↺ Khôi phục mặc định
+          </button>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button id="cancelRewardsEditorModal" class="btn-secondary">Hủy</button>
+        <button id="btnSaveRewardsEditor" class="btn-primary">💾 Lưu cấu hình quà</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ==================== MODAL QUẢN LÝ NGÂN HÀNG CÂU HỎI ==================== -->
+  <div id="quizManagerModal" class="modal-overlay">
+    <div class="modal-card quiz-manager-card">
+      <div class="modal-header">
+        <div class="modal-title">
+          <span>🏆 Quản Lý Ngân Hàng Câu Hỏi Đấu Trường</span>
+        </div>
+        <button id="closeQuizManagerModal" class="modal-close" onclick="closeQuizManagerModal()">&times;</button>
+      </div>
+      <div class="modal-body quiz-manager-body-2col">
+        <!-- CỘT TRÁI: BỘ LỆNH & CÔNG CỤ NHẬP XUẤT ĐỀ THI -->
+        <div class="quiz-manager-left-col">
+          <!-- Nhóm 1: Thao tác tạo & nạp mẫu -->
+          <div class="quiz-panel-card">
+            <div class="quiz-panel-header">
+              <span class="quiz-panel-title">⚡ Thao Tác Nhanh</span>
+            </div>
+            <div class="quiz-quick-actions-grid">
+              <button id="btnAddNewSingleQuiz" class="btn-secondary btn-quiz-action" onclick="addNewSingleQuestion()" title="Tạo một câu hỏi trắc nghiệm mới">
+                ➕ Thêm 1 câu
+              </button>
+              <button id="btnResetDefaultQuiz" class="btn-secondary btn-quiz-action" onclick="resetDefaultQuizQuestions()" title="Nạp lại bộ 10 câu hỏi mẫu chuẩn">
+                ↺ 10 câu mẫu
+              </button>
+              <button id="btnShuffleQuizzes" class="btn-secondary btn-quiz-action btn-quiz-shuffle-action" onclick="shuffleQuizQuestions()" title="Xáo trộn ngẫu nhiên thứ tự các câu hỏi">
+                🔀 Xáo trộn câu hỏi
+              </button>
+            </div>
+          </div>
+
+          <!-- Nhóm 2: Nhập & Xuất file Excel / JSON -->
+          <div class="quiz-panel-card">
+            <div class="quiz-panel-header">
+              <span class="quiz-panel-title">📁 Nhập & Xuất File Dữ Liệu</span>
+            </div>
+            <div class="quiz-io-grid">
+              <button id="btnImportQuizFile" class="btn-secondary btn-io-quiz" onclick="document.getElementById('quizFileInput').click()" title="Nạp câu hỏi từ file Excel (.xlsx) hoặc JSON">
+                📂 Nhập file (.xlsx, .json)
+              </button>
+              <button id="btnExportQuizExcel" class="btn-secondary btn-io-quiz" onclick="exportQuizToExcel()" title="Tải toàn bộ câu hỏi về máy dạng Excel .xlsx">
+                📊 Xuất Excel (.xlsx)
+              </button>
+              <button id="btnExportQuizJson" class="btn-secondary btn-io-quiz" onclick="exportQuizToJson()" title="Tải câu hỏi về máy dạng file JSON">
+                💾 Xuất JSON
+              </button>
+              <button id="btnDownloadQuizTemplate" class="btn-secondary btn-io-quiz" onclick="downloadQuizTemplateExcel()" title="Tải file Excel mẫu câu hỏi chuẩn">
+                📄 Tải mẫu Excel
+              </button>
+              <input type="file" id="quizFileInput" accept=".xlsx, .xls, .json" onchange="handleQuizFileInput(this.files[0]); this.value='';" style="display: none;">
+            </div>
+          </div>
+
+          <!-- Nhóm 3: Dán nhanh đề trắc nghiệm AI / Word / Text -->
+          <div class="quiz-panel-card quiz-bulk-panel">
+            <div class="quiz-panel-header">
+              <span class="quiz-panel-title">📝 Dán Nhanh Đề Trắc Nghiệm</span>
+            </div>
+            <p style="font-size: 0.76rem; color: #94a3b8; margin: 0 0 6px 0; line-height: 1.35;">
+              Tự động nhận diện câu hỏi, các đáp án A/B/C/D và dấu tích đáp án đúng (hỗ trợ cả đáp án trên 1 dòng hoặc dấu sao *).
+            </p>
+            <textarea id="quizBulkTextarea" class="quiz-bulk-textarea" placeholder="Dán đề thi từ Word / Text vào đây:&#10;&#10;Câu 1: Thủ đô của Việt Nam là gì?&#10;A. TP.HCM&#10;B. Đà Nẵng&#10;C. Hà Nội&#10;D. Huế&#10;Đáp án: C (hoặc đánh dấu *C. Hà Nội)&#10;&#10;Câu 2: ..."></textarea>
+            <button id="btnApplyBulkQuiz" class="btn-primary" onclick="applyBulkQuizImport()" style="margin-top: 10px; width: 100%; justify-content: center; padding: 10px 14px; font-weight: 700;">
+              📥 Nhập đề trắc nghiệm vào ngân hàng
+            </button>
+          </div>
+        </div>
+
+        <!-- CỘT PHẢI: TOÀN BỘ KHÔNG GIAN DÀNH CHO DANH SÁCH CÂU HỎI -->
+        <div class="quiz-manager-right-col">
+          <div class="quiz-right-header">
+            <div class="quiz-list-title-wrap">
+              <span class="quiz-list-main-title">📋 Danh Sách Câu Hỏi Trong Ngân Hàng:</span>
+              <span id="quizTotalCountBadge" class="choice-badge badge-green">0 câu</span>
+            </div>
+            <div class="quiz-search-filter-wrap">
+              <input type="text" id="quizSearchInput" class="quiz-search-box" placeholder="🔍 Tìm kiếm câu hỏi..." oninput="handleQuizSearch(this.value)">
+              <button id="btnClearAllQuizzes" class="btn-quiz-clear-all" onclick="clearAllQuizzes()" title="Xóa toàn bộ câu hỏi trong ngân hàng">
+                🗑️ Xóa hết
+              </button>
+            </div>
+          </div>
+
+          <!-- Thanh Lọc & Thống Kê Độ Khó (Nhận biết / Thông hiểu / Vận dụng cao) -->
+          <div id="quizDifficultyFilterBar" class="quiz-diff-filter-bar">
+            <!-- Render động bằng JS -->
+          </div>
+
+          <!-- Vùng cuộn danh sách câu hỏi rộng mở -->
+          <div id="quizQuestionsList" class="quiz-manager-list-expanded">
+            <!-- Render động các câu hỏi -->
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn-primary" onclick="closeQuizManagerModal()">Đóng</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ==================== MODAL CHỈNH SỬA / TẠO MỚI CÂU HỎI TRẮC NGHIỆM ==================== -->
+  <div id="quizEditQuestionModal" class="modal-overlay">
+    <div class="modal-card quiz-edit-modal-card">
+      <div class="modal-header">
+        <div class="modal-title">
+          <span id="quizEditModalTitle">✏️ Chỉnh Sửa Câu Hỏi Trắc Nghiệm</span>
+        </div>
+        <button id="closeQuizEditModal" class="modal-close" onclick="closeQuizEditModal()">&times;</button>
+      </div>
+      <div class="modal-body quiz-edit-modal-body">
+        <input type="hidden" id="quizEditQuestionIndex" value="-1">
+        
+        <!-- Hàng 1: Dạng câu hỏi, Mức độ nhận thức & Thời gian suy nghĩ -->
+        <div class="quiz-edit-row-flex">
+          <div class="quiz-edit-field-group" style="flex: 1.1;">
+            <label class="quiz-edit-label">📋 Dạng câu hỏi:</label>
+            <select id="quizEditQuestionType" class="quiz-edit-select" onchange="handleQuizTypeChange(this.value)">
+              <option value="mc4">📝 4 Lựa chọn (A, B, C, D)</option>
+              <option value="tf">⚖️ Đúng / Sai (2 Lựa chọn)</option>
+            </select>
+          </div>
+          <div class="quiz-edit-field-group" style="flex: 1;">
+            <label class="quiz-edit-label">🎯 Mức độ nhận thức:</label>
+            <select id="quizEditDifficulty" class="quiz-edit-select" onchange="handleQuizDifficultyChange(this.value)">
+              <option value="easy">🟢 Nhận biết (Dễ)</option>
+              <option value="medium">🟡 Thông hiểu (Trung bình)</option>
+              <option value="hard">🔴 Vận dụng cao (Khó)</option>
+            </select>
+          </div>
+          <div class="quiz-edit-field-group" style="flex: 1;">
+            <label class="quiz-edit-label">⏱️ Thời gian suy nghĩ:</label>
+            <select id="quizEditTimeLimit" class="quiz-edit-select">
+              <option value="auto">⚡ Tự động theo độ khó</option>
+              <option value="15">⏱️ 15 giây</option>
+              <option value="30">⏱️ 30 giây</option>
+              <option value="45">⏱️ 45 giây</option>
+              <option value="60">⏱️ 60 giây</option>
+              <option value="90">⏱️ 90 giây</option>
+            </select>
+          </div>
+        </div>
+
+        <!-- Hướng dẫn công thức KaTeX -->
+        <div class="quiz-katex-tip-box">
+          <span class="quiz-katex-tip-title">📐 Hỗ trợ công thức Toán/Lý/Hóa (KaTeX):</span>
+          <span class="quiz-katex-tip-text">Gõ <code>$...$</code> để tạo công thức đẹp (Ví dụ: <code>$x^2 + 1 = 0$</code>, <code>$H_2SO_4$</code>, <code>$\sqrt{16}$</code>, <code>$60^\circ$</code>).</span>
+        </div>
+
+        <!-- Hàng 2: Nội dung câu hỏi & Khung xem trước trực tiếp (Live Math Preview) -->
+        <div class="quiz-edit-field-group">
+          <label class="quiz-edit-label">📝 Nội dung câu hỏi: <span class="req">*</span></label>
+          <textarea id="quizEditQuestionText" class="quiz-edit-textarea" rows="3" placeholder="Nhập câu hỏi... (Có thể chèn công thức dạng $...$)" oninput="updateQuizLiveMathPreview()"></textarea>
+          
+          <!-- Khung xem trước công thức KaTeX trực tiếp khi đang gõ -->
+          <div id="quizLiveMathPreviewBox" class="quiz-live-preview-box" style="display: none;">
+            <div class="quiz-live-preview-title">👁️ Xem trước công thức hiển thị (Live Preview):</div>
+            <div id="quizLiveMathPreviewContent" class="quiz-live-preview-content"></div>
+          </div>
+        </div>
+
+        <!-- Hàng 3: Hình ảnh đính kèm (URL hoặc Tải lên) -->
+        <div class="quiz-edit-field-group quiz-image-attach-group">
+          <label class="quiz-edit-label">🖼️ Hình ảnh minh họa (Tùy chọn):</label>
+          <div class="quiz-image-inputs-wrap">
+            <input type="text" id="quizEditImageUrl" class="quiz-edit-input" placeholder="Dán liên kết ảnh trực tuyến (https://...)" oninput="handleQuizEditImageUrlChange(this.value)">
+            <button type="button" class="btn-secondary btn-upload-img" onclick="document.getElementById('quizEditImageFileInput').click()">
+              📁 Tải ảnh từ máy
+            </button>
+            <input type="file" id="quizEditImageFileInput" accept="image/*" style="display: none;" onchange="handleQuizEditImageUpload(this)">
+          </div>
+          <!-- Vùng xem trước ảnh đã đính kèm -->
+          <div id="quizEditImagePreviewWrap" class="quiz-image-preview-wrap" style="display: none;">
+            <img id="quizEditImagePreviewImg" src="" alt="Xem trước ảnh" class="quiz-image-preview-thumb">
+            <button type="button" class="btn-quiz-remove-img" onclick="clearQuizEditImage()" title="Gỡ bỏ ảnh này">✕ Gỡ ảnh</button>
+          </div>
+        </div>
+
+        <!-- Hàng 4: Các phương án trả lời & Chọn đáp án đúng -->
+        <div class="quiz-edit-field-group">
+          <label id="quizEditOptionsGroupTitle" class="quiz-edit-label">🔘 Phương án trả lời (Tích chọn tròn để đặt ĐÁP ÁN ĐÚNG): <span class="req">*</span></label>
+          <div class="quiz-edit-options-list">
+            <div class="quiz-edit-opt-item" id="quizEditOptItem0">
+              <label class="quiz-radio-label">
+                <input type="radio" name="quizCorrectOption" value="0" id="quizOptRadio0" checked>
+                <span class="quiz-opt-letter-tag" id="quizOptTag0">A</span>
+              </label>
+              <input type="text" id="quizEditOpt0" class="quiz-edit-input" placeholder="Phương án A" oninput="updateQuizLiveMathPreview()">
+            </div>
+
+            <div class="quiz-edit-opt-item" id="quizEditOptItem1">
+              <label class="quiz-radio-label">
+                <input type="radio" name="quizCorrectOption" value="1" id="quizOptRadio1">
+                <span class="quiz-opt-letter-tag" id="quizOptTag1">B</span>
+              </label>
+              <input type="text" id="quizEditOpt1" class="quiz-edit-input" placeholder="Phương án B" oninput="updateQuizLiveMathPreview()">
+            </div>
+
+            <div class="quiz-edit-opt-item" id="quizEditOptItem2">
+              <label class="quiz-radio-label">
+                <input type="radio" name="quizCorrectOption" value="2" id="quizOptRadio2">
+                <span class="quiz-opt-letter-tag" id="quizOptTag2">C</span>
+              </label>
+              <input type="text" id="quizEditOpt2" class="quiz-edit-input" placeholder="Phương án C" oninput="updateQuizLiveMathPreview()">
+            </div>
+
+            <div class="quiz-edit-opt-item" id="quizEditOptItem3">
+              <label class="quiz-radio-label">
+                <input type="radio" name="quizCorrectOption" value="3" id="quizOptRadio3">
+                <span class="quiz-opt-letter-tag" id="quizOptTag3">D</span>
+              </label>
+              <input type="text" id="quizEditOpt3" class="quiz-edit-input" placeholder="Phương án D" oninput="updateQuizLiveMathPreview()">
+            </div>
+          </div>
+        </div>
+
+        <!-- Hàng 5: Giải thích đáp án -->
+        <div class="quiz-edit-field-group">
+          <label class="quiz-edit-label">💡 Lời giải thích / Ghi chú sau khi lật đáp án:</label>
+          <input type="text" id="quizEditExplanation" class="quiz-edit-input" placeholder="Ví dụ: Theo định luật II Newton, F = m.a..." oninput="updateQuizLiveMathPreview()">
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn-secondary" onclick="closeQuizEditModal()">Hủy bỏ</button>
+        <button type="button" class="btn-primary" onclick="saveQuizEditQuestion()">💾 Lưu câu hỏi</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ==================== MODAL PHÓNG TO HÌNH ẢNH (LIGHTBOX) ==================== -->
+  <div id="quizImageLightboxModal" class="modal-overlay" onclick="closeQuizImageLightbox()">
+    <div class="modal-card quiz-lightbox-card" onclick="event.stopPropagation()">
+      <div class="modal-header">
+        <div class="modal-title"><span>🖼️ Ảnh Minh Họa Câu Hỏi</span></div>
+        <button class="modal-close" onclick="closeQuizImageLightbox()">&times;</button>
+      </div>
+      <div class="modal-body quiz-lightbox-body">
+        <img id="quizLightboxImg" src="" alt="Ảnh minh họa phóng to" class="quiz-lightbox-img">
+      </div>
+    </div>
+  </div>
+
+  <!-- ==================== MODAL CÀI ĐẶT ÂM THANH ==================== -->
+  <div id="audioSettingsModal" class="modal-overlay">
+    <div class="modal-card audio-settings-card">
+      <div class="modal-header">
+        <div class="modal-title">
+          <span>🎵 Tùy Biến Chủ Đề Âm Thanh</span>
+        </div>
+        <button id="closeAudioSettingsModal" class="modal-close">&times;</button>
+      </div>
+      <div class="modal-body">
+        <div class="audio-setting-row">
+          <label class="audio-setting-label">
+            <span>🎡 Nhạc khi vòng quay đang chạy:</span>
+          </label>
+          <div class="audio-setting-control-group">
+            <select id="audioThemeSelect" class="excel-select">
+              <option value="classic">Tích tắc nhịp nhàng (Classic Tick)</option>
+              <option value="suspense">Xổ số kịch tính & Hồi hộp (Suspense Beat)</option>
+              <option value="arcade">Điện tử 8-bit retro (Arcade Fun)</option>
+            </select>
+            <button id="btnTestAudioSpin" class="btn-test-sound" title="Nghe thử âm thanh quay">▶ Thử</button>
+          </div>
+        </div>
+
+        <div class="audio-setting-row">
+          <label class="audio-setting-label">
+            <span>🎉 Âm thanh khi dừng trúng kết quả:</span>
+          </label>
+          <div class="audio-setting-control-group">
+            <select id="celebrationThemeSelect" class="excel-select">
+              <option value="fanfare">Khúc nhạc khải hoàn rộn rã (Fanfare)</option>
+              <option value="applause">Tràng pháo tay đám đông nồng nhiệt (Applause)</option>
+              <option value="chime">Tiếng chuông vàng lấp lánh (Magic Chimes)</option>
+            </select>
+            <button id="btnTestAudioVictory" class="btn-test-sound" title="Nghe thử âm thanh chiến thắng">▶ Thử</button>
+          </div>
+        </div>
+
+        <!-- ==================== CÀI ĐẶT BÌNH LUẬN VIÊN GIỌNG NÓI AI ==================== -->
+        <div id="voiceSettingsSectionWrapper" class="voice-settings-wrapper">
+          <div class="voice-section-header-bar">
+            <div class="voice-section-title-wrap">
+              <span class="voice-icon">🎙️</span>
+              <div>
+                <div class="voice-section-title">Bình Luận Viên Giọng Nói AI (Web Speech)</div>
+                <div class="voice-section-subtitle">Tự động đọc to tên học sinh, vị trí và tổ trúng thưởng</div>
+              </div>
+            </div>
+            <label class="switch" title="Bật hoặc tắt giọng bình luận viên AI">
+              <input type="checkbox" id="voiceAnnouncerModalToggle" checked>
+              <span class="slider"></span>
+            </label>
+          </div>
+
+          <!-- Bộ Thiết Lập Nhanh Theo Lứa Tuổi Học Sinh (Age Presets) -->
+          <div class="voice-preset-container">
+            <span class="voice-preset-label">🐣 Phong cách theo lứa tuổi:</span>
+            <div class="voice-preset-buttons">
+              <button type="button" class="voice-preset-pill" onclick="window.voiceAnnouncer?.applyAgePreset('primary')" title="Giọng nhí nhảnh, cao độ vui tươi cho trẻ mầm non & tiểu học">
+                🐣 Tiểu học (Vui nhộn)
+              </button>
+              <button type="button" class="voice-preset-pill" onclick="window.voiceAnnouncer?.applyAgePreset('secondary')" title="Giọng hào hứng, tự nhiên, dứt khoát cho học sinh cấp 2">
+                🎒 THCS (Hào hứng)
+              </button>
+              <button type="button" class="voice-preset-pill" onclick="window.voiceAnnouncer?.applyAgePreset('highschool')" title="Giọng trầm ấm, chững chạc, truyền cảm cho học sinh cấp 3">
+                🎓 THPT (Trầm ấm)
+              </button>
+            </div>
+          </div>
+
+          <!-- Thanh Trượt 1: Tốc Độ Đọc (Speed / Rate) -->
+          <div class="voice-slider-card">
+            <div class="voice-slider-header">
+              <span class="voice-slider-name">⚡ Tốc độ đọc (Speed):</span>
+              <span id="voiceRateValueText" class="voice-val-chip">1.02x</span>
+            </div>
+            <input type="range" id="voiceRateSlider" class="voice-slider-range" min="0.5" max="1.8" step="0.05" value="1.02">
+            <div class="voice-slider-legend">
+              <span>0.5x (Chậm rãi)</span>
+              <span>1.0x (Tự nhiên)</span>
+              <span>1.8x (Cực nhanh)</span>
+            </div>
+          </div>
+
+          <!-- Thanh Trượt 2: Cao Độ Giọng (Pitch / Tone) -->
+          <div class="voice-slider-card">
+            <div class="voice-slider-header">
+              <span class="voice-slider-name">🎵 Cao độ giọng (Pitch):</span>
+              <span id="voicePitchValueText" class="voice-val-chip">1.06x (Tự nhiên)</span>
+            </div>
+            <input type="range" id="voicePitchSlider" class="voice-slider-range" min="0.5" max="1.8" step="0.05" value="1.06">
+            <div class="voice-slider-legend">
+              <span>0.5x (Trầm ấm / Dày)</span>
+              <span>1.0x (Bình thường)</span>
+              <span>1.8x (Hài hước / Nhí nhảnh)</span>
+            </div>
+          </div>
+
+          <!-- Danh sách Giọng đọc của Hệ thống & Nút Thử -->
+          <div class="voice-select-device-row">
+            <div class="voice-select-col">
+              <label class="voice-field-label">Giọng đọc máy phát hiện được:</label>
+              <select id="voiceDeviceSelect" class="excel-select voice-device-select">
+                <option value="">Đang tải danh sách giọng...</option>
+              </select>
+            </div>
+            <button type="button" id="btnTestVoiceSpeech" class="btn-test-sound btn-test-voice" onclick="window.voiceAnnouncer?.testVoice()" title="Đọc thử câu mẫu với tốc độ và cao độ hiện tại">
+              ▶️ Nghe Thử
+            </button>
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button id="closeAudioSettingsModalBtn" class="btn-primary" onclick="document.getElementById('audioSettingsModal').classList.remove('open')">Xong</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ==================== MODAL KẾT NỐI TRÌNH CHIẾU & ĐIỀU KHIỂN TỪ XA ==================== -->
+  <div id="remoteSyncModal" class="modal-overlay">
+    <div class="modal-card" style="max-width: 580px;">
+      <div class="modal-header">
+        <div class="modal-title">
+          <span>📱 Kết Nối Trình Chiếu 2 Màn Hình & Remote</span>
+        </div>
+        <button id="closeRemoteSyncModal" class="modal-close" onclick="closeRemoteModal()">&times;</button>
+      </div>
+      <div class="modal-body" style="display: flex; flex-direction: column; gap: 16px;">
+        <!-- Lựa chọn 1: Dùng điện thoại điều khiển qua Wi-Fi -->
+        <div style="background: rgba(30, 41, 59, 0.6); border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 12px; padding: 14px;">
+          <div style="font-weight: 700; color: #38bdf8; margin-bottom: 6px; font-size: 0.95rem; display: flex; align-items: center; gap: 8px;">
+            <span>📱 Cách 1: Cầm điện thoại điều khiển từ xa (Qua Wi-Fi)</span>
+          </div>
+          <p style="font-size: 0.82rem; color: #94a3b8; margin-bottom: 12px;">
+            Thầy/Cô mở camera điện thoại quét mã QR hoặc truy cập đường link bên dưới (cùng mạng Wi-Fi với máy tính):
+          </p>
+          <div style="display: flex; gap: 16px; align-items: center; flex-wrap: wrap;">
+            <div id="qrCodeContainer" style="background: #ffffff; padding: 8px; border-radius: 10px; width: 140px; height: 140px; display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 10px rgba(0,0,0,0.3);">
+              <!-- Render QR code bằng script -->
+            </div>
+            <div style="flex: 1; min-width: 200px; display: flex; flex-direction: column; gap: 8px;">
+              <div style="font-size: 0.82rem; color: #cbd5e1;">Đường dẫn mở trên điện thoại:</div>
+              <input type="text" id="remoteUrlInput" class="search-input" readonly value="Đang tải..." style="font-size: 0.85rem; padding: 8px 12px;">
+              <div style="display: flex; gap: 8px;">
+                <button class="btn-secondary" style="flex: 1; justify-content: center; font-size: 0.8rem;" onclick="copyRemoteUrl()">
+                  📋 Sao chép Link
+                </button>
+                <button class="btn-secondary" style="flex: 1; justify-content: center; font-size: 0.8rem;" onclick="window.open(document.getElementById('remoteUrlInput').value, '_blank')">
+                  🔗 Mở thử
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Lựa chọn 2: Trình chiếu 2 màn hình trên cùng 1 máy tính -->
+        <div style="background: rgba(30, 41, 59, 0.6); border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 12px; padding: 14px;">
+          <div style="font-weight: 700; color: #34d399; margin-bottom: 6px; font-size: 0.95rem; display: flex; align-items: center; gap: 8px;">
+            <span>📽️ Cách 2: Chiếu 2 màn hình trên cùng 1 máy tính (Laptop + TV/Máy chiếu)</span>
+          </div>
+          <p style="font-size: 0.82rem; color: #94a3b8; margin-bottom: 10px;">
+            Mở một cửa sổ riêng biệt đã được phóng to tối đa (Cinema View), sau đó kéo cửa sổ đó sang màn hình Máy Chiếu / TV. Hai màn hình sẽ tự động đồng bộ tức thì mà không cần mạng internet!
+          </p>
+          <button class="btn-primary" style="width: 100%; justify-content: center; padding: 10px;" onclick="window.open('index.html?projector=1', '_blank', 'width=1280,height=800')">
+            📽️ Mở Cửa Sổ Máy Chiếu Phóng To (index.html?projector=1)
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ==================== MODAL CÀI ĐẶT RIÊNG CHO TRÒ CHƠI SƠ ĐỒ LỚP HỌC ==================== -->
+  <div id="seatingSettingsModal" class="modal-overlay">
+    <div class="modal-card seating-settings-modal-card">
+      <div class="modal-header">
+        <div class="modal-title">
+          <span style="font-size: 1.3rem;">⚙️</span>
+          <div>
+            <div style="font-weight: 800; font-size: 1.1rem; color: #1e293b;">CÀI ĐẶT TRÒ CHƠI SƠ ĐỒ LỚP HỌC</div>
+            <div style="font-size: 0.78rem; color: #64748b; font-weight: 500;">Thiết lập kích thước dãy bàn, phương án xếp chỗ, phân chia 4 tổ và giọng đọc AI</div>
+          </div>
+        </div>
+        <button class="modal-close" onclick="SeatingChartModule.closeSettingsModal()">&times;</button>
+      </div>
+
+      <div class="modal-body seating-settings-body">
+        <!-- 1. CHỌN LỚP & PHƯƠNG ÁN SƠ ĐỒ -->
+        <div class="seating-settings-card">
+          <div class="seating-settings-card-title">
+            <span>📐</span>
+            <span>1. Chọn Lớp Học & Phương Án Sơ Đồ</span>
+          </div>
+          <div class="seating-settings-grid-2">
+            <div class="seating-settings-field">
+              <label class="seating-field-label">🏫 Lớp học áp dụng:</label>
+              <select id="seatingClassSelector" class="excel-select" onchange="switchClass(this.value)" style="width: 100%;" title="Chọn lớp học"></select>
+            </div>
+            <div class="seating-settings-field">
+              <label class="seating-field-label">📐 Phương án sơ đồ (Đổi chỗ):</label>
+              <div style="display: flex; gap: 6px;">
+                <select id="seatingPresetSelector" class="excel-select" onchange="SeatingChartModule.switchPreset(this.value)" style="flex: 1;" title="Chọn phương án sơ đồ"></select>
+                <button class="btn-seating-mini" onclick="SeatingChartModule.promptNewPreset()" title="Thêm phương án sơ đồ mới cho lớp này">➕ PA</button>
+                <button class="btn-seating-mini" onclick="SeatingChartModule.deleteCurrentPreset()" title="Xóa phương án này" style="color: #ef4444;">🗑️</button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 2. KÍCH THƯỚC DÃY BÀN & KIỂU BÀN -->
+        <div class="seating-settings-card">
+          <div class="seating-settings-card-title">
+            <span>🏛️</span>
+            <span>2. Kích Thước Dãy Bàn & Kiểu Bàn Học</span>
+          </div>
+          <div class="seating-settings-grid-3">
+            <div class="seating-settings-field">
+              <label class="seating-field-label">🏛️ Số Dãy Bàn:</label>
+              <select id="seatingSelectAisles" class="excel-select" onchange="SeatingChartModule.updateDimensions()">
+                <option value="2">2 Dãy bàn</option>
+                <option value="3">3 Dãy bàn</option>
+                <option value="4" selected>4 Dãy bàn</option>
+                <option value="5">5 Dãy bàn</option>
+              </select>
+            </div>
+            <div class="seating-settings-field">
+              <label class="seating-field-label">📏 Số Hàng Bàn:</label>
+              <select id="seatingSelectRows" class="excel-select" onchange="SeatingChartModule.updateDimensions()">
+                <option value="3">3 Hàng</option>
+                <option value="4">4 Hàng</option>
+                <option value="5" selected>5 Hàng</option>
+                <option value="6">6 Hàng</option>
+                <option value="7">7 Hàng</option>
+              </select>
+            </div>
+            <div class="seating-settings-field">
+              <label class="seating-field-label">🪑 Kiểu Bàn Học:</label>
+              <select id="seatingSelectType" class="excel-select" onchange="SeatingChartModule.updateDimensions()">
+                <option value="double" selected>Bàn đôi (2 chỗ)</option>
+                <option value="single">Bàn đơn (1 chỗ)</option>
+                <option value="triple">Bàn 3 (3 chỗ)</option>
+              </select>
+            </div>
+          </div>
+
+          <!-- TÙY CHỌN CỠ CHỮ SƠ ĐỒ (NHỎ / VỪA / LỚN) -->
+          <div class="seating-settings-field" style="margin-top: 14px; padding-top: 12px; border-top: 1px dashed #e2e8f0;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
+              <label class="seating-field-label" style="margin-bottom: 0;">🔤 Kích thước chữ tên học sinh:</label>
+              <span id="seatingFontSizeIndicator" class="seating-font-badge">Vừa (Chuẩn)</span>
+            </div>
+            <div class="seating-font-size-btn-group">
+              <button type="button" class="btn-seating-font-size" data-size="small" onclick="SeatingChartModule.setFontSize('small')" title="Cỡ chữ Nhỏ gọn gàng, phù hợp nhiều bàn hoặc màn hình nhỏ">
+                <span class="font-size-preview-char">A-</span>
+                <span class="font-size-label">Nhỏ gọn</span>
+              </button>
+              <button type="button" class="btn-seating-font-size active" data-size="medium" onclick="SeatingChartModule.setFontSize('medium')" title="Cỡ chữ Vừa tiêu chuẩn, sắc nét">
+                <span class="font-size-preview-char">A</span>
+                <span class="font-size-label">Vừa (Chuẩn)</span>
+              </button>
+              <button type="button" class="btn-seating-font-size" data-size="large" onclick="SeatingChartModule.setFontSize('large')" title="Cỡ chữ Lớn nổi bật, thích hợp trình chiếu máy chiếu/TV">
+                <span class="font-size-preview-char">A+</span>
+                <span class="font-size-label">Lớn (Chiếu xa)</span>
+              </button>
+            </div>
+          </div>
+
+          <!-- KIỂU HIỂN THỊ TÊN HỌC SINH (NGẮN GỌN / ĐẦY ĐỦ) -->
+          <div class="seating-settings-field" style="margin-top: 14px; padding-top: 12px; border-top: 1px dashed #e2e8f0;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
+              <label class="seating-field-label" style="margin-bottom: 0;">🏷️ Kiểu hiển thị tên học sinh:</label>
+              <span id="seatingNameModeIndicator" class="seating-name-mode-badge">Tên ngắn gọn (2 chữ cuối)</span>
+            </div>
+            <div class="seating-name-mode-btn-group">
+              <button type="button" id="btnNameModeShort" class="btn-seating-name-mode active" data-mode="short" onclick="SeatingChartModule.setNameDisplayMode('short')" title="Chỉ hiển thị chữ lót cuối và tên học sinh (ví dụ: Khánh An), chữ to rõ rệt">
+                <span class="name-mode-title">🏷️ Tên ngắn gọn (Chữ siêu to)</span>
+                <span class="name-mode-sub">Chỉ hiện 2 chữ cuối: Chữ lót cuối + Tên (ví dụ: Khánh An)</span>
+              </button>
+              <button type="button" id="btnNameModeFull" class="btn-seating-name-mode" data-mode="full" onclick="SeatingChartModule.setNameDisplayMode('full')" title="Hiển thị toàn bộ Họ và Tên học sinh (ví dụ: Nguyễn Phạm Khánh An)">
+                <span class="name-mode-title">📝 Họ và Tên đầy đủ</span>
+                <span class="name-mode-sub">Hiển thị đầy đủ cả họ và tên (ví dụ: Nguyễn Phạm Khánh An)</span>
+              </button>
+            </div>
+            <div style="font-size: 0.78rem; color: #64748b; margin-top: 6px; line-height: 1.4;">
+              💡 Ở chế độ <b>Tên ngắn gọn</b>, ô ghế hiện chữ lót cuối và tên (chữ siêu to). Nếu có bạn trùng tên (ví dụ: <i>Nguyễn Minh Huy</i> và <i>Trần Minh Huy</i>), hệ thống sẽ <b>tự động thêm chữ cái họ: N. Minh Huy và T. Minh Huy</b> để tránh nhầm lẫn!
+            </div>
+          </div>
+        </div>
+
+        <!-- 3. THAO TÁC XẾP CHỖ HỌC SINH -->
+        <div class="seating-settings-card">
+          <div class="seating-settings-card-title">
+            <span>⚡</span>
+            <span>3. Thao Tác Xếp Chỗ Nhanh</span>
+          </div>
+          <div class="seating-settings-btn-row">
+            <button id="btnAutoAssignSeats" class="seating-btn-action seating-btn-primary" onclick="SeatingChartModule.autoAssign()" title="Xếp toàn bộ học sinh trong lớp vào ghế trống">
+              ⚡ Tự động xếp chỗ
+            </button>
+            <button id="btnShuffleSeats" class="seating-btn-action" onclick="SeatingChartModule.shuffle()" title="Xáo trộn ngẫu nhiên vị trí học sinh đang ngồi">
+              🔀 Đổi chỗ ngẫu nhiên
+            </button>
+            <button id="btnClearSeats" class="seating-btn-action seating-btn-danger" onclick="SeatingChartModule.clearAll()" title="Xóa toàn bộ học sinh khỏi sơ đồ">
+              🗑️ Dọn sạch sơ đồ
+            </button>
+          </div>
+        </div>
+
+        <!-- 4. THI ĐUA & PHÂN CHIA 4 TỔ -->
+        <div class="seating-settings-card">
+          <div class="seating-settings-card-title">
+            <span>🚩</span>
+            <span>4. Phân Chia 4 Tổ & Thi Đua Biệt Đội</span>
+          </div>
+          <div class="seating-settings-btn-row" style="margin-bottom: 10px;">
+            <button id="btnAssignGroupsAisle" class="seating-btn-action" style="background: rgba(56, 189, 248, 0.15); border-color: rgba(56, 189, 248, 0.4); color: #0284c7; font-weight: 700;" onclick="SeatingChartModule.assignGroupsByAisle()" title="Tự động phân chia 4 Tổ theo từng Dãy bàn">
+              🎨 4 Tổ theo Dãy bàn
+            </button>
+            <button id="btnOpenGroupSettings" class="seating-btn-action" style="background: rgba(168, 85, 247, 0.15); border-color: rgba(168, 85, 247, 0.4); color: #9333ea; font-weight: 700;" onclick="SeatingChartModule.openGroupSettings()" title="Tùy biến tên gọi và linh vật đại diện cho 4 Tổ">
+              🦁 Đổi Tên & Linh Vật
+            </button>
+            <button id="btnClearGroups" class="seating-btn-action" onclick="SeatingChartModule.clearGroups()" title="Xóa bỏ màu Tổ trên sơ đồ">
+              ❌ Bỏ màu Tổ
+            </button>
+          </div>
+          <!-- Vùng Chú Giải & Thống Kê 4 Tổ nằm gọn gàng bên trong modal cài đặt -->
+          <div id="seatingLegendBar" class="seating-legend-bar-inside"></div>
+        </div>
+
+        <!-- 5. ÂM THANH & GIỌNG ĐỌC BÌNH LUẬN AI -->
+        <div class="seating-settings-card">
+          <div class="seating-settings-card-title">
+            <span>🗣️</span>
+            <span>5. Giọng Đọc Bình Luận Viên AI (Text-to-Speech)</span>
+          </div>
+          <div class="seating-settings-btn-row">
+            <button id="btnVoiceAnnouncerToggle" class="seating-btn-action voice-toggle-btn active" onclick="SeatingChartModule.toggleVoice()" title="Bật/Tắt bình luận viên giọng đọc AI gọi tên">
+              <span>🗣️ Giọng AI: BẬT</span>
+            </button>
+            <button id="btnVoiceTestInSeating" class="seating-btn-action" style="background: rgba(34, 197, 94, 0.12); border-color: rgba(34, 197, 94, 0.35); color: #15803d; font-weight: 700;" onclick="SeatingChartModule.testVoice()" title="Phát âm thanh đọc thử câu thoại gọi tên mẫu">
+              🔊 Nghe thử giọng đọc
+            </button>
+            <button id="btnOpenVoiceSettings" class="seating-btn-action" onclick="openAudioSettingsModal('voice')" title="Tùy chỉnh tốc độ, cao độ giọng đọc AI">
+              ⚙️ Chỉnh giọng đọc AI
+            </button>
+          </div>
+          <div style="font-size: 0.78rem; color: #64748b; margin-top: 8px; line-height: 1.4;">
+            💡 Khi vòng quay dừng lại tại bàn nào, loa máy tính sẽ tự động đọc to: <b>"Mời bạn [Họ và Tên]"</b> để cả lớp cùng chú ý và hào hứng.
+          </div>
+        </div>
+      </div>
+
+      <div class="modal-footer" style="justify-content: space-between;">
+        <span style="font-size: 0.8rem; color: #64748b;">Mọi thiết lập sẽ được lưu và áp dụng ngay lập tức vào sơ đồ.</span>
+        <button class="btn-primary" onclick="SeatingChartModule.closeSettingsModal()">✓ Hoàn tất & Đóng</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ==================== MODAL TÙY BIẾN TÊN GỌI & LINH VẬT 4 TỔ ==================== -->
+  <div id="groupSettingsModal" class="modal-overlay">
+    <div class="modal-card group-settings-modal-card">
+      <div class="modal-header">
+        <div class="modal-title">
+          <span>🦁 Tùy Biến Tên Gọi & Linh Vật 4 Tổ</span>
+        </div>
+        <button class="modal-close" onclick="SeatingChartModule.closeGroupSettings()">&times;</button>
+      </div>
+      <div class="modal-body group-settings-body">
+        <!-- Thanh bộ mẫu có sẵn (Presets) -->
+        <div class="group-presets-bar">
+          <span class="preset-bar-label">⚡ Nạp nhanh bộ mẫu:</span>
+          <div class="preset-chips-wrap">
+            <button type="button" class="preset-chip" onclick="SeatingChartModule.applyPreset('beasts')">🦅 Muông Thú</button>
+            <button type="button" class="preset-chip" onclick="SeatingChartModule.applyPreset('mythic')">🐉 Tứ Linh</button>
+            <button type="button" class="preset-chip" onclick="SeatingChartModule.applyPreset('heroes')">⚡ Siêu Anh Hùng</button>
+            <button type="button" class="preset-chip" onclick="SeatingChartModule.applyPreset('seasons')">🌸 Bốn Mùa</button>
+            <button type="button" class="preset-chip" onclick="SeatingChartModule.applyPreset('classic')">1️⃣ Mặc Định</button>
+          </div>
+        </div>
+
+        <!-- Lưới cài đặt 4 Tổ -->
+        <div class="group-settings-grid">
+          <!-- TỔ 1 -->
+          <div class="group-setting-card group-card-1">
+            <div class="group-setting-header">
+              <span class="group-color-dot" style="background: #38bdf8;"></span>
+              <span class="group-order-label">Tổ 1 (Xanh dương)</span>
+            </div>
+            <div class="group-setting-row">
+              <div class="group-mascot-picker-wrap">
+                <div id="groupSettingMascotBadge_1" class="group-mascot-preview" title="Biểu trưng linh vật">🦅</div>
+                <input type="text" id="groupSettingMascot_1" class="group-mascot-input" maxlength="4" value="🦅" title="Nhập hoặc chọn emoji">
+              </div>
+              <div class="group-name-input-wrap">
+                <label class="group-input-label">Tên Biệt Đội:</label>
+                <input type="text" id="groupSettingName_1" class="group-name-input" placeholder="Ví dụ: Đại Bàng" maxlength="25">
+              </div>
+            </div>
+            <div class="quick-emojis-row">
+              <button type="button" class="emoji-pick-btn" onclick="SeatingChartModule.selectMascot(1, '🦅')">🦅</button>
+              <button type="button" class="emoji-pick-btn" onclick="SeatingChartModule.selectMascot(1, '⚡')">⚡</button>
+              <button type="button" class="emoji-pick-btn" onclick="SeatingChartModule.selectMascot(1, '🚀')">🚀</button>
+              <button type="button" class="emoji-pick-btn" onclick="SeatingChartModule.selectMascot(1, '🐬')">🐬</button>
+              <button type="button" class="emoji-pick-btn" onclick="SeatingChartModule.selectMascot(1, '👑')">👑</button>
+              <button type="button" class="emoji-pick-btn" onclick="SeatingChartModule.selectMascot(1, '💎')">💎</button>
+            </div>
+          </div>
+
+          <!-- TỔ 2 -->
+          <div class="group-setting-card group-card-2">
+            <div class="group-setting-header">
+              <span class="group-color-dot" style="background: #34d399;"></span>
+              <span class="group-order-label">Tổ 2 (Xanh lục)</span>
+            </div>
+            <div class="group-setting-row">
+              <div class="group-mascot-picker-wrap">
+                <div id="groupSettingMascotBadge_2" class="group-mascot-preview" title="Biểu trưng linh vật">🦁</div>
+                <input type="text" id="groupSettingMascot_2" class="group-mascot-input" maxlength="4" value="🦁" title="Nhập hoặc chọn emoji">
+              </div>
+              <div class="group-name-input-wrap">
+                <label class="group-input-label">Tên Biệt Đội:</label>
+                <input type="text" id="groupSettingName_2" class="group-name-input" placeholder="Ví dụ: Sư Tử" maxlength="25">
+              </div>
+            </div>
+            <div class="quick-emojis-row">
+              <button type="button" class="emoji-pick-btn" onclick="SeatingChartModule.selectMascot(2, '🦁')">🦁</button>
+              <button type="button" class="emoji-pick-btn" onclick="SeatingChartModule.selectMascot(2, '🐅')">🐅</button>
+              <button type="button" class="emoji-pick-btn" onclick="SeatingChartModule.selectMascot(2, '🦖')">🦖</button>
+              <button type="button" class="emoji-pick-btn" onclick="SeatingChartModule.selectMascot(2, '🍀')">🍀</button>
+              <button type="button" class="emoji-pick-btn" onclick="SeatingChartModule.selectMascot(2, '🛡️')">🛡️</button>
+              <button type="button" class="emoji-pick-btn" onclick="SeatingChartModule.selectMascot(2, '🌲')">🌲</button>
+            </div>
+          </div>
+
+          <!-- TỔ 3 -->
+          <div class="group-setting-card group-card-3">
+            <div class="group-setting-header">
+              <span class="group-color-dot" style="background: #fbbf24;"></span>
+              <span class="group-order-label">Tổ 3 (Vàng cam)</span>
+            </div>
+            <div class="group-setting-row">
+              <div class="group-mascot-picker-wrap">
+                <div id="groupSettingMascotBadge_3" class="group-mascot-preview" title="Biểu trưng linh vật">🦈</div>
+                <input type="text" id="groupSettingMascot_3" class="group-mascot-input" maxlength="4" value="🦈" title="Nhập hoặc chọn emoji">
+              </div>
+              <div class="group-name-input-wrap">
+                <label class="group-input-label">Tên Biệt Đội:</label>
+                <input type="text" id="groupSettingName_3" class="group-name-input" placeholder="Ví dụ: Cá Mập" maxlength="25">
+              </div>
+            </div>
+            <div class="quick-emojis-row">
+              <button type="button" class="emoji-pick-btn" onclick="SeatingChartModule.selectMascot(3, '🦈')">🦈</button>
+              <button type="button" class="emoji-pick-btn" onclick="SeatingChartModule.selectMascot(3, '🔥')">🔥</button>
+              <button type="button" class="emoji-pick-btn" onclick="SeatingChartModule.selectMascot(3, '☀️')">☀️</button>
+              <button type="button" class="emoji-pick-btn" onclick="SeatingChartModule.selectMascot(3, '🐆')">🐆</button>
+              <button type="button" class="emoji-pick-btn" onclick="SeatingChartModule.selectMascot(3, '🦊')">🦊</button>
+              <button type="button" class="emoji-pick-btn" onclick="SeatingChartModule.selectMascot(3, '🏆')">🏆</button>
+            </div>
+          </div>
+
+          <!-- TỔ 4 -->
+          <div class="group-setting-card group-card-4">
+            <div class="group-setting-header">
+              <span class="group-color-dot" style="background: #f472b6;"></span>
+              <span class="group-order-label">Tổ 4 (Hồng tím)</span>
+            </div>
+            <div class="group-setting-row">
+              <div class="group-mascot-picker-wrap">
+                <div id="groupSettingMascotBadge_4" class="group-mascot-preview" title="Biểu trưng linh vật">🐉</div>
+                <input type="text" id="groupSettingMascot_4" class="group-mascot-input" maxlength="4" value="🐉" title="Nhập hoặc chọn emoji">
+              </div>
+              <div class="group-name-input-wrap">
+                <label class="group-input-label">Tên Biệt Đội:</label>
+                <input type="text" id="groupSettingName_4" class="group-name-input" placeholder="Ví dụ: Rồng Vàng" maxlength="25">
+              </div>
+            </div>
+            <div class="quick-emojis-row">
+              <button type="button" class="emoji-pick-btn" onclick="SeatingChartModule.selectMascot(4, '🐉')">🐉</button>
+              <button type="button" class="emoji-pick-btn" onclick="SeatingChartModule.selectMascot(4, '🦄')">🦄</button>
+              <button type="button" class="emoji-pick-btn" onclick="SeatingChartModule.selectMascot(4, '🌟')">🌟</button>
+              <button type="button" class="emoji-pick-btn" onclick="SeatingChartModule.selectMascot(4, '🌸')">🌸</button>
+              <button type="button" class="emoji-pick-btn" onclick="SeatingChartModule.selectMascot(4, '🦋')">🦋</button>
+              <button type="button" class="emoji-pick-btn" onclick="SeatingChartModule.selectMascot(4, '🔮')">🔮</button>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer" style="justify-content: flex-end; gap: 10px;">
+        <button type="button" class="btn-secondary" onclick="SeatingChartModule.closeGroupSettings()">Hủy</button>
+        <button type="button" class="btn-primary" onclick="SeatingChartModule.saveGroupSettings()" style="padding: 10px 24px;">
+          💾 Lưu Thay Đổi
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Vùng chứa Toast thông báo -->
+  <div id="toastContainer" class="toast-container"></div>
+
+  <!-- ==========================================================================
+       CÁC MÔ-ĐUN LOGIC JAVASCRIPT (MODULAR SCRIPTS)
+       ========================================================================== -->
+  <script src="scripts/audio.js?v=3.1"></script>
+  <script src="scripts/wheel.js?v=3.1"></script>
+  <script src="scripts/students.js?v=3.1"></script>
+  <script src="scripts/quiz.js?v=3.1"></script>
+  <script src="scripts/seatingChart.js?v=3.1"></script>
+  <script src="scripts/remoteSync.js?v=3.1"></script>
+  <script src="scripts/app.js?v=3.1"></script>
+  <script src="scripts/landing.js?v=1.0"></script>
+</body>
+</html>

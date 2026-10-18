@@ -1,0 +1,19 @@
+{
+  "name": "tro-choi-goi-ten-ngau-nhien",
+  "version": "1.0.0",
+  "description": "Ứng dụng trò chơi gọi tên ngẫu nhiên kết hợp điều khiển từ xa qua Wi-Fi dành cho lớp học và giáo viên",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "check": "node --check server.js && node --check scripts/app.js"
+  },
+  "keywords": [
+    "wheel-of-fortune",
+    "classroom",
+    "random-picker",
+    "teacher-tools",
+    "vietnam-education"
+  ],
+  "author": "Thầy Cô & Antigravity Agent",
+  "license": "MIT"
+}

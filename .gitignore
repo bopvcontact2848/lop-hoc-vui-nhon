@@ -1,0 +1,33 @@
+# Thư mục phụ thuộc Node.js
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Python & Cache biên dịch
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Môi trường cấu hình & Khóa bí mật
+.env
+.env.*
+*.local
+
+# File nhật ký hệ thống (Logs)
+logs/
+*.log
+
+# Hệ điều hành & Phần mềm soạn thảo
+.DS_Store
+Thumbs.db
+desktop.ini
+.vscode/
+.idea/
+*.sublime-project
+*.sublime-workspace
+
+# Thư mục cấu hình và tác vụ của AI Agent (Không đưa lên GitHub)
+.agent/
+.Agent/
+.system_generated/
