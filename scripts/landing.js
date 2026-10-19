@@ -510,6 +510,7 @@
   }
 
   window.syncSoundBtnState = syncSoundBtnState;
+  window.updateLiveMetrics = updateLiveMetrics;
 
   // Tự động khởi tạo sau khi DOM sẵn sàng
   if (document.readyState === 'loading') {

@@ -470,6 +470,10 @@ function useLifelineCallFriend() {
 function switchGameMode(mode) {
   if (window.state) {
     window.state.gameMode = mode;
+    if (mode === 'quiz') window.state.currentGameId = 'quiz';
+    else if (mode === 'seating') window.state.currentGameId = 'seating';
+    else if (mode === 'minigames') window.state.currentGameId = 'bonus';
+    else if (mode === 'classic') window.state.currentGameId = window.state.viewMode === 'wheel' ? 'wheel' : 'slot';
     if (typeof saveStateToStorage === 'function') saveStateToStorage();
   }
 

@@ -267,36 +267,18 @@ function loadStateFromStorage() {
         state.audioTheme = data.audioTheme || 'classic';
         state.celebrationTheme = data.celebrationTheme || 'fanfare';
 
-        // Tự động dọn dẹp và loại bỏ toàn bộ các lớp mẫu demo nếu còn tồn tại trong LocalStorage
-        const sampleIds = new Set(SAMPLE_CLASSES_DEFINITIONS.map(d => d.id));
-        const sampleNames = new Set(SAMPLE_CLASSES_DEFINITIONS.map(d => d.name));
-        const hasSample = state.classes.some(c => sampleIds.has(c.id) || (typeof c.id === 'string' && c.id.startsWith('cls_sample_')) || sampleNames.has(c.name));
+        // TỰ ĐỘNG KHÔI PHỤC: Nếu phát hiện dữ liệu chỉ có đúng 1 lớp "Lớp 1" rỗng với 0 học sinh
+        // (đây là hậu quả của bug tự động dọn dẹp ở phiên bản cũ), tự động nạp lại 5 lớp mẫu có sẵn danh sách học sinh
+        const isCorruptedEmpty = state.classes.length === 1 &&
+          (!state.classes[0].students || state.classes[0].students.length === 0) &&
+          (state.classes[0].name === 'Lớp 1' || state.classes[0].name === 'Lớp mới 1');
 
-        if (hasSample) {
-          state.classes.forEach(c => {
-            if (sampleIds.has(c.id) || (typeof c.id === 'string' && c.id.startsWith('cls_sample_')) || sampleNames.has(c.name)) {
-              try { localStorage.removeItem(`vong_quay_seating_chart_v1_${c.id}`); } catch (e) {}
-            }
-          });
-          state.classes = state.classes.filter(c => !(sampleIds.has(c.id) || (typeof c.id === 'string' && c.id.startsWith('cls_sample_')) || sampleNames.has(c.name)));
-
-          if (state.classes.length === 0) {
-            const newId = 'cls_' + Date.now();
-            state.classes.push({
-              id: newId,
-              name: 'Lớp 1',
-              students: [],
-              called: [],
-              callCounts: {},
-              history: []
-            });
-            state.currentClassId = newId;
-            generateSeatingLayoutForClass(newId, [], { aisles: 4, rows: 5, deskType: 'double' });
-          } else if (!state.classes.some(c => c.id === state.currentClassId)) {
-            state.currentClassId = state.classes[0].id;
-          }
-          saveStateToStorage();
+        if (isCorruptedEmpty) {
+          console.warn('Phát hiện dữ liệu lớp rỗng do bug cũ, tự động nạp lại 5 lớp học mẫu hoàn chỉnh...');
+          seedSampleClassesAction(false);
+          return true;
         }
+
         return true;
       }
     }
@@ -506,9 +488,19 @@ function seedSampleClassesAction(notify = true) {
     }
   });
 
+  // Loại bỏ lớp trống 'Lớp 1' (0 học sinh) nếu có do lỗi tạo tự động trước đó
+  state.classes = state.classes.filter(c => !(c.name === 'Lớp 1' && (!c.students || c.students.length === 0)));
+
+  // Nếu lớp đang chọn không có học sinh hoặc rỗng, chuyển sang Lớp 9A4
+  const curr = getCurrentClass();
+  if (!curr || !curr.students || curr.students.length === 0) {
+    state.currentClassId = 'cls_sample_9a4';
+  }
+
   saveStateToStorage();
   if (typeof updateUI === 'function') updateUI();
   if (typeof renderClassManagerModalList === 'function') renderClassManagerModalList();
+  if (typeof window.updateLiveMetrics === 'function') window.updateLiveMetrics();
 
   if (notify && typeof showToast === 'function') {
     showToast(`✅ Đã nạp thành công 5 lớp học mẫu kèm sơ đồ chỗ ngồi riêng biệt!`, 'success');
@@ -649,6 +641,7 @@ function renderClassManagerModalList() {
 function selectClassFromManager(classId) {
   switchClass(classId);
   renderClassManagerModalList();
+  if (typeof window.updateLiveMetrics === 'function') window.updateLiveMetrics();
 }
 
 function cloneClassFromManager(classId) {

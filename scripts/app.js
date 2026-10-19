@@ -248,6 +248,11 @@ function updateUI() {
   if (window.RemoteSync && typeof window.RemoteSync.broadcastFullState === 'function') {
     window.RemoteSync.broadcastFullState();
   }
+
+  // Đồng bộ nhãn lớp và số lượng học sinh lên Navbar Trang chủ
+  if (typeof window.updateLiveMetrics === 'function') {
+    window.updateLiveMetrics();
+  }
 }
 
 // Vẽ danh sách học sinh trong Sidebar (hỗ trợ tab Chờ gọi, Đã gọi và Lịch sử gọi)
@@ -432,6 +437,7 @@ function switchViewMode(mode) {
   const stageIcon = document.getElementById('classicGameStageIcon');
   const stageTitle = document.getElementById('classicGameStageTitle');
   const slotModeBar = document.getElementById('slotModeBar');
+  const btnWheelSettings = document.getElementById('btnWheelStageSettings');
 
   if (mode === 'slot') {
     if (DOM.displayScreen) DOM.displayScreen.classList.add('active');
@@ -440,6 +446,7 @@ function switchViewMode(mode) {
     if (stageTitle) stageTitle.textContent = 'Thẻ Lướt Hồi Hộp';
     if (stageTag) stageTag.className = 'current-game-stage-tag theme-slot';
     if (slotModeBar) slotModeBar.style.display = 'flex';
+    if (btnWheelSettings) btnWheelSettings.style.display = 'none';
     renderDefaultStage();
   } else {
     if (DOM.displayScreen) DOM.displayScreen.classList.remove('active');
@@ -449,6 +456,7 @@ function switchViewMode(mode) {
     if (stageTitle) stageTitle.textContent = 'Vòng Quay May Mắn';
     if (stageTag) stageTag.className = 'current-game-stage-tag';
     if (slotModeBar) slotModeBar.style.display = 'none';
+    if (btnWheelSettings) btnWheelSettings.style.display = 'inline-flex';
     if (typeof drawLuckyWheel === 'function') drawLuckyWheel();
   }
   saveStateToStorage();
@@ -1526,20 +1534,24 @@ function init() {
   const hasData = loadStateFromStorage();
 
   if (!hasData || state.classes.length === 0) {
-    const defaultId = 'cls_' + Date.now();
-    state.classes = [
-      {
-        id: defaultId,
-        name: 'Lớp 1',
-        students: [],
-        called: [],
-        callCounts: {},
-        history: []
+    if (typeof seedSampleClassesAction === 'function') {
+      seedSampleClassesAction(false);
+    } else {
+      const defaultId = 'cls_sample_9a4';
+      state.classes = [
+        {
+          id: defaultId,
+          name: 'Lớp 9A4',
+          students: (typeof SAMPLE_STUDENTS !== 'undefined') ? [...SAMPLE_STUDENTS] : [],
+          called: [],
+          callCounts: {},
+          history: []
+        }
+      ];
+      state.currentClassId = defaultId;
+      if (typeof generateSeatingLayoutForClass === 'function') {
+        generateSeatingLayoutForClass(defaultId, state.classes[0].students, { aisles: 4, rows: 6, deskType: 'double' });
       }
-    ];
-    state.currentClassId = defaultId;
-    if (typeof generateSeatingLayoutForClass === 'function') {
-      generateSeatingLayoutForClass(defaultId, [], { aisles: 4, rows: 5, deskType: 'double' });
     }
     state.viewMode = 'slot';
     state.currentMode = 'single';
@@ -1597,6 +1609,10 @@ function selectGame(gameId) {
     btn.classList.toggle('active', btn.getAttribute('data-game') === gameId);
   });
 
+  if (window.state) {
+    window.state.currentGameId = gameId;
+  }
+
   if (gameId === 'wheel') {
     if (typeof switchGameMode === 'function') switchGameMode('classic');
     if (typeof switchViewMode === 'function') switchViewMode('wheel');
@@ -1653,6 +1669,9 @@ function openClassManagementAction() {
 
 function openStudentListAction() {
   closeSettingsDropdown();
+  if (window.LandingRouter && window.LandingRouter.currentScreen === 'home') {
+    window.LandingRouter.navigateTo('game');
+  }
   const sidebar = document.getElementById('sidebar');
   const backdrop = document.getElementById('sidebarBackdrop');
   if (sidebar) {
@@ -1682,10 +1701,479 @@ function syncGameNavSidebar(mode, viewMode) {
     targetGame = viewMode === 'slot' ? 'slot' : 'wheel';
   }
 
+  if (window.state) {
+    window.state.currentGameId = targetGame;
+  }
+
   document.querySelectorAll('.game-nav-btn').forEach(btn => {
     btn.classList.toggle('active', btn.getAttribute('data-game') === targetGame);
   });
 }
+
+// ==============================================================================
+// HỆ THỐNG CÀI ĐẶT RIÊNG CHO TỪNG TRÒ CHƠI (GAME-AWARE SETTINGS SYSTEM)
+// ==============================================================================
+
+function getCurrentGameId() {
+  if (window.state && window.state.currentGameId) return window.state.currentGameId;
+  const quizSection = document.getElementById('quizArenaSection');
+  if (quizSection && quizSection.style.display !== 'none') return 'quiz';
+  const seatingSection = document.getElementById('seatingArenaSection');
+  if (seatingSection && seatingSection.style.display !== 'none') return 'seating';
+  if (window.state && window.state.viewMode === 'wheel') return 'wheel';
+  return 'slot';
+}
+
+function openGameSettingsModal(targetGameId) {
+  const gameId = targetGameId || getCurrentGameId();
+  if (window.state) {
+    window.state.currentGameId = gameId;
+  }
+
+  const modal = document.getElementById('gameSettingsModal');
+  if (!modal) return;
+
+  const titleEl = document.getElementById('gameSettingsTitle');
+  const subtitleEl = document.getElementById('gameSettingsSubtitle');
+  const iconEl = document.getElementById('gameSettingsIcon');
+  const sectionTitleEl = document.getElementById('gameSpecificSectionTitle');
+  const container = document.getElementById('gameSpecificSettingsContainer');
+
+  if (!container) return;
+
+  // Cấu hình tiêu đề theo game
+  switch (gameId) {
+    case 'seating':
+      if (titleEl) titleEl.textContent = 'CÀI ĐẶT SƠ ĐỒ LỚP HỌC';
+      if (subtitleEl) subtitleEl.textContent = 'Tùy chỉnh kích thước dãy bàn, phương án xếp chỗ và 4 tổ thi đua';
+      if (iconEl) iconEl.textContent = '🪑';
+      if (sectionTitleEl) sectionTitleEl.textContent = 'TÍNH NĂNG RIÊNG: SƠ ĐỒ LỚP & 4 TỔ THI ĐUA';
+      container.innerHTML = renderSeatingSpecificSettings();
+      break;
+
+    case 'quiz':
+      if (titleEl) titleEl.textContent = 'CÀI ĐẶT ĐẤU TRƯỜNG TRẮC NGHIỆM';
+      if (subtitleEl) subtitleEl.textContent = 'Quản lý ngân hàng đề thi, thời gian trả lời & quyền trợ giúp';
+      if (iconEl) iconEl.textContent = '🏆';
+      if (sectionTitleEl) sectionTitleEl.textContent = 'TÍNH NĂNG RIÊNG: ĐỀ THI & LUẬT ĐẤU TRƯỜNG';
+      container.innerHTML = renderQuizSpecificSettings();
+      break;
+
+    case 'wheel':
+      if (titleEl) titleEl.textContent = 'CÀI ĐẶT VÒNG QUAY MAY MẮN';
+      if (subtitleEl) subtitleEl.textContent = 'Tùy chỉnh thời gian quay, tốc độ bánh xe và chống gọi trùng';
+      if (iconEl) iconEl.textContent = '🎡';
+      if (sectionTitleEl) sectionTitleEl.textContent = 'TÍNH NĂNG RIÊNG: BÁNH XE MAY MẮN';
+      container.innerHTML = renderWheelSpecificSettings();
+      break;
+
+    case 'slot':
+      if (titleEl) titleEl.textContent = 'CÀI ĐẶT THẺ LƯỚT HỒI HỘP';
+      if (subtitleEl) subtitleEl.textContent = 'Chế độ bốc thăm cá nhân, cặp đôi, nhóm 4, nhóm 6 & chống lặp';
+      if (iconEl) iconEl.textContent = '🎰';
+      if (sectionTitleEl) sectionTitleEl.textContent = 'TÍNH NĂNG RIÊNG: THẺ LƯỚT SLOT';
+      container.innerHTML = renderSlotSpecificSettings();
+      break;
+
+    case 'bonus':
+      if (titleEl) titleEl.textContent = 'CÀI ĐẶT VÒNG QUAY ĐIỂM THƯỞNG';
+      if (subtitleEl) subtitleEl.textContent = 'Chỉnh sửa các ô điểm thưởng (+1, +2, quà tặng) & âm thanh';
+      if (iconEl) iconEl.textContent = '🎁';
+      if (sectionTitleEl) sectionTitleEl.textContent = 'TÍNH NĂNG RIÊNG: DANH SÁCH PHẦN THƯỞNG';
+      container.innerHTML = renderBonusSpecificSettings();
+      break;
+
+    case 'groups':
+      if (titleEl) titleEl.textContent = 'CÀI ĐẶT CHIA NHÓM CẢ LỚP';
+      if (subtitleEl) subtitleEl.textContent = 'Quy tắc chia nhóm ngẫu nhiên theo số lượng nhóm hoặc số người';
+      if (iconEl) iconEl.textContent = '🧩';
+      if (sectionTitleEl) sectionTitleEl.textContent = 'TÍNH NĂNG RIÊNG: QUY TẮC PHÂN CHIA NHÓM';
+      container.innerHTML = renderGroupsSpecificSettings();
+      break;
+
+    default:
+      if (titleEl) titleEl.textContent = 'CÀI ĐẶT TRÒ CHƠI';
+      if (subtitleEl) subtitleEl.textContent = 'Tùy chỉnh các tính năng phù hợp';
+      if (iconEl) iconEl.textContent = '⚙️';
+      if (sectionTitleEl) sectionTitleEl.textContent = 'CÀI ĐẶT TRÒ CHƠI';
+      container.innerHTML = renderWheelSpecificSettings();
+      break;
+  }
+
+  modal.classList.add('open');
+}
+
+function closeGameSettingsModal() {
+  const modal = document.getElementById('gameSettingsModal');
+  if (modal) modal.classList.remove('open');
+}
+
+// 1. Giao diện cài đặt riêng cho Sơ Đồ Lớp
+function renderSeatingSpecificSettings() {
+  return `
+    <!-- Mục 1: Kích thước Bàn Ghế & Sơ đồ -->
+    <div class="game-setting-item-card">
+      <div class="game-setting-item-left">
+        <div class="game-setting-item-icon">📐</div>
+        <div>
+          <span class="game-setting-item-title">Kích Thước Bàn Ghế & Sơ Đồ</span>
+          <span class="game-setting-item-desc">Chọn số dãy bàn (2, 3, 4, 5 dãy), số hàng ghế, kiểu bàn đơn/đôi, phương án xếp chỗ & cỡ chữ tên học sinh.</span>
+        </div>
+      </div>
+      <button type="button" class="btn-action-trigger btn-teal" onclick="closeGameSettingsModal(); if (window.SeatingChartModule) SeatingChartModule.openSettingsModal();">
+        ⚙️ Mở Bảng Cấu Hình Sơ Đồ ➔
+      </button>
+    </div>
+
+    <!-- Mục 2: 4 Tổ & Linh vật -->
+    <div class="game-setting-item-card">
+      <div class="game-setting-item-left">
+        <div class="game-setting-item-icon">🦅</div>
+        <div>
+          <span class="game-setting-item-title">Đổi Tên 4 Tổ & Linh Vật Thi Đua</span>
+          <span class="game-setting-item-desc">Đặt tên riêng cho 4 tổ (Đại Bàng, Sư Tử, Cá Mập, Rồng Vàng), chọn biểu tượng linh vật Emoji và màu sắc tổ.</span>
+        </div>
+      </div>
+      <button type="button" class="btn-action-trigger btn-teal" onclick="closeGameSettingsModal(); if (window.SeatingChartModule) SeatingChartModule.openGroupSettings(1);">
+        🦁 Đổi Tên 4 Tổ & Linh Vật ➔
+      </button>
+    </div>
+
+    <!-- Mục 3: Làm mới vòng bốc thăm -->
+    <div class="game-setting-item-card">
+      <div class="game-setting-item-left">
+        <div class="game-setting-item-icon">🔄</div>
+        <div>
+          <span class="game-setting-item-title">Làm Mới Vòng Bốc Thăm (Reset Lượt Gọi)</span>
+          <span class="game-setting-item-desc">Đưa toàn bộ học sinh đã gọi trên sơ đồ lớp trở lại danh sách chờ gọi để bắt đầu vòng bốc thăm mới từ đầu.</span>
+        </div>
+      </div>
+      <button type="button" class="btn-action-trigger" onclick="if (window.SeatingChartModule) SeatingChartModule.resetCalledRound(); showToast('Đã làm mới vòng bốc thăm sơ đồ lớp!', 'success');">
+        🔄 Làm Mới Lượt Gọi
+      </button>
+    </div>
+
+    <!-- Mục 4: Bàn Giáo Viên & Khay Chưa Xếp Chỗ -->
+    <div class="game-setting-item-card">
+      <div class="game-setting-item-left">
+        <div class="game-setting-item-icon">🧑‍🏫</div>
+        <div>
+          <span class="game-setting-item-title">Vị Trí Bàn Giáo Viên & Khay Chưa Xếp</span>
+          <span class="game-setting-item-desc">Đổi vị trí bàn giáo viên sang bên Trái hoặc bên Phải bục giảng; mở khay học sinh chưa xếp vào bàn.</span>
+        </div>
+      </div>
+      <div class="game-setting-btn-row">
+        <button type="button" class="btn-pill-choice" onclick="if (window.SeatingChartModule) SeatingChartModule.toggleTeacherDeskPosition();">
+          📍 Đổi Bàn GV (Trái/Phải)
+        </button>
+        <button type="button" class="btn-pill-choice" onclick="closeGameSettingsModal(); if (window.SeatingChartModule) SeatingChartModule.toggleUnassignedColumn();">
+          🎒 Mở Khay Chưa Xếp
+        </button>
+      </div>
+    </div>
+  `;
+}
+
+// 2. Giao diện cài đặt riêng cho Đấu Trường Trắc Nghiệm
+function renderQuizSpecificSettings() {
+  const curSeconds = (window.getTimerState ? window.getTimerState().totalSeconds : 30);
+  return `
+    <!-- Mục 1: Ngân hàng câu hỏi -->
+    <div class="game-setting-item-card">
+      <div class="game-setting-item-left">
+        <div class="game-setting-item-icon">📚</div>
+        <div>
+          <span class="game-setting-item-title">Ngân Hàng Đề Thi & Quản Lý Câu Hỏi</span>
+          <span class="game-setting-item-desc">Nạp đề thi trắc nghiệm từ file Excel (.xlsx), dán đề văn bản Word/Text, soạn câu hỏi mới, lọc mức độ khó.</span>
+        </div>
+      </div>
+      <button type="button" class="btn-action-trigger" onclick="closeGameSettingsModal(); if (typeof openQuizManagerModal === 'function') openQuizManagerModal();">
+        📚 Mở Ngân Hàng Đề Thi ➔
+      </button>
+    </div>
+
+    <!-- Mục 2: Thời gian đếm ngược suy nghĩ -->
+    <div class="game-setting-item-card">
+      <div class="game-setting-item-left">
+        <div class="game-setting-item-icon">⏱️</div>
+        <div>
+          <span class="game-setting-item-title">Thời Gian Đếm Ngược Cho Mỗi Câu Hỏi</span>
+          <span class="game-setting-item-desc">Chọn thời gian suy nghĩ mặc định cho học sinh khi đồng hồ bấm giờ đếm ngược chạy.</span>
+        </div>
+      </div>
+      <div class="game-setting-btn-row">
+        <button type="button" class="btn-pill-choice ${curSeconds === 15 ? 'active' : ''}" onclick="setQuizCountdownTime(15, this)">
+          15 Giây
+        </button>
+        <button type="button" class="btn-pill-choice ${curSeconds === 30 ? 'active' : ''}" onclick="setQuizCountdownTime(30, this)">
+          30 Giây (Chuẩn)
+        </button>
+        <button type="button" class="btn-pill-choice ${curSeconds === 60 ? 'active' : ''}" onclick="setQuizCountdownTime(60, this)">
+          60 Giây
+        </button>
+      </div>
+    </div>
+
+    <!-- Mục 3: Hiển thị câu hỏi & Vòng thưởng -->
+    <div class="game-setting-item-card">
+      <div class="game-setting-item-left">
+        <div class="game-setting-item-icon">🙈</div>
+        <div>
+          <span class="game-setting-item-title">Chế Độ Hiển Thị Đề Bài & Thưởng Điểm</span>
+          <span class="game-setting-item-desc">Tạm thời ẩn câu hỏi trước khi học sinh chuẩn bị sẵn sàng; mở vòng quay điểm thưởng để khích lệ.</span>
+        </div>
+      </div>
+      <div class="game-setting-btn-row">
+        <button type="button" class="btn-pill-choice" onclick="if (typeof toggleQuestionVisibility === 'function') toggleQuestionVisibility();">
+          🙈 Tạm Ẩn / Hiện Câu Hỏi
+        </button>
+        <button type="button" class="btn-pill-choice" onclick="closeGameSettingsModal(); if (typeof openBonusWheelModal === 'function') openBonusWheelModal();">
+          🎁 Thưởng Điểm
+        </button>
+      </div>
+    </div>
+  `;
+}
+
+// 3. Giao diện cài đặt riêng cho Vòng Quay May Mắn
+function renderWheelSpecificSettings() {
+  const curDuration = (window.state && window.state.wheelDuration) ? window.state.wheelDuration : 4500;
+  const isNoRepeat = window.state ? !!window.state.noRepeat : true;
+
+  return `
+    <!-- Mục 1: Thời gian quay bánh xe -->
+    <div class="game-setting-item-card">
+      <div class="game-setting-item-left">
+        <div class="game-setting-item-icon">🎡</div>
+        <div>
+          <span class="game-setting-item-title">Thời Gian Quay Mỗi Lượt (Tốc Độ Bánh Xe)</span>
+          <span class="game-setting-item-desc">Tùy chỉnh thời gian bánh xe quay trước khi dừng lại ở học sinh may mắn.</span>
+        </div>
+      </div>
+      <div class="game-setting-btn-row">
+        <button type="button" class="btn-pill-choice ${curDuration === 3000 ? 'active' : ''}" onclick="setWheelDuration(3000, this)">
+          ⚡ 3 Giây (Nhanh)
+        </button>
+        <button type="button" class="btn-pill-choice ${curDuration === 4500 ? 'active' : ''}" onclick="setWheelDuration(4500, this)">
+          🎯 4.5s (Chuẩn)
+        </button>
+        <button type="button" class="btn-pill-choice ${curDuration === 7000 ? 'active' : ''}" onclick="setWheelDuration(7000, this)">
+          🔥 7 Giây (Hồi hộp)
+        </button>
+      </div>
+    </div>
+
+    <!-- Mục 2: Chống gọi trùng lặp -->
+    <div class="game-setting-item-card">
+      <div class="game-setting-item-left">
+        <div class="game-setting-item-icon">🛡️</div>
+        <div>
+          <span class="game-setting-item-title">Chế Độ Chống Trùng Lặp (Không Gọi Lại)</span>
+          <span class="game-setting-item-desc">Học sinh đã quay trúng sẽ được đánh dấu đã gọi và không bị gọi lại trong các lượt tiếp theo.</span>
+        </div>
+      </div>
+      <label class="switch" style="flex-shrink: 0;">
+        <input type="checkbox" id="wheelSettingNoRepeatToggle" ${isNoRepeat ? 'checked' : ''} onchange="setGameSettingNoRepeat(this.checked)">
+        <span class="slider"></span>
+      </label>
+    </div>
+
+    <!-- Mục 3: Làm mới danh sách đã quay -->
+    <div class="game-setting-item-card">
+      <div class="game-setting-item-left">
+        <div class="game-setting-item-icon">🔄</div>
+        <div>
+          <span class="game-setting-item-title">Làm Mới Danh Sách Gọi Lại</span>
+          <span class="game-setting-item-desc">Đưa toàn bộ học sinh đã gọi trở lại vòng quay để tất cả các bạn có cơ hội quay lại từ đầu.</span>
+        </div>
+      </div>
+      <button type="button" class="btn-action-trigger" onclick="if (typeof resetCalledList === 'function') resetCalledList(true);">
+        🔄 Đặt Lại Danh Sách
+      </button>
+    </div>
+  `;
+}
+
+// 4. Giao diện cài đặt riêng cho Thẻ Lướt Hồi Hộp
+function renderSlotSpecificSettings() {
+  const currentMode = (window.state && window.state.currentMode) ? window.state.currentMode : 'single';
+  const isNoRepeat = window.state ? !!window.state.noRepeat : true;
+
+  return `
+    <!-- Mục 1: Chế độ bốc thăm Slot -->
+    <div class="game-setting-item-card">
+      <div class="game-setting-item-left">
+        <div class="game-setting-item-icon">🎰</div>
+        <div>
+          <span class="game-setting-item-title">Số Lượng Học Sinh Bốc Thăm Mỗi Lượt</span>
+          <span class="game-setting-item-desc">Chọn gọi ngẫu nhiên cá nhân (1), ghép đôi đối kháng (2) hoặc chọn nhóm 4, nhóm 6.</span>
+        </div>
+      </div>
+      <div class="game-setting-btn-row">
+        <button type="button" class="btn-pill-choice ${currentMode === 'single' ? 'active' : ''}" onclick="setSlotModeFromSettings('single', this)">
+          Cá nhân (1)
+        </button>
+        <button type="button" class="btn-pill-choice ${currentMode === 'pair' ? 'active' : ''}" onclick="setSlotModeFromSettings('pair', this)">
+          Cặp đôi (2)
+        </button>
+        <button type="button" class="btn-pill-choice ${currentMode === 'group4' ? 'active' : ''}" onclick="setSlotModeFromSettings('group4', this)">
+          Nhóm 4
+        </button>
+        <button type="button" class="btn-pill-choice ${currentMode === 'group6' ? 'active' : ''}" onclick="setSlotModeFromSettings('group6', this)">
+          Nhóm 6
+        </button>
+      </div>
+    </div>
+
+    <!-- Mục 2: Chống gọi trùng lặp -->
+    <div class="game-setting-item-card">
+      <div class="game-setting-item-left">
+        <div class="game-setting-item-icon">🛡️</div>
+        <div>
+          <span class="game-setting-item-title">Chế Độ Chống Trùng Lặp (Không Gọi Lại)</span>
+          <span class="game-setting-item-desc">Không gọi lại học sinh đã được bốc trúng trong các lượt trước.</span>
+        </div>
+      </div>
+      <label class="switch" style="flex-shrink: 0;">
+        <input type="checkbox" id="slotSettingNoRepeatToggle" ${isNoRepeat ? 'checked' : ''} onchange="setGameSettingNoRepeat(this.checked)">
+        <span class="slider"></span>
+      </label>
+    </div>
+
+    <!-- Mục 3: Chia nhóm cả lớp -->
+    <div class="game-setting-item-card">
+      <div class="game-setting-item-left">
+        <div class="game-setting-item-icon">🧩</div>
+        <div>
+          <span class="game-setting-item-title">Chia Nhanh Toàn Bộ Lớp Thành Nhóm</span>
+          <span class="game-setting-item-desc">Tự động xáo trộn và phân chia tất cả học sinh trong lớp thành các nhóm 2, 4, 6 người.</span>
+        </div>
+      </div>
+      <button type="button" class="btn-action-trigger" onclick="closeGameSettingsModal(); if (typeof openAllGroupsModal === 'function') openAllGroupsModal();">
+        🧩 Chia Cả Lớp ➔
+      </button>
+    </div>
+  `;
+}
+
+// 5. Giao diện cài đặt riêng cho Vòng Quay Điểm Thưởng
+function renderBonusSpecificSettings() {
+  return `
+    <div class="game-setting-item-card">
+      <div class="game-setting-item-left">
+        <div class="game-setting-item-icon">✏️</div>
+        <div>
+          <span class="game-setting-item-title">Chỉnh Sửa Các Ô Phần Thưởng & Điểm Số</span>
+          <span class="game-setting-item-desc">Thêm/bớt, đổi tên, biểu tượng Emoji và màu sắc cho từng nan quạt của Vòng Quay Điểm Thưởng (+1, +2, +5 điểm, tràng pháo tay...).</span>
+        </div>
+      </div>
+      <button type="button" class="btn-action-trigger" onclick="closeGameSettingsModal(); if (typeof openRewardsEditorModal === 'function') openRewardsEditorModal();">
+        ✏️ Tùy Chỉnh Ô Quà ➔
+      </button>
+    </div>
+
+    <div class="game-setting-item-card">
+      <div class="game-setting-item-left">
+        <div class="game-setting-item-icon">🔄</div>
+        <div>
+          <span class="game-setting-item-title">Khôi Phục Danh Sách Phần Thưởng Mặc Định</span>
+          <span class="game-setting-item-desc">Khôi phục lại bộ phần thưởng chuẩn gồm 8 ô mẫu ban đầu.</span>
+        </div>
+      </div>
+      <button type="button" class="btn-action-trigger" onclick="if (typeof resetDefaultRewards === 'function') resetDefaultRewards(); showToast('Đã khôi phục bộ phần thưởng gốc!', 'success');">
+        🔄 Khôi Phục Mặc Định
+      </button>
+    </div>
+  `;
+}
+
+// 6. Giao diện cài đặt riêng cho Chia Nhóm Cả Lớp
+function renderGroupsSpecificSettings() {
+  return `
+    <div class="game-setting-item-card">
+      <div class="game-setting-item-left">
+        <div class="game-setting-item-icon">🧩</div>
+        <div>
+          <span class="game-setting-item-title">Cấu Hình Số Lượng Thành Viên Mỗi Nhóm</span>
+          <span class="game-setting-item-desc">Mở bảng phân chia ngẫu nhiên và chọn số thành viên mỗi nhóm (2, 3, 4, 5, 6 bạn).</span>
+        </div>
+      </div>
+      <button type="button" class="btn-action-trigger" onclick="closeGameSettingsModal(); if (typeof openAllGroupsModal === 'function') openAllGroupsModal();">
+        🧩 Mở Bảng Chia Nhóm ➔
+      </button>
+    </div>
+  `;
+}
+
+// Các hàm bổ trợ xử lý cài đặt tức thì:
+function setWheelDuration(durationMs, btnEl) {
+  if (window.state) {
+    window.state.wheelDuration = durationMs;
+    if (typeof saveStateToStorage === 'function') saveStateToStorage();
+  }
+  if (btnEl && btnEl.parentElement) {
+    btnEl.parentElement.querySelectorAll('.btn-pill-choice').forEach(b => b.classList.remove('active'));
+    btnEl.classList.add('active');
+  }
+  const sec = durationMs / 1000;
+  showToast(`Đã đặt thời gian quay bánh xe: ${sec} giây!`, 'success');
+}
+
+function setQuizCountdownTime(seconds, btnEl) {
+  if (typeof setTimerDuration === 'function') {
+    setTimerDuration(seconds);
+  }
+  if (btnEl && btnEl.parentElement) {
+    btnEl.parentElement.querySelectorAll('.btn-pill-choice').forEach(b => b.classList.remove('active'));
+    btnEl.classList.add('active');
+  }
+  showToast(`Đã đặt thời gian đếm ngược: ${seconds} giây!`, 'success');
+}
+
+function setGameSettingNoRepeat(enabled) {
+  if (window.state) {
+    window.state.noRepeat = !!enabled;
+    if (typeof saveStateToStorage === 'function') saveStateToStorage();
+  }
+  const sidebarToggle = document.getElementById('noRepeatToggle');
+  if (sidebarToggle) sidebarToggle.checked = !!enabled;
+  if (typeof updateUI === 'function') updateUI();
+  showToast(`Chế độ không gọi lại: ${enabled ? 'BẬT' : 'TẮT'}`, 'info');
+}
+
+function setSlotModeFromSettings(mode, btnEl) {
+  if (window.state) {
+    window.state.currentMode = mode;
+    if (typeof saveStateToStorage === 'function') saveStateToStorage();
+  }
+  document.querySelectorAll('.mode-pill').forEach(p => {
+    p.classList.toggle('active', p.getAttribute('data-mode') === mode);
+  });
+  if (btnEl && btnEl.parentElement) {
+    btnEl.parentElement.querySelectorAll('.btn-pill-choice').forEach(b => b.classList.remove('active'));
+    btnEl.classList.add('active');
+  }
+  if (typeof renderDefaultStage === 'function') renderDefaultStage();
+  showToast(`Đã chuyển sang chế độ: ${mode === 'single' ? 'Cá nhân (1)' : mode === 'pair' ? 'Cặp đôi (2)' : mode === 'group4' ? 'Nhóm 4' : 'Nhóm 6'}`, 'success');
+}
+
+// Đóng modal cài đặt trò chơi khi click ra ngoài nền hoặc nhấn phím Escape
+document.addEventListener('keydown', (e) => {
+  if (e.key === 'Escape') {
+    closeGameSettingsModal();
+  }
+});
+
+document.addEventListener('DOMContentLoaded', () => {
+  const gameSettingsModalEl = document.getElementById('gameSettingsModal');
+  if (gameSettingsModalEl) {
+    gameSettingsModalEl.addEventListener('click', (e) => {
+      if (e.target === gameSettingsModalEl) {
+        closeGameSettingsModal();
+      }
+    });
+  }
+});
 
 // Gắn toàn cục các hàm cần truy xuất
 window.showToast = showToast;
@@ -1710,3 +2198,10 @@ window.openStudentListAction = openStudentListAction;
 window.openQuizBankAction = openQuizBankAction;
 window.openAudioSettingsAction = openAudioSettingsAction;
 window.syncGameNavSidebar = syncGameNavSidebar;
+window.getCurrentGameId = getCurrentGameId;
+window.openGameSettingsModal = openGameSettingsModal;
+window.closeGameSettingsModal = closeGameSettingsModal;
+window.setWheelDuration = setWheelDuration;
+window.setQuizCountdownTime = setQuizCountdownTime;
+window.setGameSettingNoRepeat = setGameSettingNoRepeat;
+window.setSlotModeFromSettings = setSlotModeFromSettings;

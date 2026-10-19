@@ -191,7 +191,8 @@ function spinLuckyWheel() {
     deltaAngle += 2 * Math.PI;
   }
 
-  const duration = 4300; // 4.3 giây hồi hộp
+  // Thời gian quay hồi hộp (đọc từ cấu hình state hoặc mặc định 4.5s)
+  const duration = (window.state && window.state.wheelDuration) ? window.state.wheelDuration : 4500;
   const startTime = performance.now();
   let lastHoverIdx = -1;
 

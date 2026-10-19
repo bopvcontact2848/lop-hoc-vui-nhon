@@ -74,9 +74,10 @@
 
         <div class="landing-nav-actions">
           <!-- Chỉ báo lớp học hiện tại -->
-          <div class="nav-class-indicator" onclick="openStudentListAction()" title="Nhấp để xem và quản lý danh sách học sinh">
+          <div class="nav-class-indicator" onclick="openClassManagementAction()" title="Nhấp để xem danh sách tất cả các lớp và chuyển đổi lớp học">
             <span>🏫</span>
             <span id="landingNavClassName">Lớp 9A4</span>
+            <span style="font-size: 0.75rem; opacity: 0.7; margin-left: 2px;">▾</span>
           </div>
 
           <!-- Bật / Tắt âm thanh đồng bộ -->
@@ -294,7 +295,7 @@
               Mỗi lượt chơi là một cơ hội để khám phá bản thân, tự tin thể hiện và cùng bạn bè tiến bộ. Thầy cô và học sinh cùng nhau biến mỗi tiết học thành những trải nghiệm khó quên!
             </p>
             <div class="inspiration-actions">
-              <button class="btn-inspiration-action" onclick="openStudentListAction()">
+              <button class="btn-inspiration-action" onclick="openClassManagementAction()">
                 <span>👥 Quản lý danh sách lớp</span>
               </button>
               <button class="btn-inspiration-alt" onclick="openQuizBankAction()">
@@ -409,8 +410,8 @@
             <button id="btnHeaderNewClass" class="btn-header-mini" onclick="openNewClassModal()" title="Thêm lớp học mới">➕</button>
           </div>
 
-          <!-- 2. Menu Cài Đặt & Dữ Liệu (Dropdown gồm Lớp học, Danh sách lớp, Câu hỏi úp lên) -->
-          <div class="header-settings-wrapper">
+          <!-- 2. Menu Cài Đặt trên Header (Đã ẩn theo yêu cầu: chuyển nút Cài đặt trực tiếp vào từng trò chơi) -->
+          <div class="header-settings-wrapper" style="display: none !important;">
             <button id="btnSettingsMenu" class="btn-header btn-settings-trigger" onclick="toggleSettingsDropdown(event)" title="Cài đặt lớp học, danh sách học sinh và ngân hàng câu hỏi">
               <span>⚙️ Cài đặt</span>
               <span class="dropdown-chevron">▾</span>
@@ -749,6 +750,11 @@
             <span id="classicGameStageTitle">Vòng Quay May Mắn</span>
           </div>
 
+          <!-- Nút Cài đặt riêng cho Vòng Quay (Ẩn khi đang chơi Slot) -->
+          <button id="btnWheelStageSettings" class="btn-subbar btn-subbar-primary" onclick="openGameSettingsModal('wheel')" title="Cài đặt Vòng Quay May Mắn: Thời gian quay, chống trùng lặp, âm thanh...">
+            <span>⚙️</span> Cài đặt Vòng Quay
+          </button>
+
           <!-- Các nút chế độ bốc thăm Slot (Chỉ hiển thị khi chơi Thẻ Lướt) -->
           <div id="slotModeBar" class="mode-bar" style="display: none; margin-bottom: 0;">
             <button class="mode-pill active" data-mode="single">
@@ -766,6 +772,10 @@
             <button id="btnDivideAllGroups" class="btn-header" style="background: rgba(139, 92, 246, 0.25); border-color: rgba(139, 92, 246, 0.45); color: #c4b5fd;">
               <span>🧩 Chia cả lớp</span>
             </button>
+            <!-- Nút Cài đặt riêng cho Thẻ Lướt -->
+            <button id="btnSlotStageSettings" class="btn-subbar btn-subbar-primary" onclick="openGameSettingsModal('slot')" title="Cài đặt Thẻ Lướt: Chế độ gọi, tốc độ lướt, chống trùng lặp...">
+              <span>⚙️</span> Cài đặt Thẻ Lướt
+            </button>
           </div>
 
           <!-- Các nút ẩn để duy trì tương thích các hàm JS cũ -->
@@ -782,11 +792,14 @@
             <span>Đấu Trường Trắc Nghiệm</span>
           </div>
           <div class="quiz-subbar-group">
-            <button id="btnToggleQuestionVisibility" class="btn-subbar" onclick="toggleQuestionVisibility()" title="Ẩn/Hiện thẻ câu hỏi trên màn hình">
-              🙈 Tạm ẩn câu hỏi
+            <button id="btnQuizArenaSettings" class="btn-subbar btn-subbar-primary" onclick="openGameSettingsModal('quiz')" title="Cài đặt Đấu Trường Trắc Nghiệm: Ngân hàng đề, thời gian suy nghĩ, câu hỏi...">
+              <span>⚙️</span> Cài đặt Đấu Trường
             </button>
             <button id="btnOpenQuizBankModal" class="btn-subbar" onclick="openQuizManagerModal()" title="Mở danh sách câu hỏi, xuất nhập Excel/JSON">
-              ⚙️ Ngân hàng đề thi (.xlsx / .json)
+              📚 Ngân hàng đề thi
+            </button>
+            <button id="btnToggleQuestionVisibility" class="btn-subbar" onclick="toggleQuestionVisibility()" title="Ẩn/Hiện thẻ câu hỏi trên màn hình">
+              🙈 Tạm ẩn câu hỏi
             </button>
             <button class="btn-subbar btn-bonus-shortcut" onclick="openBonusWheelModal()" title="Mở vòng quay điểm thưởng">
               🎁 Thưởng điểm
@@ -973,6 +986,12 @@
                       <span class="desk-text">Bàn Giáo Viên</span>
                     </div>
                   </div>
+
+                  <!-- Nút Cài đặt nhanh trên Bục Giảng -->
+                  <button type="button" id="btnPodiumSeatingSettings" class="btn-podium-action-settings" onclick="openGameSettingsModal('seating')" title="Cài đặt sơ đồ lớp: Số dãy bàn, hàng ghế, 4 tổ thi đua...">
+                    <span class="podium-settings-icon">⚙️</span>
+                    <span class="podium-settings-text">Cài đặt Sơ Đồ</span>
+                  </button>
                 </div>
 
                 <!-- BỐ CỤC THÂN SÂN KHẤU: BỘ ĐIỀU KHIỂN CHẾ ĐỘ (CỘT TRÁI) & LƯỚI BÀN GHẾ (PHẢI) -->
@@ -989,6 +1008,14 @@
                       </div>
                       <button type="button" id="btnToggleModesPanel" class="btn-toggle-modes-panel" onclick="SeatingChartModule.toggleModesPanelCollapse()" title="Thu gọn bảng điều khiển (Chỉ hiện icon để mở rộng sơ đồ)">
                         <span id="modesPanelToggleArrow" class="toggle-modes-panel-arrow">◀</span>
+                      </button>
+                    </div>
+
+                    <!-- Nút Mở Cài Đặt Sơ Đồ Lớp Nổi Bật -->
+                    <div class="seating-panel-settings-box">
+                      <button type="button" id="btnSeatingPanelSettings" class="btn-seating-panel-settings" onclick="openGameSettingsModal('seating')" title="Cài đặt sơ đồ lớp: Dãy bàn, phương án xếp chỗ, tên 4 tổ thi đua, học sinh, âm thanh...">
+                        <span class="btn-icon">⚙️</span>
+                        <span class="btn-text">CÀI ĐẶT SƠ ĐỒ LỚP</span>
                       </button>
                     </div>
 
@@ -2285,6 +2312,72 @@
         <button type="button" class="btn-secondary" onclick="SeatingChartModule.closeGroupSettings()">Hủy</button>
         <button type="button" class="btn-primary" onclick="SeatingChartModule.saveGroupSettings()" style="padding: 10px 24px;">
           💾 Lưu Thay Đổi
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ==================== MODAL CÀI ĐẶT RIÊNG CHO MỖI TRÒ CHƠI (GAME-AWARE SETTINGS) ==================== -->
+  <div id="gameSettingsModal" class="modal-overlay">
+    <div class="modal-card game-settings-modal-card">
+      <div class="modal-header game-settings-header">
+        <div class="game-settings-title-wrap">
+          <div id="gameSettingsIcon" class="game-settings-icon-badge">⚙️</div>
+          <div>
+            <h3 id="gameSettingsTitle" class="game-settings-title">CÀI ĐẶT TRÒ CHƠI</h3>
+            <p id="gameSettingsSubtitle" class="game-settings-subtitle">Các tính năng cấu hình tối ưu cho trò chơi đang chọn</p>
+          </div>
+        </div>
+        <button type="button" class="modal-close" onclick="closeGameSettingsModal()" title="Đóng">&times;</button>
+      </div>
+
+      <div class="modal-body game-settings-body">
+        <!-- PHẦN 1: CÁC TÍNH NĂNG RIÊNG CỦA TRÒ CHƠI -->
+        <div class="settings-section-badge-bar">
+          <span class="badge-icon">🎯</span>
+          <span id="gameSpecificSectionTitle" class="badge-text">TÍNH NĂNG ĐẶC THÙ CỦA TRÒ CHƠI NÀY</span>
+        </div>
+
+        <div id="gameSpecificSettingsContainer" class="game-specific-settings-list">
+          <!-- Render tự động theo ngữ cảnh trò chơi -->
+        </div>
+
+        <!-- PHẦN 2: DỮ LIỆU & TIỆN ÍCH DÙNG CHUNG TOÀN LỚP (LUÔN CÓ MẶT) -->
+        <div class="settings-section-badge-bar badge-common">
+          <span class="badge-icon">🌐</span>
+          <span class="badge-text">QUẢN LÝ DỮ LIỆU & TIỆN ÍCH DÙNG CHUNG TOÀN LỚP</span>
+        </div>
+
+        <div class="game-common-settings-grid">
+          <!-- Thẻ 1: Quản lý Danh Sách Lớp & Học Sinh -->
+          <div class="common-setting-card" onclick="closeGameSettingsModal(); openStudentListAction();" title="Xem danh sách, nạp file Excel, nạp học sinh mẫu">
+            <div class="common-card-left">
+              <span class="common-card-icon">👥</span>
+              <div class="common-card-info">
+                <span class="common-card-title">Danh sách Lớp & Học sinh</span>
+                <span class="common-card-desc">Nạp file Excel (.xlsx), dán danh sách, chọn lớp học và học sinh mẫu</span>
+              </div>
+            </div>
+            <span class="common-card-arrow">➔</span>
+          </div>
+
+          <!-- Thẻ 2: Âm điệu & Giọng đọc AI -->
+          <div class="common-setting-card" onclick="closeGameSettingsModal(); openAudioSettingsAction();" title="Tùy chỉnh nhạc nền hồi hộp, tiếng chuông, giọng bình luận AI">
+            <div class="common-card-left">
+              <span class="common-card-icon">🎵</span>
+              <div class="common-card-info">
+                <span class="common-card-title">Âm điệu & Giọng đọc AI</span>
+                <span class="common-card-desc">Chỉnh nhạc nền hồi hộp, tiếng chuông đồng hồ, pháo hoa nổ và giọng đọc AI</span>
+              </div>
+            </div>
+            <span class="common-card-arrow">➔</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="modal-footer game-settings-footer">
+        <button type="button" class="btn-primary" onclick="closeGameSettingsModal()" style="padding: 10px 24px; font-weight: 700;">
+          ✅ Hoàn tất & Trở lại trò chơi
         </button>
       </div>
     </div>
