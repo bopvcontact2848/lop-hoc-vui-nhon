@@ -660,7 +660,8 @@
               min-width 0.3s cubic-bezier(0.4, 0, 0.2, 1),
               max-width 0.3s cubic-bezier(0.4, 0, 0.2, 1),
               padding 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-  overflow: hidden;
+  overflow-x: hidden;
+  overflow-y: auto;
 }
 
 .seating-modes-header {
@@ -797,6 +798,31 @@
   font-size: 1.35rem;
 }
 
+/* Nút Cài đặt sơ đồ lớp khi thu gọn */
+.seating-modes-panel.collapsed .seating-panel-settings-box {
+  justify-content: center;
+  width: 100%;
+  margin: 2px 0;
+}
+
+.seating-modes-panel.collapsed .btn-seating-panel-settings {
+  padding: 0;
+  width: 44px;
+  height: 44px;
+  min-width: 44px;
+  border-radius: 10px;
+  justify-content: center;
+}
+
+.seating-modes-panel.collapsed .btn-seating-panel-settings .btn-text {
+  display: none !important;
+}
+
+.seating-modes-panel.collapsed .btn-seating-panel-settings .btn-icon {
+  font-size: 1.3rem;
+  margin: 0;
+}
+
 /* Ẩn hộp trạng thái chữ dài khi thu gọn */
 .seating-modes-panel.collapsed .seating-mode-status-box {
   display: none !important;
@@ -895,7 +921,7 @@
   display: flex;
   flex-direction: column;
   gap: 6px;
-  flex: 1;
+  flex: 0 0 auto;
 }
 
 .seating-mode-card {
@@ -1124,7 +1150,7 @@
   flex-direction: column;
   gap: 6px;
   box-shadow: 0 2px 6px rgba(234, 88, 12, 0.06);
-  margin-top: auto;
+  margin-top: 0;
 }
 
 .round-control-header {

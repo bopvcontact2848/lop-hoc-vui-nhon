@@ -986,12 +986,6 @@
                       <span class="desk-text">Bàn Giáo Viên</span>
                     </div>
                   </div>
-
-                  <!-- Nút Cài đặt nhanh trên Bục Giảng -->
-                  <button type="button" id="btnPodiumSeatingSettings" class="btn-podium-action-settings" onclick="openGameSettingsModal('seating')" title="Cài đặt sơ đồ lớp: Số dãy bàn, hàng ghế, 4 tổ thi đua...">
-                    <span class="podium-settings-icon">⚙️</span>
-                    <span class="podium-settings-text">Cài đặt Sơ Đồ</span>
-                  </button>
                 </div>
 
                 <!-- BỐ CỤC THÂN SÂN KHẤU: BỘ ĐIỀU KHIỂN CHẾ ĐỘ (CỘT TRÁI) & LƯỚI BÀN GHẾ (PHẢI) -->
@@ -1011,11 +1005,12 @@
                       </button>
                     </div>
 
-                    <!-- Nút Mở Cài Đặt Sơ Đồ Lớp Nổi Bật -->
-                    <div class="seating-panel-settings-box">
-                      <button type="button" id="btnSeatingPanelSettings" class="btn-seating-panel-settings" onclick="openGameSettingsModal('seating')" title="Cài đặt sơ đồ lớp: Dãy bàn, phương án xếp chỗ, tên 4 tổ thi đua, học sinh, âm thanh...">
-                        <span class="btn-icon">⚙️</span>
-                        <span class="btn-text">CÀI ĐẶT SƠ ĐỒ LỚP</span>
+                    <!-- Nút Quay Sơ Đồ Siêu Nổi Bật (Chuyển lên trên đầu danh sách chế độ theo hướng mũi tên) -->
+                    <div class="panel-spin-wrapper">
+                      <button id="btnSpinSeatingPodium" class="seating-spin-btn podium-spin-btn panel-spin-btn" onclick="SeatingChartModule.spin()" title="🎲 Quay Tên Sơ Đồ (Nhấn phím Space hoặc Click)">
+                        <span class="spin-dice-icon">🎲</span>
+                        <span class="spin-btn-label">QUAY TÊN SƠ ĐỒ</span>
+                        <span class="spin-hotkey-badge">Space</span>
                       </button>
                     </div>
 
@@ -1081,12 +1076,11 @@
                       </button>
                     </div>
 
-                    <!-- Nút Quay Sơ Đồ Siêu Nổi Bật (Chuyển từ bục giảng về cột điều khiển) -->
-                    <div class="panel-spin-wrapper">
-                      <button id="btnSpinSeatingPodium" class="seating-spin-btn podium-spin-btn panel-spin-btn" onclick="SeatingChartModule.spin()" title="🎲 Quay Tên Sơ Đồ (Nhấn phím Space hoặc Click)">
-                        <span class="spin-dice-icon">🎲</span>
-                        <span class="spin-btn-label">QUAY TÊN SƠ ĐỒ</span>
-                        <span class="spin-hotkey-badge">Space</span>
+                    <!-- Nút Mở Cài Đặt Sơ Đồ Lớp Nổi Bật -->
+                    <div class="seating-panel-settings-box">
+                      <button type="button" id="btnSeatingPanelSettings" class="btn-seating-panel-settings" onclick="openGameSettingsModal('seating')" title="Cài đặt sơ đồ lớp: Dãy bàn, phương án xếp chỗ, tên 4 tổ thi đua, học sinh, âm thanh...">
+                        <span class="btn-icon">⚙️</span>
+                        <span class="btn-text">CÀI ĐẶT SƠ ĐỒ LỚP</span>
                       </button>
                     </div>
 
