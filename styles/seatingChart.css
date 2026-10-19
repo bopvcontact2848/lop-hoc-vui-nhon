@@ -531,6 +531,61 @@
   padding: 10px 14px;
   font-size: 0.92rem;
   box-sizing: border-box;
+  position: relative;
+  animation: dicePanelPulse 2.2s cubic-bezier(0.4, 0, 0.2, 1) infinite !important;
+}
+
+/* Hiệu ứng gợn sóng cam nhẹ nhàng lan tỏa quanh nút quay bốc thăm chính */
+@keyframes dicePanelPulse {
+  0% {
+    transform: scale(1);
+    box-shadow: 0 4px 18px rgba(234, 88, 12, 0.45), 0 0 0 0 rgba(249, 115, 22, 0.65);
+  }
+  50% {
+    transform: scale(1.025);
+    box-shadow: 0 6px 24px rgba(234, 88, 12, 0.65), 0 0 0 9px rgba(249, 115, 22, 0);
+  }
+  100% {
+    transform: scale(1);
+    box-shadow: 0 4px 18px rgba(234, 88, 12, 0.45), 0 0 0 0 rgba(249, 115, 22, 0);
+  }
+}
+
+/* Lắc nhẹ icon xúc xắc để tạo sự chú ý sinh động */
+.panel-spin-btn:not(:disabled):not(.spinning) .spin-dice-icon {
+  display: inline-block;
+  animation: diceIconWiggle 2.2s ease-in-out infinite;
+}
+
+@keyframes diceIconWiggle {
+  0%, 100% { transform: rotate(0deg) scale(1); }
+  20% { transform: rotate(-10deg) scale(1.12); }
+  40% { transform: rotate(10deg) scale(1.15); }
+  60% { transform: rotate(-5deg) scale(1.08); }
+  80% { transform: rotate(0deg) scale(1); }
+}
+
+.panel-spin-btn:hover {
+  animation: none !important;
+  transform: translateY(-2px) scale(1.04) !important;
+  box-shadow: 0 8px 28px rgba(234, 88, 12, 0.75) !important;
+}
+
+.panel-spin-btn:hover .spin-dice-icon {
+  animation: none !important;
+  transform: rotate(20deg) scale(1.2) !important;
+}
+
+.panel-spin-btn:active {
+  animation: none !important;
+  transform: translateY(1px) scale(0.98) !important;
+}
+
+.panel-spin-btn:disabled {
+  animation: none !important;
+}
+.panel-spin-btn:disabled .spin-dice-icon {
+  animation: none !important;
 }
 
 .blackboard-box {
@@ -787,6 +842,22 @@
   min-width: 44px;
   border-radius: 12px;
   justify-content: center;
+  animation: dicePanelPulseCollapsed 2.2s cubic-bezier(0.4, 0, 0.2, 1) infinite !important;
+}
+
+@keyframes dicePanelPulseCollapsed {
+  0% {
+    transform: scale(1);
+    box-shadow: 0 3px 12px rgba(234, 88, 12, 0.45), 0 0 0 0 rgba(249, 115, 22, 0.7);
+  }
+  50% {
+    transform: scale(1.06);
+    box-shadow: 0 6px 20px rgba(234, 88, 12, 0.7), 0 0 0 9px rgba(249, 115, 22, 0);
+  }
+  100% {
+    transform: scale(1);
+    box-shadow: 0 3px 12px rgba(234, 88, 12, 0.45), 0 0 0 0 rgba(249, 115, 22, 0);
+  }
 }
 
 .seating-modes-panel.collapsed .spin-btn-label,
