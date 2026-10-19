@@ -910,6 +910,111 @@
   }
 
   // ============================================================================
+  // BONG BÓNG CHÚ THÍCH NỔI THÔNG MINH (SMART FLOATING TOOLTIP) CHO SIDEBAR THU GỌN
+  // ============================================================================
+  let isSmartTooltipsInitialized = false;
+  function initSmartSidebarTooltips() {
+    let tooltipEl = document.getElementById('seatingSmartTooltip');
+    if (!tooltipEl) {
+      tooltipEl = document.createElement('div');
+      tooltipEl.id = 'seatingSmartTooltip';
+      tooltipEl.className = 'seating-smart-tooltip';
+      document.body.appendChild(tooltipEl);
+    }
+
+    if (isSmartTooltipsInitialized) return;
+    isSmartTooltipsInitialized = true;
+
+    const panel = document.getElementById('seatingModesPanel');
+    if (!panel) return;
+
+    // Danh sách các icon cần gắn Smart Tooltip khi sidebar thu gọn
+    const items = [
+      {
+        selector: '#btnSpinSeatingPodium',
+        html: '<span class="tooltip-text">🎲 Quay Tên Sơ Đồ</span><span class="tooltip-badge">Space</span>',
+        isDice: true
+      },
+      {
+        selector: '.seating-mode-card[data-mode="single"]',
+        html: '<span class="tooltip-text">🎯 Gọi Cá Nhân</span><span class="tooltip-badge">Chuẩn</span>'
+      },
+      {
+        selector: '.seating-mode-card[data-mode="desk"]',
+        html: '<span class="tooltip-text">👥 Theo Cả Bàn</span><span class="tooltip-badge">Đôi bạn</span>'
+      },
+      {
+        selector: '.seating-mode-card[data-mode="versus"]',
+        html: '<span class="tooltip-text">⚔️ Đối Kháng 2 Dãy</span><span class="tooltip-badge">PK 1vs1</span>'
+      },
+      {
+        selector: '.seating-mode-card[data-mode="all_groups"]',
+        html: '<span class="tooltip-text">🏆 Đại Chiến 4 Tổ</span><span class="tooltip-badge">4 Tổ</span>'
+      },
+      {
+        selector: '.seating-mode-card[data-mode="row"]',
+        html: '<span class="tooltip-text">📏 Gọi Hàng Ngang</span><span class="tooltip-badge">Cả hàng</span>'
+      },
+      {
+        selector: '#btnSeatingPanelSettings',
+        html: '<span class="tooltip-text">⚙️ Cài Đặt Sơ Đồ Lớp</span>'
+      },
+      {
+        selector: '#btnUnassignedExpandTab',
+        html: '<span class="tooltip-text">🎒 Chưa Xếp Chỗ</span>'
+      },
+      {
+        selector: '#btnSeatingResetRound',
+        html: '<span class="tooltip-text">🔄 Làm Mới Danh Sách Gọi Tên</span>'
+      }
+    ];
+
+    items.forEach(item => {
+      const el = panel.querySelector(item.selector);
+      if (!el) return;
+
+      el.addEventListener('mouseenter', () => {
+        // Chỉ hiện tooltip khi panel đang ở trạng thái thu gọn
+        if (!panel.classList.contains('collapsed')) return;
+
+        // Tạm lưu title gốc và làm rỗng để ngăn chặn tooltip mặc định của trình duyệt
+        if (el.hasAttribute('title') && el.getAttribute('title')) {
+          el.setAttribute('data-stored-title', el.getAttribute('title'));
+          el.removeAttribute('title');
+        }
+
+        tooltipEl.innerHTML = item.html;
+        tooltipEl.classList.toggle('dice-tooltip', !!item.isDice);
+
+        const rect = el.getBoundingClientRect();
+        const tooltipX = rect.right + 12;
+        const tooltipY = rect.top + rect.height / 2;
+
+        tooltipEl.style.left = `${tooltipX}px`;
+        tooltipEl.style.top = `${tooltipY}px`;
+        tooltipEl.classList.add('show');
+      });
+
+      el.addEventListener('mouseleave', () => {
+        tooltipEl.classList.remove('show');
+        // Khôi phục title mặc định nếu có
+        const stored = el.getAttribute('data-stored-title');
+        if (stored) {
+          el.setAttribute('title', stored);
+        }
+      });
+
+      el.addEventListener('click', () => {
+        tooltipEl.classList.remove('show');
+      });
+    });
+
+    // Ẩn tooltip khi cuộn hoặc đổi kích thước cửa sổ
+    window.addEventListener('scroll', () => tooltipEl.classList.remove('show'), { passive: true });
+    window.addEventListener('resize', () => tooltipEl.classList.remove('show'), { passive: true });
+  }
+
+  // ============================================================================
   // HÀM VẼ GIAO DIỆN (RENDER DOM)
   // ============================================================================
   function renderSeatingModule() {
@@ -926,6 +1031,7 @@
     renderTeacherDeskPosition();
     initTeacherDeskInteractions();
     initModesPanelCollapse();
+    initSmartSidebarTooltips();
 
     // Nếu lớp đã xếp đủ 100% học sinh thì mặc định thu gọn; nếu còn học sinh chưa xếp thì mở ra để Thầy xếp
     const unassigned = getUnassignedStudents();

@@ -3267,4 +3267,92 @@ body.stage-celebrate-group-4 .winner-headline {
   color: #1e293b;
 }
 
+/* ==============================================================================
+   BONG BÓNG CHÚ THÍCH NỔI THÔNG MINH (SMART FLOATING TOOLTIP) CHO SIDEBAR THU GỌN
+   ============================================================================== */
+.seating-smart-tooltip {
+  position: fixed;
+  z-index: 9999999;
+  background: linear-gradient(135deg, rgba(15, 23, 42, 0.95) 0%, rgba(30, 41, 59, 0.95) 100%);
+  color: #ffffff;
+  padding: 7px 12px;
+  border-radius: 8px;
+  border: 1.5px solid #ea580c;
+  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.5), 0 0 14px rgba(234, 88, 12, 0.35);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  font-family: inherit;
+  font-size: 0.84rem;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  pointer-events: none;
+  white-space: nowrap;
+  opacity: 0;
+  visibility: hidden;
+  transform: translateY(-50%) translateX(-6px);
+  transition: opacity 0.18s cubic-bezier(0.4, 0, 0.2, 1),
+              transform 0.18s cubic-bezier(0.4, 0, 0.2, 1),
+              visibility 0.18s;
+  letter-spacing: 0.3px;
+}
+
+.seating-smart-tooltip.show {
+  opacity: 1;
+  visibility: visible;
+  transform: translateY(-50%) translateX(0);
+}
+
+/* Mũi tên nhọn trỏ vào icon bên trái */
+.seating-smart-tooltip::before {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: -7px;
+  transform: translateY(-50%);
+  width: 0;
+  height: 0;
+  border-top: 6px solid transparent;
+  border-bottom: 6px solid transparent;
+  border-right: 7px solid #ea580c;
+}
+
+.seating-smart-tooltip .tooltip-text {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: #fff7ed;
+}
+
+.seating-smart-tooltip .tooltip-badge {
+  background: rgba(234, 88, 12, 0.25);
+  border: 1px solid rgba(251, 146, 60, 0.6);
+  color: #fed7aa;
+  font-size: 0.68rem;
+  font-weight: 800;
+  padding: 2px 6px;
+  border-radius: 5px;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+}
+
+/* Biến thể đặc biệt cho nút Xúc Xắc 🎲 */
+.seating-smart-tooltip.dice-tooltip {
+  border-color: #f97316;
+  background: linear-gradient(135deg, rgba(30, 20, 15, 0.96) 0%, rgba(15, 23, 42, 0.96) 100%);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.6), 0 0 20px rgba(249, 115, 22, 0.45);
+}
+
+.seating-smart-tooltip.dice-tooltip::before {
+  border-right-color: #f97316;
+}
+
+.seating-smart-tooltip.dice-tooltip .tooltip-badge {
+  background: #ea580c;
+  color: #ffffff;
+  border-color: #ffedd5;
+  box-shadow: 0 2px 6px rgba(234, 88, 12, 0.4);
+}
+
 
