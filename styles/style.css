@@ -4584,7 +4584,7 @@
    MODAL QUẢN LÝ LỚP HỌC & ĐA SƠ ĐỒ (CLASS MANAGER & MULTI-CHART PRESETS)
    ========================================================================== */
 .class-manager-modal-card {
-  max-width: 720px;
+  max-width: 960px;
   width: 95%;
 }
 
@@ -4707,60 +4707,74 @@
 .manager-classes-list {
   display: flex;
   flex-direction: column;
-  gap: 10px;
-  margin-top: 4px;
+  gap: 12px;
+  margin-top: 6px;
+  max-height: 480px;
+  overflow-y: auto;
+  padding-right: 4px;
 }
 
 .manager-class-item {
   display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 12px 16px;
+  flex-direction: column;
+  gap: 12px;
+  padding: 14px 18px;
   background: #ffffff;
   border: 1.5px solid #e7ded5;
   border-radius: var(--radius-md);
   transition: all 0.2s ease;
-  gap: 12px;
 }
 
 .manager-class-item:hover {
   border-color: #fdba74;
-  box-shadow: 0 4px 14px rgba(74, 59, 50, 0.06);
+  box-shadow: 0 4px 16px rgba(74, 59, 50, 0.08);
 }
 
 .manager-class-item.current-active {
   background: #fffaf5;
   border-color: #ea580c;
-  box-shadow: 0 4px 16px rgba(234, 88, 12, 0.12);
+  box-shadow: 0 4px 18px rgba(234, 88, 12, 0.12);
 }
 
-.manager-class-left {
+.manager-class-main-row {
   display: flex;
   align-items: center;
-  gap: 12px;
+  justify-content: space-between;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.manager-class-info-block {
+  display: flex;
+  align-items: center;
+  gap: 14px;
   min-width: 0;
+  flex: 1;
 }
 
 .manager-class-icon {
-  font-size: 1.6rem;
+  font-size: 1.8rem;
   line-height: 1;
+  flex-shrink: 0;
 }
 
-.manager-class-meta {
+.manager-class-details {
   display: flex;
   flex-direction: column;
-  gap: 4px;
+  gap: 6px;
+  min-width: 0;
+  flex: 1;
 }
 
 .manager-class-title-row {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 10px;
   flex-wrap: wrap;
 }
 
 .manager-class-name {
-  font-size: 0.98rem;
+  font-size: 1.08rem;
   font-weight: 800;
   color: var(--text-main);
 }
@@ -4768,40 +4782,101 @@
 .manager-active-badge {
   background: #16a34a;
   color: #ffffff;
-  font-size: 0.7rem;
+  font-size: 0.72rem;
   font-weight: 800;
-  padding: 2px 7px;
+  padding: 3px 8px;
   border-radius: 999px;
   letter-spacing: 0.3px;
 }
 
-.manager-class-subinfo {
+.manager-class-badge-pill {
+  padding: 3px 10px;
+  border-radius: 6px;
+  font-weight: 700;
+  font-size: 0.8rem;
+  border: 1px solid #cbd5e1;
+}
+
+.manager-class-seating-row {
   display: flex;
   align-items: center;
   gap: 8px;
-  font-size: 0.78rem;
-  color: var(--text-secondary);
+  flex-wrap: wrap;
 }
 
-.manager-class-badge-pill {
-  background: #f1f5f9;
-  border: 1px solid #cbd5e1;
-  padding: 2px 8px;
-  border-radius: 6px;
-  font-weight: 600;
+.manager-seating-pill {
+  font-size: 0.82rem;
   color: #475569;
-}
-
-.manager-class-actions {
-  display: flex;
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  padding: 3px 10px;
+  border-radius: 6px;
+  display: inline-flex;
   align-items: center;
   gap: 6px;
-  flex-shrink: 0;
+  white-space: normal;
+  line-height: 1.4;
+}
+
+.manager-class-bottom-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding-top: 10px;
+  border-top: 1px dashed #e2e8f0;
+  flex-wrap: wrap;
+}
+
+.manager-class-actions-left,
+.manager-class-actions-right {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.current-selected-label {
+  font-size: 0.82rem;
+  font-weight: 800;
+  color: #16a34a;
+  background: #dcfce7;
+  padding: 5px 12px;
+  border-radius: 6px;
+  border: 1px solid #bbf7d0;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.btn-grade-filter {
+  padding: 5px 11px;
+  font-size: 0.8rem;
+  font-weight: 700;
+  border-radius: 6px;
+  border: 1.5px solid #cbd5e1;
+  background: #ffffff;
+  color: #475569;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.btn-grade-filter:hover {
+  background: #f1f5f9;
+  border-color: #94a3b8;
+  color: #0f172a;
+}
+
+.btn-grade-filter.active {
+  background: #ea580c;
+  border-color: #ea580c;
+  color: #ffffff;
+  box-shadow: 0 2px 8px rgba(234, 88, 12, 0.25);
 }
 
 .btn-manager-action {
-  padding: 6px 11px;
-  font-size: 0.8rem;
+  padding: 7px 12px;
+  font-size: 0.82rem;
   font-weight: 700;
   border-radius: 6px;
   border: 1.5px solid #d7c7bb;
@@ -4811,7 +4886,7 @@
   transition: all 0.15s ease;
   display: inline-flex;
   align-items: center;
-  gap: 4px;
+  gap: 5px;
 }
 
 .btn-manager-action:hover {

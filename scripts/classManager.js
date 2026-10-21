@@ -298,9 +298,33 @@ function submitCreateNewClassFromManager() {
   }
 }
 
+// Biến trạng thái tìm kiếm và lọc khối lớp
+let currentGradeFilter = 'all';
+let currentSearchKeyword = '';
+
+/**
+ * Đặt bộ lọc theo khối lớp (Tất cả, 6, 7, 8, 9)
+ */
+function setManagerGradeFilter(grade) {
+  currentGradeFilter = grade;
+  document.querySelectorAll('.btn-grade-filter').forEach(btn => {
+    btn.classList.toggle('active', btn.getAttribute('data-grade') === grade);
+  });
+  renderClassManagerModalList();
+}
+
+/**
+ * Lọc danh sách lớp theo từ khóa tìm kiếm
+ */
+function filterManagerClassesList() {
+  const input = document.getElementById('managerClassSearchInput');
+  currentSearchKeyword = input ? input.value.trim().toLowerCase() : '';
+  renderClassManagerModalList();
+}
+
 /**
  * Nâng cấp hàm render danh sách lớp trong Modal Quản Lý Lớp Học
- * Bổ sung nút: "👥 DS Học sinh" cho từng lớp
+ * Bố cục thoáng đãng, chống co rúm chữ, hỗ trợ tìm kiếm & lọc khi có nhiều lớp
  */
 function renderClassManagerModalList() {
   const container = document.getElementById('managerClassesList');
@@ -313,7 +337,34 @@ function renderClassManagerModalList() {
   if (countEl) countEl.textContent = state.classes.length;
   container.innerHTML = '';
 
-  state.classes.forEach(cls => {
+  // Lọc danh sách theo từ khóa tìm kiếm & khối lớp
+  let listToDisplay = state.classes;
+
+  if (currentSearchKeyword) {
+    listToDisplay = listToDisplay.filter(c => c.name.toLowerCase().includes(currentSearchKeyword));
+  }
+
+  if (currentGradeFilter !== 'all') {
+    listToDisplay = listToDisplay.filter(c => {
+      const match = c.name.match(/\b([6-9])|([6-9])[a-zA-Z]/i);
+      if (match) {
+        return (match[1] || match[2]) === currentGradeFilter;
+      }
+      return c.name.includes(currentGradeFilter);
+    });
+  }
+
+  if (listToDisplay.length === 0) {
+    container.innerHTML = `
+      <div style="text-align: center; padding: 36px 12px; color: #94a3b8; font-size: 0.92rem; background: #ffffff; border: 1.5px dashed #cbd5e1; border-radius: 8px;">
+        <div>🔍 Không tìm thấy lớp học nào phù hợp với bộ lọc!</div>
+        <div style="font-size: 0.8rem; margin-top: 6px;">Thầy hãy thử xóa từ khóa tìm kiếm hoặc chọn khối khác nhé.</div>
+      </div>
+    `;
+    return;
+  }
+
+  listToDisplay.forEach(cls => {
     const isCurrent = cls.id === state.currentClassId;
     const card = document.createElement('div');
     card.className = `manager-class-item ${isCurrent ? 'current-active' : ''}`;
@@ -334,25 +385,42 @@ function renderClassManagerModalList() {
     }
 
     card.innerHTML = `
-      <div class="manager-class-left">
-        <div class="manager-class-icon">${isCurrent ? '🌟' : '🏫'}</div>
-        <div class="manager-class-meta">
-          <div class="manager-class-title-row">
-            <span class="manager-class-name">${cls.name}</span>
-            ${isCurrent ? '<span class="manager-active-badge">ĐANG CHỌN</span>' : ''}
-          </div>
-          <div class="manager-class-subinfo">
-            <span class="manager-class-badge-pill" style="font-weight: 700; color: ${cls.students.length > 0 ? '#0369a1' : '#b45309'}; background: ${cls.students.length > 0 ? '#e0f2fe' : '#fef3c7'};">👥 ${cls.students.length} học sinh</span>
-            <span>${seatingInfo}</span>
+      <!-- HÀNG 1: THÔNG TIN NHẬN DIỆN LỚP HỌC (RỘNG RÃI, KHÔNG CO RÚM) -->
+      <div class="manager-class-main-row">
+        <div class="manager-class-info-block">
+          <div class="manager-class-icon">${isCurrent ? '🌟' : '🏫'}</div>
+          <div class="manager-class-details">
+            <div class="manager-class-title-row">
+              <span class="manager-class-name">${cls.name}</span>
+              ${isCurrent ? '<span class="manager-active-badge">✓ ĐANG CHỌN</span>' : ''}
+              <span class="manager-class-badge-pill" style="font-weight: 700; color: ${cls.students.length > 0 ? '#0369a1' : '#b45309'}; background: ${cls.students.length > 0 ? '#e0f2fe' : '#fef3c7'};">👥 ${cls.students.length} học sinh</span>
+            </div>
+            <div class="manager-class-seating-row">
+              <span class="manager-seating-pill">🪑 ${seatingInfo}</span>
+            </div>
           </div>
         </div>
+
+        <div class="manager-class-select-trigger">
+          ${!isCurrent 
+            ? `<button class="btn-manager-action btn-select-current" onclick="selectClassFromManager('${cls.id}')" title="Chuyển sang dùng lớp này">👉 Chọn lớp này</button>` 
+            : `<span class="current-selected-label">✓ Đang hoạt động</span>`
+          }
+        </div>
       </div>
-      <div class="manager-class-actions">
-        ${!isCurrent ? `<button class="btn-manager-action btn-select-current" onclick="selectClassFromManager('${cls.id}')" title="Chuyển sang dùng lớp này">👉 Chọn lớp</button>` : `<span style="font-size:0.8rem; font-weight:700; color:#16a34a; padding: 0 6px;">✓ Đang hoạt động</span>`}
-        <button class="btn-manager-action" onclick="openClassStudentEditor('${cls.id}')" title="Xem & nhập danh sách học sinh thật cho lớp này" style="color: #0284c7; border-color: #bae6fd; background: #f0f9ff; font-weight: 800;">👥 DS Học sinh</button>
-        <button class="btn-manager-action" onclick="openRenameClassModal('${cls.id}')" title="Đổi tên lớp học">✏️ Đổi tên</button>
-        <button class="btn-manager-action" onclick="cloneClassFromManager('${cls.id}')" title="Nhân bản lớp kèm sơ đồ">📋 Nhân bản</button>
-        ${state.classes.length > 1 ? `<button class="btn-manager-action btn-danger-class" onclick="deleteClassFromManager('${cls.id}')" title="Xóa lớp học này">🗑️ Xóa</button>` : ''}
+
+      <!-- HÀNG 2: THANH CÔNG CỤ THAO TÁC RỘNG RÃI -->
+      <div class="manager-class-bottom-toolbar">
+        <div class="manager-class-actions-left">
+          <button class="btn-manager-action btn-students-action" onclick="openClassStudentEditor('${cls.id}')" title="Xem danh sách, thêm bớt học sinh thật hoặc nạp Excel">
+            👥 Quản lý danh sách (${cls.students.length} HS)
+          </button>
+        </div>
+        <div class="manager-class-actions-right">
+          <button class="btn-manager-action" onclick="openRenameClassModal('${cls.id}')" title="Đổi tên lớp học">✏️ Đổi tên</button>
+          <button class="btn-manager-action" onclick="cloneClassFromManager('${cls.id}')" title="Nhân bản lớp kèm sơ đồ">📋 Nhân bản</button>
+          ${state.classes.length > 1 ? `<button class="btn-manager-action btn-danger-class" onclick="deleteClassFromManager('${cls.id}')" title="Xóa lớp học này">🗑️ Xóa lớp</button>` : ''}
+        </div>
       </div>
     `;
 
@@ -659,3 +727,5 @@ window.editStudentInEditor = editStudentInEditor;
 window.updateEditorPasteCount = updateEditorPasteCount;
 window.handleEditorExcelUpload = handleEditorExcelUpload;
 window.saveClassStudentEditorChanges = saveClassStudentEditorChanges;
+window.setManagerGradeFilter = setManagerGradeFilter;
+window.filterManagerClassesList = filterManagerClassesList;

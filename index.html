@@ -1647,7 +1647,24 @@
 
         <!-- Danh sách các lớp học hiện có -->
         <div class="existing-classes-section">
-          <div class="section-subheading">📋 DANH SÁCH LỚP HỌC HIỆN TẠI (<span id="managerClassCount">0</span>)</div>
+          <div class="classes-section-header" style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px; margin-bottom: 8px;">
+            <div class="section-subheading" style="margin-bottom: 0;">📋 DANH SÁCH LỚP HỌC HIỆN TẠI (<span id="managerClassCount">0</span>)</div>
+            
+            <!-- Bộ lọc & Tìm kiếm lớp nhanh cho giáo viên -->
+            <div style="display: flex; gap: 8px; align-items: center; flex-wrap: wrap;">
+              <div class="manager-search-box" style="position: relative; width: 180px;">
+                <input type="text" id="managerClassSearchInput" class="excel-select" placeholder="🔍 Tìm tên lớp..." style="padding: 6px 10px 6px 28px; font-size: 0.82rem; width: 100%; border-radius: 6px;" oninput="filterManagerClassesList()">
+                <span style="position: absolute; left: 8px; top: 50%; transform: translateY(-50%); font-size: 0.8rem; color: #94a3b8; pointer-events: none;">🔍</span>
+              </div>
+              <div class="manager-grade-filters" style="display: flex; gap: 4px;">
+                <button type="button" class="btn-grade-filter active" data-grade="all" onclick="setManagerGradeFilter('all')">Tất cả</button>
+                <button type="button" class="btn-grade-filter" data-grade="6" onclick="setManagerGradeFilter('6')">Khối 6</button>
+                <button type="button" class="btn-grade-filter" data-grade="7" onclick="setManagerGradeFilter('7')">Khối 7</button>
+                <button type="button" class="btn-grade-filter" data-grade="8" onclick="setManagerGradeFilter('8')">Khối 8</button>
+                <button type="button" class="btn-grade-filter" data-grade="9" onclick="setManagerGradeFilter('9')">Khối 9</button>
+              </div>
+            </div>
+          </div>
           <div id="managerClassesList" class="manager-classes-list">
             <!-- Render động bằng JavaScript -->
           </div>
