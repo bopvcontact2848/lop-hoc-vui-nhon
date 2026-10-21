@@ -629,8 +629,8 @@
                 🗑️ Xóa
               </button>
             </div>
-            <button id="btnOpenClassManagerAll" class="btn-secondary" style="margin-top: 6px; width: 100%; justify-content: center; font-size: 0.82rem; font-weight: 700;" onclick="openClassManagerModal()" title="Xem toàn bộ các lớp học và nạp bộ 5 lớp mẫu demo">
-              🏫 Danh sách tất cả các lớp & Lớp mẫu
+            <button id="btnOpenClassManagerAll" class="btn-secondary" style="margin-top: 6px; width: 100%; justify-content: center; font-size: 0.82rem; font-weight: 700;" onclick="openClassManagerModal()" title="Xem và quản lý tất cả các lớp học cùng sơ đồ chỗ ngồi">
+              🏫 Quản lý tất cả các lớp học & Sơ đồ
             </button>
           </div>
 
@@ -1585,22 +1585,6 @@
         <button id="closeClassManagerModal" class="modal-close" onclick="closeClassManagerModal()">&times;</button>
       </div>
       <div class="modal-body class-manager-body">
-        <!-- Banner nạp / xóa các lớp mẫu có sẵn sơ đồ -->
-        <div class="class-quick-seed-banner">
-          <div class="seed-banner-text">
-            <strong>✨ Bộ 5 lớp mẫu có sẵn sơ đồ (9A4, 9A1, 8A2, 7A3, 6A5)</strong>
-            <span>Phục vụ chạy thử nghiệm. Thầy có thể nạp lại hoặc xóa toàn bộ lớp mẫu bất kỳ lúc nào.</span>
-          </div>
-          <div style="display: flex; gap: 8px; flex-wrap: wrap;">
-            <button class="btn-seed-classes" onclick="seedSampleClassesAction()" title="Nạp 5 lớp học mẫu để trải nghiệm thử">
-              ⚡ Nạp 5 lớp mẫu
-            </button>
-            <button class="btn-manager-action btn-danger-class" onclick="deleteSampleClasses(true)" style="padding: 7px 12px; font-weight: 700;" title="Xóa toàn bộ các lớp mẫu demo">
-              🗑️ Xóa lớp mẫu
-            </button>
-          </div>
-        </div>
-
         <!-- Khối Thêm Lớp Mới -->
         <div class="add-class-section">
           <div class="section-subheading">➕ THÊM LỚP HỌC MỚI & NHẬP DANH SÁCH THẬT</div>
@@ -1610,7 +1594,6 @@
               <option value="paste" selected>📋 Dán danh sách học sinh thật (Khuyên dùng)</option>
               <option value="excel">📁 Tải file Excel (.xlsx, .xls)</option>
               <option value="empty">📄 Lớp trống (0 học sinh - tự nhập sau)</option>
-              <option value="sample_seating">🌟 Kèm 45 HS mẫu & sơ đồ chuẩn</option>
               <option value="clone">📋 Sao chép từ lớp đang chọn</option>
             </select>
             <button class="btn-primary" style="white-space: nowrap; font-weight: 800;" onclick="submitCreateNewClassFromManager()">➕ Tạo lớp</button>
