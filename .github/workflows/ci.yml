@@ -1,0 +1,48 @@
+name: CI - Kiem Tra Chat Luong Ma Nguon
+
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+  workflow_dispatch:
+
+jobs:
+  code-quality:
+    name: Kiem Tra Cu Phap va Chat Luong Ma Nguon
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: 📥 Tai ma nguon tu GitHub (Checkout)
+        uses: actions/checkout@v4
+
+      - name: ⚙️ Cai dat moi truong Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: ''
+
+      - name: 🔍 Kiem tra cu phap cac file JavaScript (Syntax Check)
+        run: node tools/checkSyntax.js
+
+      - name: 🛡️ Kiem tra chuan code voi ESLint
+        run: npx eslint server.js scripts/
+
+      - name: 📦 Kiem tra tinh toan ven cua cac file goc quan trong
+        run: |
+          for file in index.html remote.html server.js scripts/app.js; do
+            if [ ! -s "$file" ]; then
+              echo "❌ File thieu hoac bi rong: $file"
+              exit 1
+            fi
+            echo "✅ File ton tai va hop le: $file"
+          done
+
+      - name: 📋 Tong ket ket qua kiem tra len GitHub
+        if: always()
+        run: |
+          echo "### 🚀 Ket Qua Kiem Tra CI/CD Tuan Thu Quy Chuan" >> $GITHUB_STEP_SUMMARY
+          echo "- **Trang thai:** ${{ job.status == 'success' && '✅ DAT CHUAN (PASS)' || '❌ THAT BAI (FAILED)' }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Kiem tra cu phap Node.js:** Hoan tat" >> $GITHUB_STEP_SUMMARY
+          echo "- **Kiem tra quy chuan ESLint:** Hoan tat" >> $GITHUB_STEP_SUMMARY
+          echo "- **Thoi gian kiem tra:** $(date '+%Y-%m-%d %H:%M:%S UTC')" >> $GITHUB_STEP_SUMMARY

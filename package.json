@@ -5,7 +5,13 @@
   "main": "server.js",
   "scripts": {
     "start": "node server.js",
-    "check": "node --check server.js && node --check scripts/app.js"
+    "check": "node tools/checkSyntax.js",
+    "lint": "npx eslint server.js scripts/",
+    "lint:fix": "npx eslint server.js scripts/ --fix",
+    "validate": "node tools/checkSyntax.js && npx eslint server.js scripts/"
+  },
+  "devDependencies": {
+    "eslint": "^9.20.0"
   },
   "keywords": [
     "wheel-of-fortune",
