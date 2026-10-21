@@ -863,70 +863,157 @@
               <span class="picker-header-title">🎯 Người Lên Bảng Trả Lời</span>
             </div>
 
-            <!-- Màn hình 1: Thẻ lướt Slot -->
-            <div id="displayScreen" class="display-screen active">
-              <!-- Nội dung giao diện sẽ biến đổi theo chế độ quay -->
-            </div>
-
-            <!-- Màn hình 2: Vòng quay Bánh xe Lucky Wheel -->
-            <div id="wheelStage" class="wheel-stage">
-              <div class="wheel-outer-wrapper">
-                <div class="wheel-halo"></div>
-                <div class="wheel-pointer" id="wheelPointer"></div>
-                <canvas id="luckyWheelCanvas" class="wheel-canvas" width="520" height="520"></canvas>
-                <div class="wheel-center-cap" id="wheelCenterCap" title="Bấm vào đây hoặc nút QUAY để quay vòng!">🎓</div>
-              </div>
-              <div id="wheelWinnerCard" class="wheel-winner-card" style="display: none;"></div>
-            </div>
-
-            <!-- Nút hành động quay trung tâm -->
-            <div class="action-controls">
-              <button id="btnSpin" class="btn-spin-master">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
-                  <circle cx="12" cy="12" r="10"></circle>
-                  <polygon points="10 8 16 12 10 16 10 8"></polygon>
-                </svg>
-                <span>QUAY TÊN NGAY</span>
-              </button>
-              <div class="spin-hint">
-                <span>Ấn phím</span> <kbd>Space</kbd> <span>hoặc click chuột để quay</span>
-              </div>
-
-              <!-- Bộ Đồng Hồ Đếm Ngược Trả Lời Câu Hỏi (Countdown Timer Widget) -->
-              <div id="countdownTimerWidget" class="countdown-timer-widget">
-                <div class="timer-display-col">
-                  <div class="timer-dial-wrapper">
-                    <svg class="timer-svg" viewBox="0 0 90 90">
-                      <circle class="timer-svg-bg" cx="45" cy="45" r="40"></circle>
-                      <circle id="timerSvgProgress" class="timer-svg-progress" cx="45" cy="45" r="40"></circle>
-                    </svg>
-                    <span class="timer-dial-icon">⏱️</span>
+            <!-- BỐ CỤC 2 CỘT: CỘT ĐIỀU KHIỂN BÊN TRÁI & SÂN KHẤU VÒNG QUAY BÊN PHẢI (TƯƠNG TỰ SƠ ĐỒ LỚP HỌC) -->
+            <div class="wheel-main-workspace" id="wheelMainWorkspace">
+              <!-- CỘT TRÁI: BẢNG ĐIỀU KHIỂN VÒNG QUAY MAY MẮN -->
+              <aside id="wheelControlPanel" class="wheel-control-panel">
+                <!-- 1. Tiêu đề Bảng điều khiển & Nút thu gọn -->
+                <div class="wheel-panel-header">
+                  <div class="wheel-panel-header-main">
+                    <span class="wheel-panel-icon">🎡</span>
+                    <div class="wheel-panel-text">
+                      <span class="wheel-panel-title">VÒNG QUAY MAY MẮN</span>
+                      <span class="wheel-panel-desc">Bốc thăm ngẫu nhiên</span>
+                    </div>
                   </div>
-                  <div class="timer-info-text">
-                    <span class="timer-label">Đồng hồ đếm ngược</span>
-                    <span id="timerDigits" class="timer-digits">30s</span>
+                  <button type="button" id="btnToggleWheelPanel" class="btn-toggle-wheel-panel" onclick="toggleWheelPanelCollapse()" title="Thu gọn bảng điều khiển (Chỉ hiện icon để mở rộng vòng quay)">
+                    <span id="wheelPanelToggleArrow" class="toggle-wheel-panel-arrow">◀</span>
+                  </button>
+                </div>
+
+                <!-- 2. Nút Quay Siêu Nổi Bật (Đặt trên đầu cột) -->
+                <div class="panel-spin-wrapper">
+                  <button id="btnSpin" class="btn-spin-master panel-spin-btn wheel-spin-btn" title="Quay Vòng May Mắn (Nhấn phím Space hoặc Click)">
+                    <span class="spin-wheel-icon">🎡</span>
+                    <span class="spin-btn-label">QUAY TÊN NGAY</span>
+                    <span class="spin-hotkey-badge">Space</span>
+                  </button>
+                  <div class="spin-hint wheel-panel-spin-hint">
+                    <span>Ấn phím</span> <kbd>Space</kbd> <span>hoặc click chuột</span>
                   </div>
                 </div>
-                <div class="timer-controls-col">
-                  <button id="btnTimer15" class="timer-preset-btn" title="Đếm ngược 15 giây">15s</button>
-                  <button id="btnTimer30" class="timer-preset-btn" title="Đếm ngược 30 giây">30s</button>
-                  <button id="btnTimer60" class="timer-preset-btn" title="Đếm ngược 60 giây">60s</button>
-                  <button id="btnTimerToggle" class="timer-action-btn btn-timer-toggle" title="Bắt đầu / Tạm dừng đếm">▶️ Bắt đầu</button>
-                  <button id="btnTimerReset" class="timer-action-btn btn-timer-reset" title="Đặt lại đồng hồ">↺ Đặt lại</button>
-                </div>
-              </div>
 
-              <!-- Các nút phụ sau khi quay -->
-              <div id="postSpinActions" class="post-spin-actions">
-                <button id="btnReSpin" class="btn-header">
-                  🔄 Quay tiếp
-                </button>
-                <button id="btnOpenBonusWheel" class="btn-header" style="background: rgba(245, 158, 11, 0.25); border-color: rgba(245, 158, 11, 0.5); color: #fde68a;" title="Quay điểm số hoặc phần thưởng cho học sinh">
-                  🎁 Quay điểm thưởng
-                </button>
-                <button id="btnAbsentReturn" class="btn-header" style="color: #fca5a5;" title="Học sinh này vắng mặt, đưa lại danh sách chờ">
-                  ⚠️ Báo vắng mặt (Hoàn lại)
-                </button>
+                <!-- 3. Khu vực Chọn Chế Độ Quay (Cá Nhân vs Gọi Nhóm 6 - 12 nhóm) -->
+                <div class="wheel-panel-section">
+                  <div class="wheel-panel-section-title">CHẾ ĐỘ QUAY</div>
+                  <div class="wheel-modes-list">
+                    <!-- Chế độ Cá Nhân -->
+                    <button type="button" id="btnWheelCardStudent" class="wheel-mode-card active" onclick="setWheelTargetType('student')" title="👤 Bốc 1 học sinh may mắn ngẫu nhiên">
+                      <div class="mode-card-icon">👤</div>
+                      <div class="mode-card-info">
+                        <div class="mode-card-top">
+                          <span class="mode-card-title">Cá Nhân</span>
+                          <span class="mode-card-badge badge-blue">Học sinh</span>
+                        </div>
+                        <span class="mode-card-desc">Bốc 1 bạn ngẫu nhiên</span>
+                      </div>
+                    </button>
+
+                    <!-- Chế độ Gọi Nhóm -->
+                    <div class="wheel-group-mode-wrapper">
+                      <button type="button" id="btnWheelCardGroup" class="wheel-mode-card" onclick="setWheelTargetType('group')" title="👥 Gọi Theo Nhóm: Quay chọn 1 nhóm từ 6 đến 12 nhóm">
+                        <div class="mode-card-icon">👥</div>
+                        <div class="mode-card-info">
+                          <div class="mode-card-top">
+                            <span class="mode-card-title">Gọi Theo Nhóm</span>
+                            <span id="wheelPanelGroupBadge" class="mode-card-badge badge-orange">6 Nhóm</span>
+                          </div>
+                          <span class="mode-card-desc">Quay chọn nhóm lên bảng</span>
+                        </div>
+                      </button>
+
+                      <!-- Bảng chọn nhanh số lượng nhóm (6 đến 12 nhóm) -->
+                      <div id="wheelPanelGroupQuickSelect" class="wheel-group-quick-select" style="display: none;">
+                        <div class="group-select-label">Số lượng nhóm:</div>
+                        <div class="group-buttons-grid">
+                          <button type="button" class="group-select-btn active" data-count="6" onclick="selectWheelGroupCount(6)">6</button>
+                          <button type="button" class="group-select-btn" data-count="7" onclick="selectWheelGroupCount(7)">7</button>
+                          <button type="button" class="group-select-btn" data-count="8" onclick="selectWheelGroupCount(8)">8</button>
+                          <button type="button" class="group-select-btn" data-count="9" onclick="selectWheelGroupCount(9)">9</button>
+                          <button type="button" class="group-select-btn" data-count="10" onclick="selectWheelGroupCount(10)">10</button>
+                          <button type="button" class="group-select-btn" data-count="11" onclick="selectWheelGroupCount(11)">11</button>
+                          <button type="button" class="group-select-btn" data-count="12" onclick="selectWheelGroupCount(12)">12</button>
+                        </div>
+                        <button type="button" id="btnViewWheelGroupMembers" class="btn-wheel-panel-members" onclick="openWheelGroupMembersModal()" title="Xem danh sách phân bổ học sinh vào các nhóm">
+                          <span>📋 Danh sách thành viên</span>
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- 4. Bộ Đồng Hồ Đếm Ngược Trả Lời Câu Hỏi -->
+                <div class="wheel-panel-section">
+                  <div class="wheel-panel-section-title">ĐỒNG HỒ ĐẾM NGƯỢC</div>
+                  <div id="countdownTimerWidget" class="countdown-timer-widget wheel-panel-timer">
+                    <div class="timer-display-col">
+                      <div class="timer-dial-wrapper">
+                        <svg class="timer-svg" viewBox="0 0 90 90">
+                          <circle class="timer-svg-bg" cx="45" cy="45" r="40"></circle>
+                          <circle id="timerSvgProgress" class="timer-svg-progress" cx="45" cy="45" r="40"></circle>
+                        </svg>
+                        <span class="timer-dial-icon">⏱️</span>
+                      </div>
+                      <div class="timer-info-text">
+                        <span class="timer-label">Đồng hồ đếm ngược</span>
+                        <span id="timerDigits" class="timer-digits">30s</span>
+                      </div>
+                    </div>
+                    <div class="timer-controls-col">
+                      <div class="timer-presets-row">
+                        <button id="btnTimer15" class="timer-preset-btn" title="15 giây">15s</button>
+                        <button id="btnTimer30" class="timer-preset-btn" title="30 giây">30s</button>
+                        <button id="btnTimer60" class="timer-preset-btn" title="60 giây">60s</button>
+                      </div>
+                      <div class="timer-actions-row">
+                        <button id="btnTimerToggle" class="timer-action-btn btn-timer-toggle" title="Bắt đầu / Tạm dừng đếm">▶️ Bắt đầu</button>
+                        <button id="btnTimerReset" class="timer-action-btn btn-timer-reset" title="Đặt lại đồng hồ">↺ Đặt lại</button>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- 5. Các thao tác phụ sau khi quay -->
+                <div id="postSpinActions" class="post-spin-actions wheel-panel-post-actions">
+                  <button id="btnReSpin" class="btn-panel-action" title="Quay tiếp lượt khác">
+                    🔄 Quay tiếp
+                  </button>
+                  <button id="btnOpenBonusWheel" class="btn-panel-action btn-bonus-action" onclick="openBonusWheelModal()" title="Mở vòng quay điểm thưởng">
+                    🎁 Quay điểm thưởng
+                  </button>
+                  <button id="btnAbsentReturn" class="btn-panel-action btn-absent-action" title="Học sinh này vắng mặt, đưa lại danh sách">
+                    ⚠️ Báo vắng mặt
+                  </button>
+                </div>
+
+                <!-- 6. Quản lý Lượt Gọi & Cài Đặt Nhanh -->
+                <div class="wheel-panel-footer">
+                  <button type="button" class="btn-panel-footer" onclick="openGameSettingsModal('wheel')" title="Cài đặt Vòng Quay May Mắn (⚙️)">
+                    <span>⚙️ Cài đặt</span>
+                  </button>
+                  <button type="button" class="btn-panel-footer" onclick="resetCalledList(true)" title="Làm mới lượt gọi để tất cả học sinh / nhóm có thể quay lại từ đầu">
+                    <span>🔄 Làm mới</span>
+                  </button>
+                </div>
+              </aside>
+
+              <!-- CỘT PHẢI: KHU VỰC VÒNG QUAY BÁNH XE CHÍNH -->
+              <div class="wheel-stage-workspace">
+                <!-- Màn hình 1: Thẻ lướt Slot -->
+                <div id="displayScreen" class="display-screen">
+                  <!-- Nội dung giao diện sẽ biến đổi theo chế độ quay -->
+                </div>
+
+                <!-- Màn hình 2: Vòng quay Bánh xe Lucky Wheel -->
+                <div id="wheelStage" class="wheel-stage active">
+                  <div class="wheel-outer-wrapper">
+                    <div class="wheel-halo"></div>
+                    <div class="wheel-pointer" id="wheelPointer"></div>
+                    <canvas id="luckyWheelCanvas" class="wheel-canvas" width="520" height="520"></canvas>
+                    <div class="wheel-center-cap" id="wheelCenterCap" title="Bấm vào đây hoặc nút QUAY để quay vòng!">🎓</div>
+                  </div>
+                  <div id="wheelWinnerCard" class="wheel-winner-card" style="display: none;"></div>
+                </div>
               </div>
             </div>
           </div>

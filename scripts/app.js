@@ -445,8 +445,12 @@ function switchViewMode(mode) {
   const slotModeBar = document.getElementById('slotModeBar');
   const btnWheelSettings = document.getElementById('btnWheelStageSettings');
   const wheelModeSelector = document.getElementById('wheelModeSelector');
+  const subbarClassic = document.getElementById('subbarClassic');
+  const wheelControlPanel = document.getElementById('wheelControlPanel');
 
   if (mode === 'slot') {
+    if (subbarClassic) subbarClassic.style.display = 'flex';
+    if (wheelControlPanel) wheelControlPanel.style.display = 'none';
     if (DOM.displayScreen) DOM.displayScreen.classList.add('active');
     if (DOM.wheelStage) DOM.wheelStage.classList.remove('active');
     if (stageIcon) stageIcon.textContent = '🎰';
@@ -457,6 +461,9 @@ function switchViewMode(mode) {
     if (wheelModeSelector) wheelModeSelector.style.display = 'none';
     renderDefaultStage();
   } else {
+    // Chế độ Vòng Quay May Mắn (Các tính năng đã chuyển sang cột bên trái tương tự sơ đồ lớp)
+    if (subbarClassic) subbarClassic.style.display = 'none';
+    if (wheelControlPanel) wheelControlPanel.style.display = 'flex';
     if (DOM.displayScreen) DOM.displayScreen.classList.remove('active');
     if (DOM.wheelStage) DOM.wheelStage.classList.add('active');
     if (DOM.wheelWinnerCard) DOM.wheelWinnerCard.style.display = 'none';
@@ -464,8 +471,6 @@ function switchViewMode(mode) {
     if (stageTitle) stageTitle.textContent = 'Vòng Quay May Mắn';
     if (stageTag) stageTag.className = 'current-game-stage-tag';
     if (slotModeBar) slotModeBar.style.display = 'none';
-    if (btnWheelSettings) btnWheelSettings.style.display = 'inline-flex';
-    if (wheelModeSelector) wheelModeSelector.style.display = 'inline-flex';
     if (typeof updateWheelModeUI === 'function') updateWheelModeUI();
     if (typeof drawLuckyWheel === 'function') drawLuckyWheel();
   }
@@ -945,6 +950,26 @@ function closeWheelGroupDropdown() {
   if (menu) menu.classList.remove('open');
 }
 
+/**
+ * Thu gọn / Mở rộng Cột điều khiển Vòng Quay May Mắn (tương tự Sơ đồ lớp học)
+ */
+function toggleWheelPanelCollapse() {
+  const panel = document.getElementById('wheelControlPanel');
+  const arrow = document.getElementById('wheelPanelToggleArrow');
+  if (!panel) return;
+
+  panel.classList.toggle('collapsed');
+  const isCollapsed = panel.classList.contains('collapsed');
+
+  if (arrow) {
+    arrow.textContent = isCollapsed ? '▶' : '◀';
+  }
+
+  try {
+    localStorage.setItem('wheel_panel_collapsed_v1', isCollapsed ? '1' : '0');
+  } catch (e) {}
+}
+
 function updateWheelModeUI() {
   const state = window.state;
   if (!state) return;
@@ -952,30 +977,41 @@ function updateWheelModeUI() {
   const isGroup = (state.wheelTargetType === 'group');
   const groupCount = (typeof getWheelGroupCount === 'function') ? getWheelGroupCount() : (state.wheelGroupCount || 6);
 
-  const btnStudent = document.getElementById('btnWheelModeStudent');
-  const btnGroup = document.getElementById('btnWheelModeGroup');
-  const badge = document.getElementById('wheelGroupCountBadge');
-  const btnMembers = document.getElementById('btnViewWheelGroupMembers');
-  const btnSpin = document.getElementById('btnSpin');
+  // 1. Đồng bộ các nút cũ (nếu có trên subbar)
+  const btnStudentOld = document.getElementById('btnWheelModeStudent');
+  const btnGroupOld = document.getElementById('btnWheelModeGroup');
+  const badgeOld = document.getElementById('wheelGroupCountBadge');
+  const btnMembersOld = document.getElementById('btnViewWheelGroupMembers');
 
-  if (btnStudent) btnStudent.classList.toggle('active', !isGroup);
-  if (btnGroup) btnGroup.classList.toggle('active', isGroup);
-  if (badge) badge.textContent = `${groupCount} nhóm`;
+  if (btnStudentOld) btnStudentOld.classList.toggle('active', !isGroup);
+  if (btnGroupOld) btnGroupOld.classList.toggle('active', isGroup);
+  if (badgeOld) badgeOld.textContent = `${groupCount} nhóm`;
+  if (btnMembersOld) btnMembersOld.style.display = isGroup ? 'inline-flex' : 'none';
 
-  if (btnMembers) {
-    btnMembers.style.display = isGroup ? 'inline-flex' : 'none';
+  // 2. Đồng bộ các thẻ trên Cột điều khiển bên trái (Wheel Control Panel)
+  const cardStudent = document.getElementById('btnWheelCardStudent');
+  const cardGroup = document.getElementById('btnWheelCardGroup');
+  const panelBadge = document.getElementById('wheelPanelGroupBadge');
+  const groupQuickSelect = document.getElementById('wheelPanelGroupQuickSelect');
+
+  if (cardStudent) cardStudent.classList.toggle('active', !isGroup);
+  if (cardGroup) cardGroup.classList.toggle('active', isGroup);
+  if (panelBadge) panelBadge.textContent = `${groupCount} Nhóm`;
+  if (groupQuickSelect) {
+    groupQuickSelect.style.display = isGroup ? 'block' : 'none';
   }
 
-  // Cập nhật nhãn của nút quay lớn
+  // 3. Cập nhật nhãn của nút quay lớn
+  const btnSpin = document.getElementById('btnSpin');
   if (btnSpin && state.viewMode === 'wheel') {
-    const spanText = btnSpin.querySelector('span');
-    if (spanText) {
-      spanText.textContent = isGroup ? 'QUAY NHÓM NGAY' : 'QUAY TÊN NGAY';
+    const labelSpan = btnSpin.querySelector('.spin-btn-label') || btnSpin.querySelector('span');
+    if (labelSpan) {
+      labelSpan.textContent = isGroup ? 'QUAY NHÓM NGAY' : 'QUAY TÊN NGAY';
     }
   }
 
-  // Cập nhật nút active trong dropdown
-  const optBtns = document.querySelectorAll('.group-opt-btn');
+  // 4. Cập nhật trạng thái active của các nút chọn số nhóm (6..12)
+  const optBtns = document.querySelectorAll('.group-opt-btn, .group-select-btn');
   optBtns.forEach(btn => {
     const c = parseInt(btn.getAttribute('data-count'), 10);
     btn.classList.toggle('active', isGroup && c === groupCount);
@@ -1811,6 +1847,17 @@ function init() {
   }
   updateUI();
   renderDefaultStage();
+
+  // Khôi phục trạng thái thu gọn của Cột điều khiển Vòng Quay
+  try {
+    if (localStorage.getItem('wheel_panel_collapsed_v1') === '1') {
+      const panel = document.getElementById('wheelControlPanel');
+      const arrow = document.getElementById('wheelPanelToggleArrow');
+      if (panel) panel.classList.add('collapsed');
+      if (arrow) arrow.textContent = '▶';
+    }
+  } catch (e) {}
+
   console.log("Ứng dụng Vòng Quay Lớp Học (Mô-đun hóa) đã sẵn sàng!");
 }
 
@@ -2599,3 +2646,4 @@ window.closeWheelGroupMembersModal = closeWheelGroupMembersModal;
 window.renderWheelGroupsView = renderWheelGroupsView;
 window.reshuffleWheelGroupsAction = reshuffleWheelGroupsAction;
 window.copyWheelGroupsToClipboard = copyWheelGroupsToClipboard;
+window.toggleWheelPanelCollapse = toggleWheelPanelCollapse;
