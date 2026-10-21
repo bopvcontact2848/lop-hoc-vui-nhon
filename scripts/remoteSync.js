@@ -343,6 +343,14 @@
       case 'reset_called':
         if (typeof window.resetCalledList === 'function') {
           window.resetCalledList(false);
+          if (window.SeatingChartModule && typeof window.SeatingChartModule.syncRoundStatusUI === 'function') {
+            window.SeatingChartModule.syncRoundStatusUI();
+          }
+          if (typeof showToast === 'function') {
+            const cls = typeof getCurrentClass === 'function' ? getCurrentClass() : null;
+            const clsName = cls ? `lớp "${cls.name}"` : 'lớp học';
+            showToast(`📱 Remote điện thoại vừa làm mới lượt gọi cho ${clsName}!`, 'info');
+          }
           broadcastFullState();
         }
         break;

@@ -205,6 +205,33 @@ class SoundFX {
     }
   }
 
+  // Âm thanh vệt sáng laser / tia sét bốc thăm gọi tên (Web Audio Synthesizer)
+  playLaserZap(pitch = 750) {
+    if (!window.state || !window.state.soundEnabled) return;
+    this.init();
+    if (!this.ctx) return;
+
+    try {
+      const now = this.ctx.currentTime;
+      const osc = this.ctx.createOscillator();
+      const gain = this.ctx.createGain();
+      osc.type = 'sawtooth';
+      osc.frequency.setValueAtTime(pitch, now);
+      osc.frequency.exponentialRampToValueAtTime(130, now + 0.16);
+
+      gain.gain.setValueAtTime(0.2, now);
+      gain.gain.exponentialRampToValueAtTime(0.001, now + 0.16);
+
+      osc.connect(gain);
+      gain.connect(this.ctx.destination);
+
+      osc.start(now);
+      osc.stop(now + 0.16);
+    } catch (e) {
+      console.warn("Audio playLaserZap error:", e);
+    }
+  }
+
   // Tiếng tích tắc đếm ngược hồi hộp của đồng hồ
   playTimerTick(secondsLeft = 10) {
     if (!window.state || !window.state.soundEnabled) return;

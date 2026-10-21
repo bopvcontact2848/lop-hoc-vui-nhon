@@ -80,6 +80,7 @@
     groupProfiles: JSON.parse(JSON.stringify(DEFAULT_GROUP_PROFILES)), // Hồ sơ tên và linh vật 4 tổ
     selectedStudent: null, // Thao tác Click/Touch: { type: 'unassigned'|'seat', name: '', seatKey: '' }
     isSpinning: false,   // Trạng thái đang chạy hiệu ứng gọi tên
+    isCelebrating: false, // Trạng thái đang khóa đèn/laser và vinh danh người thắng
     callingMode: 'single', // Chế độ gọi tên: 'single' | 'desk' | 'versus' | 'all_groups' | 'row'
     activePresetId: 'preset_default', // ID phương án sơ đồ hiện tại
     presets: [],         // Danh sách các phương án sơ đồ của lớp này
@@ -627,6 +628,332 @@
   }
 
   // ============================================================================
+  // HIỆU ỨNG VỆT SÁNG LASER / TIA SÉT BẮN TỪ BẢNG ĐEN XUỐNG BÀN HỌC SINH
+  // ============================================================================
+  let isLaserEffectEnabled = true;
+
+  function getSavedLaserEnabled() {
+    try {
+      const saved = localStorage.getItem('vong_quay_seating_laser_enabled');
+      if (saved !== null) {
+        return saved === '1' || saved === 'true';
+      }
+    } catch (e) {}
+    return true; // Mặc định bật hiệu ứng tia sét laser
+  }
+
+  function setLaserEnabled(enabled, showToastMessage = true) {
+    isLaserEffectEnabled = Boolean(enabled);
+    try {
+      localStorage.setItem('vong_quay_seating_laser_enabled', isLaserEffectEnabled ? '1' : '0');
+    } catch (e) {}
+    syncLaserButtonUI();
+    if (showToastMessage && typeof showToast === 'function') {
+      showToast(
+        isLaserEffectEnabled 
+          ? '⚡ Đã BẬT hiệu ứng vệt sáng laser / tia sét gọi tên!' 
+          : '⚡ Đã TẮT hiệu ứng tia sét laser.',
+        isLaserEffectEnabled ? 'success' : 'info'
+      );
+    }
+  }
+
+  function toggleLaserBeam() {
+    setLaserEnabled(!isLaserEffectEnabled, true);
+  }
+
+  function syncLaserButtonUI() {
+    const btn = document.getElementById('btnToggleLaserBeam');
+    const text = document.getElementById('laserBeamStatusText');
+    if (!btn) return;
+    if (isLaserEffectEnabled) {
+      btn.classList.add('active');
+      btn.style.background = 'rgba(245, 158, 11, 0.15)';
+      btn.style.borderColor = 'rgba(245, 158, 11, 0.4)';
+      btn.style.color = '#d97706';
+      if (text) text.textContent = '⚡ Hiệu ứng: BẬT';
+      btn.title = 'Bấm để TẮT vệt sáng laser / tia sét';
+    } else {
+      btn.classList.remove('active');
+      btn.style.background = '#f1f5f9';
+      btn.style.borderColor = '#cbd5e1';
+      btn.style.color = '#64748b';
+      if (text) text.textContent = '⚪ Hiệu ứng: TẮT';
+      btn.title = 'Bấm để BẬT vệt sáng laser / tia sét';
+    }
+  }
+
+  let activeLaserKeys = null;
+  let activeLaserIsFinal = false;
+
+  function getOrCreateLaserSvg() {
+    let svg = document.getElementById('seatingLaserSvg');
+    if (!svg) {
+      const col = document.querySelector('.seating-classroom-column');
+      if (col) {
+        svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+        svg.id = 'seatingLaserSvg';
+        svg.setAttribute('class', 'seating-laser-svg');
+        svg.setAttribute('aria-hidden', 'true');
+        col.insertBefore(svg, col.firstChild);
+      }
+    }
+    return svg;
+  }
+
+  function ensureLaserScrollListener() {
+    const wrapper = document.querySelector('.classroom-grid-wrapper');
+    if (wrapper && !wrapper.dataset.laserScrollBound) {
+      wrapper.dataset.laserScrollBound = 'true';
+      wrapper.addEventListener('scroll', () => {
+        if (activeLaserKeys && activeLaserKeys.length > 0) {
+          drawLaserBeams(activeLaserKeys, null, activeLaserIsFinal);
+        }
+      }, { passive: true });
+    }
+  }
+
+  if (typeof window !== 'undefined') {
+    window.addEventListener('resize', () => {
+      if (activeLaserKeys && activeLaserKeys.length > 0) {
+        drawLaserBeams(activeLaserKeys, null, activeLaserIsFinal);
+      }
+    }, { passive: true });
+  }
+
+  function drawLaserBeams(targetKeys, seatElementsMap = null, isFinalLanding = false) {
+    if (!isLaserEffectEnabled) return;
+    if (!Array.isArray(targetKeys) || targetKeys.length === 0) return;
+
+    activeLaserKeys = isFinalLanding ? targetKeys : null;
+    activeLaserIsFinal = isFinalLanding;
+    ensureLaserScrollListener();
+
+    const svg = getOrCreateLaserSvg();
+    if (!svg) return;
+
+    const col = document.querySelector('.seating-classroom-column');
+    const blackboard = document.getElementById('seatingBlackboardBox') || document.querySelector('.blackboard-box');
+    if (!col || !blackboard) return;
+
+    const colRect = col.getBoundingClientRect();
+    const bbRect = blackboard.getBoundingClientRect();
+    if (colRect.width <= 0 || colRect.height <= 0) return;
+
+    // Điểm bắn tia sét: Tâm đáy mép dưới Bảng Đen bục giảng
+    const startX = Math.round((bbRect.left + bbRect.width / 2) - colRect.left);
+    const startY = Math.round(bbRect.bottom - colRect.top);
+
+    const w = Math.round(colRect.width);
+    const h = Math.round(colRect.height);
+    svg.setAttribute('width', w);
+    svg.setAttribute('height', h);
+    svg.setAttribute('viewBox', `0 0 ${w} ${h}`);
+
+    let beamsHtml = `
+      <defs>
+        <filter id="laserNeonGlow" x="-30%" y="-30%" width="160%" height="160%">
+          <feGaussianBlur stdDeviation="${isFinalLanding ? '5' : '3'}" result="blur" />
+          <feMerge>
+            <feMergeNode in="blur" />
+            <feMergeNode in="blur" />
+            <feMergeNode in="SourceGraphic" />
+          </feMerge>
+        </filter>
+      </defs>
+      <g class="laser-group ${isFinalLanding ? 'final-landing' : ''}">
+        <!-- Quầng sáng năng lượng tại Bảng Đen -->
+        <circle cx="${startX}" cy="${startY}" r="${isFinalLanding ? '11' : '7'}" class="laser-origin-flare" />
+    `;
+
+    targetKeys.forEach(seatKey => {
+      let seatEl = seatElementsMap ? seatElementsMap[seatKey] : null;
+      if (!seatEl || !seatEl.isConnected) {
+        seatEl = document.querySelector(`.seat-slot[data-seat-key="${seatKey}"]`);
+      }
+      if (!seatEl) return;
+
+      const seatRect = seatEl.getBoundingClientRect();
+      const endX = Math.round((seatRect.left + seatRect.width / 2) - colRect.left);
+      const endY = Math.round((seatRect.top + seatRect.height / 2) - colRect.top);
+
+      const dist = Math.hypot(endX - startX, endY - startY);
+      const angle = Math.atan2(endY - startY, endX - startX);
+      const perpAngle = angle + Math.PI / 2;
+
+      // Sinh các điểm zic-zắc của tia sét
+      const numSegments = Math.max(5, Math.min(10, Math.floor(dist / 40)));
+      const points = [[startX, startY]];
+
+      for (let i = 1; i < numSegments; i++) {
+        const t = i / numSegments;
+        const baseX = startX + (endX - startX) * t;
+        const baseY = startY + (endY - startY) * t;
+        const maxOffset = isFinalLanding ? 16 : 11;
+        const offset = (Math.random() - 0.5) * 2 * maxOffset * Math.sin(t * Math.PI);
+        const px = Math.round(baseX + Math.cos(perpAngle) * offset);
+        const py = Math.round(baseY + Math.sin(perpAngle) * offset);
+        points.push([px, py]);
+      }
+      points.push([endX, endY]);
+
+      const pathData = points.map((p, idx) => `${idx === 0 ? 'M' : 'L'} ${p[0]} ${p[1]}`).join(' ');
+
+      // Nhánh phóng điện hồ quang phụ
+      let branchHtml = '';
+      if (points.length >= 4 && Math.random() > 0.35) {
+        const forkIdx = Math.floor(points.length / 2);
+        const [fx, fy] = points[forkIdx];
+        const branchLen = 18 + Math.random() * 22;
+        const branchSign = Math.random() > 0.5 ? 1 : -1;
+        const bx = Math.round(fx + Math.cos(angle + branchSign * 0.75) * branchLen);
+        const by = Math.round(fy + Math.sin(angle + branchSign * 0.75) * branchLen);
+        branchHtml = `<path d="M ${fx} ${fy} L ${bx} ${by}" class="laser-branch" />`;
+      }
+
+      beamsHtml += `
+        <!-- Vệt sáng rực rỡ nền -->
+        <line x1="${startX}" y1="${startY}" x2="${endX}" y2="${endY}" class="laser-beam-outer" />
+        <!-- Tia sét zic-zắc chính -->
+        <path d="${pathData}" class="laser-lightning-bolt" filter="url(#laserNeonGlow)" />
+        <!-- Lõi ánh sáng trắng cực quang -->
+        <path d="${pathData}" class="laser-lightning-core" />
+        ${branchHtml}
+        <!-- Vòng năng lượng nổ tại ghế học sinh -->
+        <circle cx="${endX}" cy="${endY}" r="${isFinalLanding ? '22' : '12'}" class="laser-impact-ring" />
+      `;
+    });
+
+    beamsHtml += `</g>`;
+    svg.innerHTML = beamsHtml;
+
+    if (isFinalLanding) {
+      blackboard.classList.remove('blackboard-laser-pulse');
+      void blackboard.offsetWidth; // Force reflow
+      blackboard.classList.add('blackboard-laser-pulse');
+    }
+  }
+
+  function clearLaserBeams() {
+    activeLaserKeys = null;
+    activeLaserIsFinal = false;
+    const svg = document.getElementById('seatingLaserSvg');
+    if (svg) svg.innerHTML = '';
+    const blackboard = document.getElementById('seatingBlackboardBox') || document.querySelector('.blackboard-box');
+    if (blackboard) blackboard.classList.remove('blackboard-laser-pulse');
+  }
+
+  function fadeLaserBeams() {
+    activeLaserKeys = null;
+    activeLaserIsFinal = false;
+    const svg = document.getElementById('seatingLaserSvg');
+    if (!svg) return;
+    svg.style.transition = 'opacity 0.35s ease-out';
+    svg.style.opacity = '0';
+    setTimeout(() => {
+      clearLaserBeams();
+      if (svg) {
+        svg.style.opacity = '1';
+        svg.style.transition = '';
+      }
+    }, 350);
+  }
+
+  // ============================================================================
+  // HIỆU ỨNG VÒM SÁNG SPOTLIGHT TỐI NỀN KHI TIA SÉT BẮN XUỐNG BÀN CHIẾN THẮNG
+  // (Làm mờ nhẹ các bàn xung quanh xuống opacity 0.25 để cả lớp tập trung 100%)
+  // ============================================================================
+  function enableSpotlightDimming(winners) {
+    const wrapper = document.querySelector('.classroom-grid-wrapper');
+    const stageCol = document.querySelector('.seating-classroom-column');
+    if (wrapper) wrapper.classList.add('stage-spotlight-dimmed');
+    if (stageCol) stageCol.classList.add('stage-spotlight-dimmed');
+    document.body.classList.add('stage-spotlight-dimmed');
+
+    if (Array.isArray(winners)) {
+      winners.forEach(w => {
+        const seatEl = w.seatEl || document.querySelector(`.seat-slot[data-seat-key="${w.seatKey}"]`);
+        const deskUnit = seatEl ? seatEl.closest('.desk-row-unit') : null;
+        if (deskUnit) {
+          deskUnit.classList.add('winner-desk');
+        }
+      });
+    }
+  }
+
+  function disableSpotlightDimming() {
+    const wrapper = document.querySelector('.classroom-grid-wrapper');
+    const stageCol = document.querySelector('.seating-classroom-column');
+    if (wrapper) wrapper.classList.remove('stage-spotlight-dimmed');
+    if (stageCol) stageCol.classList.remove('stage-spotlight-dimmed');
+    document.body.classList.remove('stage-spotlight-dimmed');
+    document.querySelectorAll('.desk-row-unit.winner-desk').forEach(el => {
+      el.classList.remove('winner-desk');
+    });
+  }
+
+  // ============================================================================
+  // THỜI GIAN DỪNG NGẮM TRÊN SƠ ĐỒ TRƯỚC KHI MỞ POPUP VINH DANH (0s - 3s)
+  // ============================================================================
+  let currentPopupDelay = 1.4; // 1.4s mặc định
+
+  function getSavedPopupDelay() {
+    try {
+      const saved = localStorage.getItem('vong_quay_seating_popup_delay');
+      if (saved !== null && !isNaN(Number(saved))) {
+        const num = parseFloat(saved);
+        if (num >= 0 && num <= 3.0) return num;
+      }
+    } catch (e) {}
+    return 1.4; // Mặc định 1.4 giây (vừa đủ ngắm ghế và nghe AI gọi tên)
+  }
+
+  function setPopupDelay(seconds, showToastMessage = true) {
+    const val = Math.max(0, Math.min(3.0, Math.round(Number(seconds) * 10) / 10));
+    currentPopupDelay = val;
+    try {
+      localStorage.setItem('vong_quay_seating_popup_delay', val.toString());
+    } catch (e) {}
+    syncPopupDelayUI(val);
+    if (showToastMessage && typeof showToast === 'function') {
+      const desc = val === 0 ? 'Mở Popup tức thì không chờ' : (val <= 1.0 ? 'Nhanh gọn' : (val <= 1.8 ? 'Cân bằng tiêu chuẩn' : 'Hồi hộp kịch tính'));
+      showToast(`⏱️ Đã đặt thời gian dừng trên sơ đồ: ${val}s (${desc})`, 'info');
+    }
+  }
+
+  function handleDelaySliderChange(val) {
+    const num = Math.max(0, Math.min(3.0, Math.round(Number(val) * 10) / 10));
+    currentPopupDelay = num;
+    syncPopupDelayUI(num, false);
+  }
+
+  function saveDelaySliderChange(val) {
+    setPopupDelay(val, true);
+  }
+
+  function syncPopupDelayUI(val = null, updateSlider = true) {
+    const delay = val !== null ? val : getSavedPopupDelay();
+    currentPopupDelay = delay;
+
+    const range = document.getElementById('seatingPopupDelayRange');
+    const badge = document.getElementById('seatingPopupDelayBadge');
+
+    if (range && updateSlider) {
+      range.value = delay;
+    }
+
+    if (badge) {
+      let desc = 'Vừa vặn';
+      if (delay === 0) desc = 'Tức thì (0s)';
+      else if (delay <= 0.8) desc = 'Nhanh gọn';
+      else if (delay <= 1.6) desc = 'Vừa vặn';
+      else desc = 'Hồi hộp';
+      badge.textContent = `${delay.toFixed(1)}s (${desc})`;
+      badge.className = delay === 0 ? 'round-control-badge' : (delay <= 1.6 ? 'round-control-badge badge-progress' : 'round-control-badge badge-full');
+    }
+  }
+
+  // ============================================================================
   // QUẢN LÝ CHẾ ĐỘ GỌI TÊN SƠ ĐỒ LỚP (CÁ NHÂN, THEO BÀN, ĐỐI KHÁNG, 4 TỔ, HÀNG NGANG)
   // ============================================================================
   function syncCallingModeUI() {
@@ -692,9 +1019,33 @@
     }
   }
 
-  // Làm mới danh sách đã gọi để bắt đầu lượt gọi mới
-  function resetCalledRound(notify = true) {
-    if (SeatingState.isSpinning) return;
+  // Làm mới danh sách đã gọi để bắt đầu lượt gọi mới (Có xác nhận bảo vệ tránh bấm nhầm)
+  function resetCalledRound(notify = true, force = false) {
+    if (SeatingState.isSpinning) return false;
+
+    const calledSet = typeof getCalledStudentsSet === 'function' ? getCalledStudentsSet() : new Set();
+    const calledCount = calledSet.size;
+
+    // Nếu chưa có học sinh nào bị gọi -> Đang ở lượt mới
+    if (calledCount === 0) {
+      if (notify && typeof showToast === 'function') {
+        showToast('✨ Danh sách hiện đang ở lượt mới, chưa có học sinh nào bị loại trừ!', 'info');
+      }
+      return false;
+    }
+
+    // Nếu đã gọi học sinh và không ép buộc (force) -> Hiện xác nhận bảo vệ
+    if (!force) {
+      const cls = typeof getCurrentClass === 'function' ? getCurrentClass() : null;
+      const className = cls ? `lớp "${cls.name}"` : 'lớp';
+      const confirmMsg = `Thầy/Cô có chắc chắn muốn làm mới lượt gọi cho ${className} không?\n\n` +
+        `• Số học sinh đã gọi: ${calledCount} em\n` +
+        `• Tất cả học sinh sẽ được đưa lại vào danh sách bốc thăm từ đầu.`;
+      if (!confirm(confirmMsg)) {
+        return false;
+      }
+    }
+
     if (typeof window.resetCalledList === 'function') {
       window.resetCalledList(notify);
     } else {
@@ -705,8 +1056,11 @@
         showToast('✨ Đã làm mới danh sách! Tất cả học sinh có thể được gọi lại từ đầu.', 'success');
       }
     }
+    clearLaserBeams();
+    disableSpotlightDimming();
     renderClassroomStage();
     syncRoundStatusUI();
+    return true;
   }
 
   // ============================================================================
@@ -956,16 +1310,16 @@
         html: '<span class="tooltip-text">📏 Gọi Hàng Ngang</span><span class="tooltip-badge">Cả hàng</span>'
       },
       {
-        selector: '#btnSeatingPanelSettings',
-        html: '<span class="tooltip-text">⚙️ Cài Đặt Sơ Đồ Lớp</span>'
-      },
-      {
         selector: '#btnUnassignedExpandTab',
         html: '<span class="tooltip-text">🎒 Chưa Xếp Chỗ</span>'
       },
       {
         selector: '#btnSeatingResetRound',
         html: '<span class="tooltip-text">🔄 Làm Mới Danh Sách Gọi Tên</span>'
+      },
+      {
+        selector: '#btnSeatingPanelSettings',
+        html: '<span class="tooltip-text">⚙️ Cài Đặt Sơ Đồ Lớp</span>'
       }
     ];
 
@@ -1018,6 +1372,7 @@
   // HÀM VẼ GIAO DIỆN (RENDER DOM)
   // ============================================================================
   function renderSeatingModule() {
+    if (SeatingState.isSpinning || SeatingState.isCelebrating) return;
     loadSeatingData();
     renderSubbarControls();
     renderLegendBar();
@@ -1032,6 +1387,10 @@
     initTeacherDeskInteractions();
     initModesPanelCollapse();
     initSmartSidebarTooltips();
+    isLaserEffectEnabled = getSavedLaserEnabled();
+    currentPopupDelay = getSavedPopupDelay();
+    syncLaserButtonUI();
+    syncPopupDelayUI();
 
     // Nếu lớp đã xếp đủ 100% học sinh thì mặc định thu gọn; nếu còn học sinh chưa xếp thì mở ra để Thầy xếp
     const unassigned = getUnassignedStudents();
@@ -1110,6 +1469,8 @@
     renderLegendBar();
     syncFontSizeUI();
     syncNameDisplayModeUI();
+    syncLaserButtonUI();
+    syncPopupDelayUI();
     if (typeof updateVoiceButtonUI === 'function') {
       updateVoiceButtonUI(window.voiceAnnouncer ? window.voiceAnnouncer.enabled : true);
     }
@@ -1215,6 +1576,7 @@
 
   // Vẽ lưới bàn ghế phòng học
   function renderClassroomStage() {
+    if (SeatingState.isSpinning || SeatingState.isCelebrating) return;
     const container = document.getElementById('classroomAislesGrid');
     if (!container) return;
 
@@ -1833,6 +2195,8 @@
   // ============================================================================
   function spinSeatingChart() {
     if (SeatingState.isSpinning) return;
+    clearLaserBeams();
+    disableSpotlightDimming();
 
     const assignedEntries = Object.entries(SeatingState.seats).filter(([k, name]) => Boolean(name));
     if (assignedEntries.length === 0) {
@@ -1984,58 +2348,114 @@
     const eligibleKeys = assignedEntries.map(e => e[0]);
 
     // Tạo hiệu ứng nhảy đèn Spotlight chậm dần đồng thời cho các ghế
-    const totalSteps = 28 + Math.floor(Math.random() * 6);
+    const totalSteps = 24 + Math.floor(Math.random() * 5); // 24-28 bước
     let currentStep = 0;
-    let delay = 60; // Tốc độ ban đầu 60ms
+    let delay = 55; // Tốc độ ban đầu 55ms
     let lastHighlightedKeys = [];
+    let prevKeys = [];
+
+    // Danh sách ghế không trùng với người chiến thắng để tạo chuỗi nhảy các bước trước
+    const nonWinnerKeys = eligibleKeys.filter(k => !targetWinnerKeys.includes(k));
+    const poolForPreSteps = nonWinnerKeys.length > 0 ? nonWinnerKeys : eligibleKeys;
+
+    // Lập bản đồ bàn -> các ghế trên bàn đó để hỗ trợ hiệu ứng nhảy cả bàn ở chế độ Đôi bạn
+    const deskToSeatsMap = {};
+    assignedEntries.forEach(([key, name]) => {
+      const parts = key.split('_');
+      const deskKey = `${parts[0]}_${parts[1]}`;
+      if (!deskToSeatsMap[deskKey]) deskToSeatsMap[deskKey] = [];
+      deskToSeatsMap[deskKey].push(key);
+    });
+    const allDeskKeys = Object.keys(deskToSeatsMap);
+    const winnerDeskKey = targetWinnerKeys.length > 0 ? targetWinnerKeys[0].split('_').slice(0, 2).join('_') : null;
+    const nonWinnerDesks = allDeskKeys.filter(dk => dk !== winnerDeskKey);
+    const deskPoolForPreSteps = nonWinnerDesks.length > 0 ? nonWinnerDesks : allDeskKeys;
+    let prevDeskKey = null;
 
     function runSpotlightStep() {
       // Xóa highlight ở các ghế bước trước
       lastHighlightedKeys.forEach(k => {
-        if (seatElementsMap[k]) seatElementsMap[k].classList.remove('spotlight-active');
+        const el = document.querySelector(`.seat-slot[data-seat-key="${k}"]`);
+        if (el) el.classList.remove('spotlight-active');
       });
 
       currentStep++;
 
+      const isFinalStep = currentStep >= totalSteps;
+
       // Xác định các ghế highlight ở bước này
-      if (currentStep >= totalSteps) {
-        // Bước cuối cùng: Nhảy vào đúng các ghế người chiến thắng
+      if (isFinalStep) {
+        // BƯỚC DỪNG CUỐI CÙNG: DỪNG CHÍNH XÁC 100% Ở GHẾ NGƯỜI CHIẾN THẮNG ĐƯỢC CHỌN
         lastHighlightedKeys = targetWinnerKeys;
+      } else if (mode === 'desk' && deskPoolForPreSteps.length > 0) {
+        // Chế độ ĐÔI BẠN CÙNG TIẾN: Nhảy cả bàn (cả 2 ghế trên cùng 1 bàn) để tạo hiệu ứng đồng đội
+        let candidateDesks = deskPoolForPreSteps.filter(dk => dk !== prevDeskKey);
+        if (candidateDesks.length === 0) candidateDesks = deskPoolForPreSteps;
+        const randomDesk = candidateDesks[Math.floor(Math.random() * candidateDesks.length)];
+        prevDeskKey = randomDesk;
+        lastHighlightedKeys = deskToSeatsMap[randomDesk] || [];
       } else {
-        // Nhảy ngẫu nhiên qua các ghế với số lượng tương ứng
-        const count = Math.min(targetWinnerKeys.length, eligibleKeys.length);
-        const shuffled = [...eligibleKeys].sort(() => 0.5 - Math.random());
+        // Nhảy qua các ghế khác (loại trừ ghế vừa sáng ở bước trước để đèn luôn di chuyển sống động)
+        const count = Math.min(targetWinnerKeys.length, poolForPreSteps.length);
+        let candidatePool = poolForPreSteps.filter(k => !prevKeys.includes(k));
+        if (candidatePool.length < count) candidatePool = poolForPreSteps;
+        const shuffled = [...candidatePool].sort(() => 0.5 - Math.random());
         lastHighlightedKeys = shuffled.slice(0, count);
+        prevKeys = lastHighlightedKeys;
       }
 
+      // Đánh dấu highlight trên DOM
       lastHighlightedKeys.forEach(k => {
-        if (seatElementsMap[k]) {
-          seatElementsMap[k].classList.add('spotlight-active');
+        const el = document.querySelector(`.seat-slot[data-seat-key="${k}"]`);
+        if (el) {
+          if (isFinalStep) {
+            el.classList.remove('spotlight-active');
+            el.classList.add('winner-seat');
+          } else {
+            el.classList.add('spotlight-active');
+          }
         }
       });
 
-      // Cuộn nhẹ ghế đầu tiên nếu nằm ngoài tầm nhìn
-      if (lastHighlightedKeys[0] && seatElementsMap[lastHighlightedKeys[0]]) {
-        seatElementsMap[lastHighlightedKeys[0]].scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+      // Cuộn nhẹ ghế đầu tiên nếu nằm ngoài tầm nhìn (dùng auto ở bước cuối để tránh trôi tọa độ vệt sáng laser)
+      if (lastHighlightedKeys[0]) {
+        const firstEl = document.querySelector(`.seat-slot[data-seat-key="${lastHighlightedKeys[0]}"]`);
+        if (firstEl) {
+          firstEl.scrollIntoView({ behavior: isFinalStep ? 'auto' : 'smooth', block: 'nearest', inline: 'nearest' });
+        }
       }
 
-      // Phát âm thanh tick
-      if (window.sound && typeof window.sound.playTick === 'function') {
+      // HIỆU ỨNG TIA SÉT / VỆT SÁNG LASER DẪN ĐƯỜNG: Ở 3 BƯỚC CUỐI CÙNG
+      const isFinalThree = currentStep >= totalSteps - 2;
+      if (isFinalThree && isLaserEffectEnabled) {
+        drawLaserBeams(lastHighlightedKeys, null, isFinalStep);
+        if (window.sound && typeof window.sound.playLaserZap === 'function') {
+          window.sound.playLaserZap(isFinalStep ? 980 : (currentStep === totalSteps - 1 ? 820 : 680));
+        }
+      } else {
+        clearLaserBeams();
+      }
+
+      // Phát âm thanh tick ở các bước nhảy
+      if (!isFinalStep && window.sound && typeof window.sound.playTick === 'function') {
         window.sound.playTick();
       }
 
       if (currentStep < totalSteps) {
-        if (currentStep > totalSteps - 12) {
-          delay += 35;
-        } else if (currentStep > totalSteps - 6) {
-          delay += 60;
+        // Giảm tốc dần đều mượt mà ở các bước cuối
+        if (currentStep > totalSteps - 4) {
+          delay += 95; // Rất chậm và hồi hộp ở 3 bước áp chót: ~300ms, ~400ms, ~500ms
+        } else if (currentStep > totalSteps - 8) {
+          delay += 45; // Giảm tốc rõ rệt
+        } else if (currentStep > totalSteps - 14) {
+          delay += 18; // Bắt đầu hãm phanh
         } else {
-          delay += 6;
+          delay += 4;  // Lướt nhanh ban đầu
         }
         setTimeout(runSpotlightStep, delay);
       } else {
-        // Dừng lại và kết thúc: Công bố kết quả
-        finalizeSeatingSpin(chosenEntries, mode, seatElementsMap);
+        // ĐÈN VÀ TIA SÉT ĐÃ KHÓA CHẶT CHÍNH XÁC 100% VÀO GHẾ HỌC SINH CHIẾN THẮNG!
+        finalizeSeatingSpin(chosenEntries, mode);
       }
     }
 
@@ -2043,8 +2463,9 @@
   }
 
   // Kết thúc vòng quay và công bố người chiến thắng
-  function finalizeSeatingSpin(chosenEntries, mode, seatElementsMap) {
+  function finalizeSeatingSpin(chosenEntries, mode) {
     SeatingState.isSpinning = false;
+    SeatingState.isCelebrating = true;
     const modeConfig = CALLING_MODES[mode] || CALLING_MODES.single;
 
     document.querySelectorAll('.seating-spin-btn').forEach(btn => {
@@ -2054,6 +2475,8 @@
       if (label) label.textContent = modeConfig.btnLabel || 'QUAY TÊN SƠ ĐỒ';
     });
 
+    const classStudents = getClassStudentList();
+
     // Tạo danh sách hồ sơ chi tiết của các học sinh chiến thắng
     const winners = chosenEntries.map(([seatKey, studentName]) => {
       const parts = seatKey.split('_').map(Number);
@@ -2062,10 +2485,15 @@
       const groupNum = SeatingState.deskGroups[deskKey] || (((parts[0] - 1) % 4) + 1);
       const groupProfile = getGroupProfile(groupNum);
       const groupInfo = groupProfile ? `${groupProfile.mascot} ${groupProfile.name}` : (groupNum && GROUP_CONFIG[groupNum] ? GROUP_CONFIG[groupNum].label : '');
-      const seatEl = seatElementsMap ? seatElementsMap[seatKey] : document.querySelector(`.seat-slot[data-seat-key="${seatKey}"]`);
+      const seatEl = document.querySelector(`.seat-slot[data-seat-key="${seatKey}"]`);
+      const isShortMode = currentNameDisplayMode === 'short';
+      const displayName = isShortMode ? getShortStudentName(studentName, classStudents) : studentName;
+      const spokenName = getSpokenStudentName(studentName, classStudents);
       return {
         seatKey,
         studentName,
+        displayName,
+        spokenName,
         aisle: parts[0],
         row: parts[1],
         seatIdx: parts[2],
@@ -2078,50 +2506,28 @@
       };
     });
 
-    // Kích hoạt hiệu ứng nổi bật ghế chiến thắng
+    // Kích hoạt hiệu ứng nổi bật ghế chiến thắng rực rỡ trên sơ đồ
     winners.forEach(w => {
-      if (w.seatEl) w.seatEl.classList.add('winner-seat');
+      const el = w.seatEl || document.querySelector(`.seat-slot[data-seat-key="${w.seatKey}"]`);
+      if (el) {
+        el.classList.remove('spotlight-active');
+        el.classList.add('winner-seat');
+      }
     });
 
-    // Phát âm thanh giọng nói bình luận viên AI theo từng chế độ
-    if (mode === 'versus' && winners.length >= 2) {
-      if (window.voiceAnnouncer && typeof window.voiceAnnouncer.speak === 'function') {
-        const p1 = getSpokenStudentName(winners[0].studentName);
-        const p2 = getSpokenStudentName(winners[1].studentName);
-        window.voiceAnnouncer.speak(`Trận đấu đối kháng giữa bạn ${p1} dãy ${winners[0].aisle} và bạn ${p2} dãy ${winners[1].aisle}! Cả hai bạn cùng chuẩn bị lên bảng nhé!`);
-      }
-    } else if (mode === 'desk') {
-      if (window.voiceAnnouncer && typeof window.voiceAnnouncer.speak === 'function') {
-        const names = winners.map(w => getSpokenStudentName(w.studentName)).join(' và bạn ');
-        window.voiceAnnouncer.speak(`Mời đôi bạn cùng tiến ở dãy ${winners[0].aisle} bàn ${winners[0].row}: bạn ${names} cùng đứng dậy trả lời!`);
-      }
-    } else if (mode === 'all_groups') {
-      if (window.voiceAnnouncer && typeof window.voiceAnnouncer.speak === 'function') {
-        window.voiceAnnouncer.speak(`Đại chiến bốn tổ! Mời các đại diện xuất sắc của các tổ cùng tiến lên sân khấu!`);
-      }
-    } else if (mode === 'row') {
-      if (window.voiceAnnouncer && typeof window.voiceAnnouncer.speak === 'function') {
-        window.voiceAnnouncer.speak(`Mời tất cả các bạn ở hàng ${winners[0]?.row || 1} của tất cả các dãy cùng đứng dậy trả lời!`);
-      }
-    } else {
-      // Chế độ Gọi cá nhân chuẩn
-      const w = winners[0];
-      const spokenWinnerName = getSpokenStudentName(w.studentName);
-      if (window.voiceAnnouncer && typeof window.voiceAnnouncer.speakWinner === 'function') {
-        window.voiceAnnouncer.speakWinner({
-          name: spokenWinnerName,
-          row: w.row,
-          col: w.seatIdx,
-          aisle: w.aisle,
-          groupNum: w.groupNum,
-          groupName: w.groupProfile?.name || '',
-          mascot: w.groupProfile?.mascot || ''
-        });
+    // Kích hoạt hiệu ứng vòm sáng Spotlight tối nền (làm mờ nhẹ các bàn xung quanh)
+    enableSpotlightDimming(winners);
+
+    // Cuộn nhẹ ghế chiến thắng vào giữa tầm nhìn
+    if (winners[0]?.seatKey) {
+      const firstEl = document.querySelector(`.seat-slot[data-seat-key="${winners[0].seatKey}"]`);
+      if (firstEl) {
+        firstEl.scrollIntoView({ behavior: 'auto', block: 'nearest', inline: 'nearest' });
       }
     }
 
     // Hiệu ứng màu sắc và âm thanh chúc mừng
-    if (mode === 'single' && winners[0]?.groupNum) {
+    if ((mode === 'single' || mode === 'desk') && winners[0]?.groupNum) {
       const gNum = winners[0].groupNum;
       document.body.classList.remove('stage-celebrate-group-1', 'stage-celebrate-group-2', 'stage-celebrate-group-3', 'stage-celebrate-group-4');
       document.body.classList.add(`stage-celebrate-group-${gNum}`);
@@ -2146,6 +2552,44 @@
       }
     }
 
+    // PHÁT ÂM THANH LOA AI XƯỚNG TÊN CHÍNH XÁC HỌC SINH ĐƯỢC CHỌN (ĐỒNG BỘ 350ms SAU KHI TIA SÉT & FANFARE KHỞI TẠO)
+    setTimeout(() => {
+      if (window.voiceAnnouncer && window.voiceAnnouncer.enabled) {
+        if (mode === 'versus' && winners.length >= 2) {
+          const p1 = winners[0].spokenName || getSpokenStudentName(winners[0].studentName);
+          const p2 = winners[1].spokenName || getSpokenStudentName(winners[1].studentName);
+          window.voiceAnnouncer.speak(`Trận đấu đối kháng giữa bạn ${p1} dãy ${winners[0].aisle} và bạn ${p2} dãy ${winners[1].aisle}! Cả hai bạn cùng chuẩn bị lên bảng nhé!`);
+        } else if (mode === 'desk') {
+          const names = winners.map(w => w.spokenName || getSpokenStudentName(w.studentName)).join(' và bạn ');
+          const gInfo = winners[0]?.groupInfo ? `của ${winners[0].groupInfo} ` : '';
+          if (winners.length >= 2) {
+            window.voiceAnnouncer.speak(`Mời đôi bạn cùng tiến ${gInfo}ở dãy ${winners[0].aisle} bàn ${winners[0].row}: bạn ${names} cùng đứng dậy trả lời!`);
+          } else {
+            window.voiceAnnouncer.speak(`Mời bạn ${names} ${gInfo}ở dãy ${winners[0].aisle} bàn ${winners[0].row} đứng dậy trả lời!`);
+          }
+        } else if (mode === 'all_groups') {
+          window.voiceAnnouncer.speak(`Đại chiến bốn tổ! Mời các đại diện xuất sắc của các tổ cùng tiến lên sân khấu!`);
+        } else if (mode === 'row') {
+          window.voiceAnnouncer.speak(`Mời tất cả các bạn ở hàng ${winners[0]?.row || 1} của tất cả các dãy cùng đứng dậy trả lời!`);
+        } else {
+          // Chế độ Gọi cá nhân chuẩn
+          const w = winners[0];
+          const spokenWinnerName = w.spokenName || getSpokenStudentName(w.studentName);
+          if (typeof window.voiceAnnouncer.speakWinner === 'function') {
+            window.voiceAnnouncer.speakWinner({
+              name: spokenWinnerName,
+              row: w.row,
+              col: w.seatIdx,
+              aisle: w.aisle,
+              groupNum: w.groupNum,
+              groupName: w.groupProfile?.name || '',
+              mascot: w.groupProfile?.mascot || ''
+            });
+          }
+        }
+      }
+    }, 350);
+
     // Cập nhật danh sách đã gọi & lịch sử gọi cho tất cả người trúng
     const cls = typeof getCurrentClass === 'function' ? getCurrentClass() : null;
     winners.forEach(w => {
@@ -2164,25 +2608,15 @@
     SeatingState.lastWinnerStudentName = winners[0]?.studentName || null;
     window.lastCalledWinnerName = winners[0]?.studentName || null;
 
-    setTimeout(() => {
-      SeatingState.lastCalledSeatKey = null;
-      SeatingState.lastWinnerStudentName = null;
-      if (window.lastCalledWinnerName === winners[0]?.studentName) {
-        window.lastCalledWinnerName = null;
-      }
-    }, 1500);
-
-    if (typeof updateUI === 'function') {
-      updateUI();
-    }
-    syncRoundStatusUI();
-
     if (typeof saveStateToStorage === 'function') {
       saveStateToStorage();
     }
 
-    // Mở Modal chúc mừng tương ứng với từng chế độ
-    openSeatingWinnerModal(winners, mode);
+    // Cập nhật các con số thống kê ở sidebar mà KHÔNG vẽ lại sơ đồ lớp
+    if (typeof updateUI === 'function') {
+      updateUI();
+    }
+    syncRoundStatusUI();
 
     // Đồng bộ kết quả sang Remote Screen Sync (Điện thoại Thầy)
     if (window.RemoteSync && typeof window.RemoteSync.send === 'function') {
@@ -2196,10 +2630,31 @@
         groupName: winners[0]?.groupProfile?.name || ''
       });
     }
+
+    // Đảm bảo duy trì vệt sáng laser/tia sét rực rỡ tại vị trí chiến thắng
+    if (isLaserEffectEnabled) {
+      const winnerSeatKeys = winners.map(w => w.seatKey);
+      drawLaserBeams(winnerSeatKeys, null, true);
+    }
+
+    // DỪNG LẠI TRÊN SƠ ĐỒ ĐỂ CẢ LỚP NHÌN RÕ GHẾ NGƯỜI THẮNG VÀ NGHE LOA GỌI TÊN (TÙY CHỈNH 0s - 3s)
+    const popupDelaySec = getSavedPopupDelay();
+    const popupDelayMs = Math.round(popupDelaySec * 1000);
+
+    if (popupDelayMs <= 50) {
+      clearLaserBeams();
+      openSeatingWinnerModal(winners, mode);
+    } else {
+      setTimeout(() => {
+        fadeLaserBeams();
+        openSeatingWinnerModal(winners, mode);
+      }, popupDelayMs);
+    }
   }
 
   // Mở Popup chúc mừng người chiến thắng trên sơ đồ
   function openSeatingWinnerModal(winners, mode) {
+    clearLaserBeams();
     const existing = document.getElementById('seatingWinnerModal');
     if (existing) existing.remove();
 
@@ -2236,33 +2691,42 @@
         </div>
       `;
     } else if (mode === 'desk') {
-      headlineText = '👥 ĐÔI BẠN CÙNG TIẾN: CÙNG LÊN BẢNG!';
-      crownIcon = '🤝';
-      borderColor = '#ea580c';
       const w1 = winners[0];
       const w2 = winners[1];
+      const groupColor = w1?.groupProfile?.color || (w1?.groupNum && GROUP_CONFIG[w1.groupNum] ? GROUP_CONFIG[w1.groupNum].color : '#ea580c');
+      const mascotEmoji = w1?.groupProfile?.mascot || '🤝';
+      crownIcon = mascotEmoji;
+      borderColor = groupColor;
+      headlineText = `👥 ĐÔI BẠN CÙNG TIẾN: ${w1?.groupInfo ? w1.groupInfo.toUpperCase() : 'CÙNG LÊN BẢNG'}!`;
+
       if (w2) {
+        const w1Diff = w1.displayName && w1.displayName !== w1.studentName;
+        const w2Diff = w2.displayName && w2.displayName !== w2.studentName;
         contentHtml = `
           <div class="winner-pair-box">
-            <div class="pair-card">
+            <div class="pair-card" style="border-color: ${groupColor};">
               <span class="pair-seat-tag">Dãy ${w1.aisle} - Hàng ${w1.row} (${w1.seatIdx === 1 ? 'Ghế Trái' : 'Ghế Phải'})</span>
               <div class="pair-student-name">${w1.studentName}</div>
+              ${w1Diff ? `<div class="pair-alias-badge" style="font-size:0.85rem; font-weight:700; opacity:0.85; margin-top:4px; color:${groupColor};">🏷️ Sơ đồ: ${w1.displayName}</div>` : ''}
             </div>
             <div class="pair-and-icon">🤝</div>
-            <div class="pair-card">
+            <div class="pair-card" style="border-color: ${groupColor};">
               <span class="pair-seat-tag">Dãy ${w2.aisle} - Hàng ${w2.row} (${w2.seatIdx === 1 ? 'Ghế Trái' : 'Ghế Phải'})</span>
               <div class="pair-student-name">${w2.studentName}</div>
+              ${w2Diff ? `<div class="pair-alias-badge" style="font-size:0.85rem; font-weight:700; opacity:0.85; margin-top:4px; color:${groupColor};">🏷️ Sơ đồ: ${w2.displayName}</div>` : ''}
             </div>
           </div>
-          <div class="winner-seat-location" style="border-color: #f97316;">
+          <div class="winner-seat-location" style="border-color: ${groupColor};">
             <span>📍</span>
-            <span>Bàn số ${w1.row} • Dãy ${w1.aisle}${w1.groupInfo ? ' • ' + w1.groupInfo : ''}</span>
+            <span>Bàn số ${w1.row} • Dãy ${w1.aisle}${w1.groupInfo ? ' • 🎖️ ' + w1.groupInfo : ''}</span>
           </div>
         `;
       } else {
+        const w1Diff = w1.displayName && w1.displayName !== w1.studentName;
         contentHtml = `
           <div class="winner-student-name">${w1.studentName}</div>
-          <div class="winner-seat-location" style="border-color: #f97316;">
+          ${w1Diff ? `<div class="winner-alias-badge" style="display:inline-block; margin-bottom:12px; padding:3px 12px; background:rgba(245,158,11,0.15); border-radius:999px; font-size:0.92rem; font-weight:700; color:${groupColor};">🏷️ Tên trên sơ đồ: ${w1.displayName}</div>` : ''}
+          <div class="winner-seat-location" style="border-color: ${groupColor};">
             <span>📍</span>
             <span>${w1.locationText} (Bàn đơn)</span>
           </div>
@@ -2303,8 +2767,10 @@
       const mascotEmoji = w.groupProfile?.mascot || '👑';
       crownIcon = mascotEmoji;
       borderColor = groupColor;
+      const hasDifferentDisplay = w.displayName && w.displayName !== w.studentName;
       contentHtml = `
         <div class="winner-student-name">${w.studentName}</div>
+        ${hasDifferentDisplay ? `<div class="winner-alias-badge" style="display:inline-block; margin-bottom:12px; padding:3px 12px; background:rgba(245,158,11,0.15); border-radius:999px; font-size:0.92rem; font-weight:700; color:${groupColor};">🏷️ Tên trên sơ đồ: ${w.displayName}</div>` : ''}
         <div class="winner-seat-location" style="border-color: ${groupColor};">
           <span>📍</span>
           <span>${w.locationText}${w.groupInfo ? ' • 🎖️ ' + w.groupInfo : ''}</span>
@@ -2331,12 +2797,19 @@
     document.body.appendChild(modal);
 
     const closeModal = () => {
+      SeatingState.isCelebrating = false;
+      clearLaserBeams();
+      disableSpotlightDimming();
       modal.remove();
       document.body.classList.remove('stage-celebrate-group-1', 'stage-celebrate-group-2', 'stage-celebrate-group-3', 'stage-celebrate-group-4');
       winners.forEach(w => {
-        if (w.seatEl) w.seatEl.classList.remove('winner-seat');
+        const el = document.querySelector(`.seat-slot[data-seat-key="${w.seatKey}"]`);
+        if (el) el.classList.remove('winner-seat');
       });
       renderClassroomStage();
+      if (typeof updateUI === 'function') {
+        updateUI();
+      }
     };
 
     document.getElementById('btnCloseSeatingWinner')?.addEventListener('click', closeModal);
@@ -2560,6 +3033,17 @@
     getTeacherDeskPosition: () => SeatingState.teacherDeskPosition || 'right',
     toggleModesPanelCollapse: toggleModesPanelCollapse,
     isModesPanelCollapsed: () => isModesPanelCollapsed,
+    toggleLaserBeam: toggleLaserBeam,
+    setLaserEnabled: setLaserEnabled,
+    isLaserEnabled: () => isLaserEffectEnabled,
+    clearLaserBeams: clearLaserBeams,
+    enableSpotlightDimming: enableSpotlightDimming,
+    disableSpotlightDimming: disableSpotlightDimming,
+    setPopupDelay: setPopupDelay,
+    getPopupDelay: () => currentPopupDelay,
+    handleDelaySliderChange: handleDelaySliderChange,
+    saveDelaySliderChange: saveDelaySliderChange,
+    isBusy: () => Boolean(SeatingState.isSpinning || SeatingState.isCelebrating),
     getState: () => ({
       aisles: SeatingState.aisles,
       rows: SeatingState.rows,

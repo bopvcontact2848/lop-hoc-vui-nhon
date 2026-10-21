@@ -833,6 +833,261 @@
       color: #64748b;
       padding-top: 10px;
     }
+
+    /* ========================================================================== */
+    /* HỆ THỐNG TOAST NOTIFICATION TRÊN REMOTE */
+    /* ========================================================================== */
+    .remote-toast {
+      position: fixed;
+      top: 16px;
+      left: 50%;
+      transform: translateX(-50%) translateY(-12px);
+      background: rgba(15, 23, 42, 0.96);
+      border: 1.5px solid #38bdf8;
+      color: #f8fafc;
+      padding: 10px 18px;
+      border-radius: 999px;
+      font-size: 0.8rem;
+      font-weight: 700;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.7), 0 0 16px rgba(56, 189, 248, 0.3);
+      z-index: 10001;
+      pointer-events: none;
+      opacity: 0;
+      transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+      max-width: 90vw;
+      text-align: center;
+      box-sizing: border-box;
+    }
+    .remote-toast.show {
+      opacity: 1;
+      transform: translateX(-50%) translateY(0);
+    }
+    .remote-toast.toast-info {
+      border-color: #38bdf8;
+      color: #e0f2fe;
+    }
+    .remote-toast.toast-success {
+      border-color: #34d399;
+      color: #d1fae5;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.7), 0 0 16px rgba(52, 211, 153, 0.35);
+    }
+    .remote-toast.toast-warning {
+      border-color: #fb923c;
+      color: #ffedd5;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.7), 0 0 16px rgba(251, 146, 60, 0.35);
+    }
+
+    /* ========================================================================== */
+    /* MODAL XÁC NHẬN CHỐNG CHẠM NHẦM TRONG TÚI QUẦN (POCKET-PROOF CONFIRM) */
+    /* ========================================================================== */
+    .remote-modal-backdrop {
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.8);
+      backdrop-filter: blur(8px);
+      -webkit-backdrop-filter: blur(8px);
+      display: flex;
+      align-items: flex-end;
+      justify-content: center;
+      z-index: 10000;
+      padding: 12px;
+      box-sizing: border-box;
+      animation: modalBackdropFadeIn 0.25s ease-out;
+    }
+    @keyframes modalBackdropFadeIn {
+      from { opacity: 0; }
+      to { opacity: 1; }
+    }
+    .remote-modal-sheet {
+      background: #0f172a;
+      border: 1.5px solid rgba(249, 115, 22, 0.45);
+      border-radius: 20px;
+      width: 100%;
+      max-width: 440px;
+      padding: 18px;
+      box-shadow: 0 -10px 40px rgba(0, 0, 0, 0.85), 0 0 30px rgba(234, 88, 12, 0.25);
+      animation: sheetSlideUp 0.28s cubic-bezier(0.16, 1, 0.3, 1);
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      box-sizing: border-box;
+    }
+    @keyframes sheetSlideUp {
+      from { transform: translateY(60px); opacity: 0; }
+      to { transform: translateY(0); opacity: 1; }
+    }
+    .remote-modal-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding-bottom: 10px;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    }
+    .remote-modal-title {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 0.95rem;
+      font-weight: 800;
+      color: #fb923c;
+    }
+    .modal-warn-icon {
+      font-size: 1.25rem;
+    }
+    .remote-modal-close {
+      background: rgba(255, 255, 255, 0.08);
+      border: none;
+      color: #94a3b8;
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1rem;
+      cursor: pointer;
+      touch-action: manipulation;
+    }
+    .remote-modal-body {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+    .remote-modal-class-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      background: rgba(56, 189, 248, 0.12);
+      border: 1px solid rgba(56, 189, 248, 0.3);
+      padding: 5px 12px;
+      border-radius: 8px;
+      font-size: 0.82rem;
+      font-weight: 700;
+      color: #38bdf8;
+      align-self: flex-start;
+    }
+    .remote-modal-stats-card {
+      background: rgba(255, 255, 255, 0.04);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      border-radius: 12px;
+      padding: 12px;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+    .modal-stats-row {
+      display: flex;
+      justify-content: space-between;
+      font-size: 0.82rem;
+    }
+    .modal-stats-row .stats-label {
+      color: #94a3b8;
+    }
+    .modal-stats-row .stats-value {
+      color: #fb923c;
+      font-weight: 800;
+    }
+    .modal-progress-bar-bg {
+      height: 6px;
+      background: rgba(255, 255, 255, 0.08);
+      border-radius: 999px;
+      overflow: hidden;
+    }
+    .modal-progress-bar-fill {
+      height: 100%;
+      background: linear-gradient(90deg, #f97316, #ef4444);
+      border-radius: 999px;
+      transition: width 0.3s ease;
+    }
+    .remote-modal-warning-box {
+      display: flex;
+      align-items: flex-start;
+      gap: 8px;
+      background: rgba(245, 158, 11, 0.1);
+      border: 1px dashed rgba(245, 158, 11, 0.35);
+      border-radius: 10px;
+      padding: 10px 12px;
+      font-size: 0.76rem;
+      color: #fed7aa;
+      line-height: 1.4;
+    }
+    .remote-modal-footer {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      margin-top: 4px;
+    }
+    /* Nút Giữ để xác nhận (Hold to confirm) */
+    .btn-hold-to-confirm {
+      position: relative;
+      width: 100%;
+      height: 48px;
+      border-radius: 12px;
+      border: 1.5px solid #ea580c;
+      background: #431407;
+      color: #ffffff;
+      font-weight: 800;
+      font-size: 0.88rem;
+      cursor: pointer;
+      overflow: hidden;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      touch-action: none;
+      -webkit-user-select: none;
+      user-select: none;
+      box-shadow: 0 4px 16px rgba(234, 88, 12, 0.35);
+    }
+    .hold-progress-overlay {
+      position: absolute;
+      top: 0;
+      left: 0;
+      height: 100%;
+      width: 0%;
+      background: linear-gradient(90deg, #f97316, #dc2626);
+      transition: width 0.1s linear;
+      pointer-events: none;
+    }
+    .btn-hold-content {
+      position: relative;
+      z-index: 2;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      pointer-events: none;
+    }
+    .btn-modal-cancel {
+      width: 100%;
+      height: 42px;
+      border-radius: 12px;
+      border: 1px solid rgba(255, 255, 255, 0.15);
+      background: rgba(255, 255, 255, 0.06);
+      color: #cbd5e1;
+      font-weight: 700;
+      font-size: 0.85rem;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.15s ease;
+      touch-action: manipulation;
+    }
+    .btn-modal-cancel:active {
+      background: rgba(255, 255, 255, 0.12);
+      transform: scale(0.98);
+    }
+    .btn-quick-confirm-link {
+      background: none;
+      border: none;
+      color: #94a3b8;
+      font-size: 0.72rem;
+      padding: 4px;
+      text-decoration: underline;
+      cursor: pointer;
+      text-align: center;
+      margin-top: 2px;
+      touch-action: manipulation;
+    }
   </style>
 </head>
 <body>
@@ -1034,6 +1289,67 @@
     </button>
   </div>
 
+  <!-- Thông Báo Nổi (Toast) Cho Remote Điện Thoại -->
+  <div id="remoteToast" class="remote-toast" style="display: none;"></div>
+
+  <!-- Modal Xác Nhận Làm Mới Lượt Gọi Chống Chạm Nhầm Túi Quần (Pocket-Proof Confirm) -->
+  <div id="remoteConfirmModal" class="remote-modal-backdrop" style="display: none;" onclick="if (event.target === this) closeRemoteResetModal()">
+    <div class="remote-modal-sheet" onclick="event.stopPropagation()">
+      <div class="remote-modal-header">
+        <div class="remote-modal-title">
+          <span class="modal-warn-icon">⚠️</span>
+          <span>Xác Nhận Làm Mới Lượt Gọi</span>
+        </div>
+        <button type="button" class="remote-modal-close" onclick="closeRemoteResetModal()" title="Đóng">✕</button>
+      </div>
+
+      <div class="remote-modal-body">
+        <div class="remote-modal-class-pill">
+          <span class="pill-icon">🏫</span>
+          <span id="modalTargetClassName" class="pill-name">Đang kết nối...</span>
+        </div>
+
+        <div class="remote-modal-stats-card">
+          <div class="modal-stats-row">
+            <span class="stats-label">Học sinh đã gọi:</span>
+            <strong id="modalCalledStatsText" class="stats-value">0 / 0 em</strong>
+          </div>
+          <div class="modal-progress-bar-bg">
+            <div id="modalCalledProgressBar" class="modal-progress-bar-fill" style="width: 0%;"></div>
+          </div>
+        </div>
+
+        <div class="remote-modal-warning-box">
+          <span class="warning-icon">💡</span>
+          <span class="warning-text">Tất cả học sinh đã gọi sẽ được đưa trở lại danh sách chờ để bắt đầu vòng bốc thăm mới từ đầu trên máy chiếu.</span>
+        </div>
+      </div>
+
+      <div class="remote-modal-footer">
+        <!-- Nút Nhấn Giữ 1.1 Giây Để Xác Nhận (Chống chạm nhầm khi để trong túi quần) -->
+        <button type="button" id="btnHoldToReset" class="btn-hold-to-confirm" 
+          ontouchstart="startHoldReset(event)" ontouchend="endHoldReset(event)" ontouchcancel="endHoldReset(event)"
+          onmousedown="startHoldReset(event)" onmouseup="endHoldReset(event)" onmouseleave="endHoldReset(event)">
+          <div id="holdProgressOverlay" class="hold-progress-overlay"></div>
+          <div class="btn-hold-content">
+            <span class="hold-icon">🔒</span>
+            <span id="holdBtnText" class="hold-text">Giữ 1 giây để Làm Mới</span>
+          </div>
+        </button>
+
+        <!-- Nút Hủy Bỏ An Toàn -->
+        <button type="button" class="btn-modal-cancel" onclick="closeRemoteResetModal()">
+          🔙 Hủy Bỏ (Không xóa)
+        </button>
+
+        <!-- Tùy chọn bấm nhanh dành cho Thầy Cô khi đang cầm chắc trên tay -->
+        <button type="button" class="btn-quick-confirm-link" onclick="executeResetCalledDirect()">
+          Hoặc bấm xác nhận ngay tại đây ⚡
+        </button>
+      </div>
+    </div>
+  </div>
+
   <div class="remote-footer">
     <span>💡 Đồng bộ trực tiếp theo thời gian thực qua Wi-Fi / SSE</span>
   </div>
@@ -1069,12 +1385,134 @@
       }
     }
 
-    // Đặt lại danh sách học sinh đã gọi
+    // ==========================================================================
+    // HỆ THỐNG TOAST & MODAL XÁC NHẬN CHỐNG CHẠM NHẦM (POCKET-PROOF CONFIRM)
+    // ==========================================================================
+    let remoteToastTimer = null;
+    function showRemoteToast(message, type = 'info') {
+      const toast = document.getElementById('remoteToast');
+      if (!toast) return;
+
+      if (remoteToastTimer) clearTimeout(remoteToastTimer);
+      toast.textContent = message;
+      toast.className = `remote-toast toast-${type} show`;
+      toast.style.display = 'block';
+
+      remoteToastTimer = setTimeout(() => {
+        toast.classList.remove('show');
+        setTimeout(() => {
+          if (!toast.classList.contains('show')) {
+            toast.style.display = 'none';
+          }
+        }, 260);
+      }, 2600);
+    }
+
+    // Biến quản lý trạng thái nhấn giữ chống chạm nhầm túi quần (Hold to reset)
+    let holdResetTimer = null;
+    const HOLD_RESET_DURATION = 1100; // 1.1 giây giữ liên tục
+
+    // Bật mở Modal Xác Nhận Làm Mới Lượt Gọi
     function triggerResetCalled() {
-      vibrate([40, 40, 40]);
-      if (confirm('Thầy/Cô có muốn đặt lại lượt gọi của cả lớp không?')) {
-        triggerAction('reset_called');
+      const calledArr = remoteState.called || [];
+      const totalStudents = (remoteState.students || []).length;
+      const calledCount = calledArr.length;
+
+      // 1. Nếu danh sách đang trống (0 học sinh đã gọi) -> Báo toast nhẹ, không mở modal phiền toái
+      if (calledCount === 0) {
+        vibrate(30);
+        showRemoteToast('✨ Danh sách hiện đang ở lượt mới (chưa có học sinh nào bị loại trừ)!', 'info');
+        return;
       }
+
+      // 2. Nếu đã có học sinh được gọi -> Bật Modal xác nhận chống chạm nhầm túi quần
+      vibrate([40, 40]);
+      const modal = document.getElementById('remoteConfirmModal');
+      const classNameEl = document.getElementById('modalTargetClassName');
+      const statsTextEl = document.getElementById('modalCalledStatsText');
+      const progressBarEl = document.getElementById('modalCalledProgressBar');
+
+      if (classNameEl) {
+        classNameEl.textContent = remoteState.className || 'Lớp hiện tại';
+      }
+      if (statsTextEl) {
+        statsTextEl.textContent = `${calledCount} / ${totalStudents} em`;
+      }
+      if (progressBarEl) {
+        const pct = totalStudents > 0 ? Math.round((calledCount / totalStudents) * 100) : 0;
+        progressBarEl.style.width = `${pct}%`;
+      }
+
+      // Đặt lại nút hold về trạng thái ban đầu
+      endHoldReset();
+
+      if (modal) {
+        modal.style.display = 'flex';
+      }
+    }
+
+    // Đóng Modal Xác Nhận
+    function closeRemoteResetModal() {
+      endHoldReset();
+      const modal = document.getElementById('remoteConfirmModal');
+      if (modal) modal.style.display = 'none';
+    }
+
+    // Bắt đầu giữ nút (Chống chạm nhầm khi để điện thoại trong túi quần)
+    function startHoldReset(e) {
+      if (e && e.type === 'touchstart' && e.cancelable) {
+        // Ngăn scroll ngoài ý muốn khi đang nhấn giữ nút
+        e.preventDefault();
+      }
+      if (holdResetTimer) return;
+
+      vibrate(35);
+      const overlay = document.getElementById('holdProgressOverlay');
+      const text = document.getElementById('holdBtnText');
+
+      if (text) text.textContent = 'Đang giữ... (Thả để hủy)';
+      if (overlay) {
+        overlay.style.transition = 'width 1.1s linear';
+        overlay.style.width = '100%';
+      }
+
+      holdResetTimer = setTimeout(() => {
+        // Đã giữ đủ thời gian an toàn 1.1s -> Thực hiện đặt lại!
+        executeResetCalled();
+      }, HOLD_RESET_DURATION);
+    }
+
+    // Hủy bỏ giữ nút (Nếu buông tay sớm hoặc vô tình chạm lướt trong túi quần)
+    function endHoldReset(e) {
+      if (holdResetTimer) {
+        clearTimeout(holdResetTimer);
+        holdResetTimer = null;
+      }
+
+      const overlay = document.getElementById('holdProgressOverlay');
+      const text = document.getElementById('holdBtnText');
+
+      if (overlay) {
+        overlay.style.transition = 'width 0.2s ease-out';
+        overlay.style.width = '0%';
+      }
+      if (text) {
+        text.textContent = 'Giữ 1 giây để Làm Mới';
+      }
+    }
+
+    // Thực hiện đặt lại lượt gọi và thông báo cho máy chiếu
+    function executeResetCalled() {
+      endHoldReset();
+      closeRemoteResetModal();
+      vibrate([60, 40, 90]);
+      triggerAction('reset_called');
+      showRemoteToast('✨ Đã làm mới lượt gọi cho lớp!', 'success');
+    }
+
+    // Tùy chọn bấm xác nhận ngay dành cho Thầy Cô khi đang cầm chắc trên tay
+    function executeResetCalledDirect() {
+      executeResetCalled();
     }
 
     // Chuyển tab góc nhìn trên Remote (Sơ đồ / Quiz & Timer / Danh sách / Phím lệnh)
@@ -1137,6 +1575,39 @@
       document.getElementById('countFilterAll').textContent = total;
       document.getElementById('countFilterRemaining').textContent = remaining;
       document.getElementById('countFilterCalled').textContent = calledArr.length;
+
+      // Cập nhật hiển thị nút Đặt Lại trên Remote (Làm mờ khi 0 học sinh, làm nổi bật khi >0)
+      const resetBtn = document.querySelector('.btn-remote-mini-reset');
+      if (resetBtn) {
+        if (calledArr.length === 0) {
+          resetBtn.style.opacity = '0.55';
+          resetBtn.style.borderColor = 'rgba(255, 255, 255, 0.15)';
+          resetBtn.style.color = '#94a3b8';
+          resetBtn.style.background = 'rgba(255, 255, 255, 0.05)';
+        } else {
+          resetBtn.style.opacity = '1';
+          resetBtn.style.borderColor = 'rgba(239, 68, 68, 0.4)';
+          resetBtn.style.color = '#fca5a5';
+          resetBtn.style.background = 'rgba(239, 68, 68, 0.18)';
+        }
+      }
+
+      // Đồng bộ dữ liệu trong Modal Xác Nhận nếu đang mở
+      const modal = document.getElementById('remoteConfirmModal');
+      if (modal && modal.style.display === 'flex') {
+        const classNameEl = document.getElementById('modalTargetClassName');
+        const statsTextEl = document.getElementById('modalCalledStatsText');
+        const progressBarEl = document.getElementById('modalCalledProgressBar');
+        if (classNameEl) classNameEl.textContent = data.className || remoteState.className;
+        if (statsTextEl) statsTextEl.textContent = `${calledArr.length} / ${total} em`;
+        if (progressBarEl) {
+          const pct = total > 0 ? Math.round((calledArr.length / total) * 100) : 0;
+          progressBarEl.style.width = `${pct}%`;
+        }
+        if (calledArr.length === 0) {
+          closeRemoteResetModal();
+        }
+      }
 
       if (data.quiz) {
         applyRemoteQuiz(data.quiz);
@@ -1581,7 +2052,7 @@
           3: '#fbbf24', // Vàng Cam
           4: '#f472b6'  // Hồng Tím
         };
-        const color = groupColors[data.groupNum] || '#f59e0b';
+        const color = data.color || groupColors[data.groupNum] || '#f59e0b';
         const mascot = data.mascot || '👑';
 
         if (card && nameEl && locEl) {

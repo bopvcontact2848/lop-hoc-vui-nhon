@@ -588,24 +588,187 @@
   animation: none !important;
 }
 
+/* ==============================================================================
+   BẢNG ĐEN BỤC GIẢNG & BIỂU NGỮ LED CHẠY NGƯỢC "TIÊN HỌC LỄ • HẬU HỌC VĂN"
+   ============================================================================== */
+
 .blackboard-box {
-  background: #14532d;
-  border: 3px solid #b45309;
-  border-radius: 8px;
-  padding: 8px 24px;
-  color: #f0fdf4;
-  font-family: 'Patrick Hand', 'Comic Sans MS', cursive, sans-serif;
-  font-size: 0.96rem;
-  letter-spacing: 1px;
-  box-shadow: inset 0 0 10px rgba(0, 0, 0, 0.4);
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
+  background: #092817;
+  border: 2px solid #b45309;
+  border-radius: 10px;
+  padding: 7px 22px;
+  min-height: 42px;
   display: flex;
   align-items: center;
   justify-content: center;
   text-align: center;
-  gap: 10px;
-  font-weight: 700;
+  gap: 12px;
   flex: 1;
-  max-width: 540px;
+  max-width: 520px;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.28),
+              inset 0 0 14px rgba(0, 0, 0, 0.7),
+              0 0 12px rgba(245, 158, 11, 0.22);
+  transition: all 0.3s ease;
+  user-select: none;
+}
+
+/* Lớp viền LED chạy ngược (Counter-Clockwise Border Light) quanh 4 cạnh bảng hiệu */
+.blackboard-box::before {
+  content: '';
+  position: absolute;
+  inset: -100%;
+  width: 300%;
+  height: 300%;
+  background: conic-gradient(
+    from 0deg,
+    transparent 0deg,
+    transparent 65deg,
+    rgba(251, 191, 36, 0.45) 80deg,
+    #ffffff 90deg,
+    rgba(251, 191, 36, 0.8) 98deg,
+    transparent 115deg,
+    transparent 360deg
+  );
+  animation: ledBorderSpinReverse 3.8s linear infinite;
+  z-index: 0;
+  opacity: 0.95;
+  pointer-events: none;
+}
+
+/* Nền bảng đen xanh thẫm có vân hạt LED ma trận tinh tế */
+.blackboard-box::after {
+  content: '';
+  position: absolute;
+  inset: 2px;
+  background: radial-gradient(circle at 50% 50%, #0d3822 0%, #062314 100%);
+  background-image: 
+    radial-gradient(rgba(52, 211, 153, 0.15) 1.2px, transparent 1.2px),
+    radial-gradient(circle at 50% 50%, #0d3822 0%, #062314 100%);
+  background-size: 8px 8px, 100% 100%;
+  border-radius: 7px;
+  box-shadow: inset 0 0 16px rgba(0, 0, 0, 0.7);
+  z-index: 1;
+  pointer-events: none;
+}
+
+/* Vòng xoay viền LED chạy ngược chiều kim đồng hồ quanh 4 cạnh */
+@keyframes ledBorderSpinReverse {
+  from {
+    transform: rotate(360deg);
+  }
+  to {
+    transform: rotate(0deg);
+  }
+}
+
+/* Hai đèn LED điểm nhấn ở hai đầu bảng hiệu */
+.led-dot-indicator {
+  position: relative;
+  z-index: 2;
+  font-size: 0.75rem;
+  color: #fbbf24;
+  line-height: 1;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  filter: drop-shadow(0 0 6px rgba(251, 191, 36, 0.9));
+  animation: ledDotPulse 1.8s ease-in-out infinite alternate;
+}
+
+.led-dot-indicator.right {
+  animation-delay: 0.9s;
+}
+
+@keyframes ledDotPulse {
+  0% {
+    transform: scale(0.85);
+    opacity: 0.65;
+    filter: drop-shadow(0 0 4px rgba(251, 191, 36, 0.6));
+  }
+  100% {
+    transform: scale(1.18);
+    opacity: 1;
+    filter: drop-shadow(0 0 10px rgba(254, 240, 138, 1)) drop-shadow(0 0 16px rgba(245, 158, 11, 0.8));
+  }
+}
+
+/* Chữ Khẩu Hiệu Bảng Đen: TIÊN HỌC LỄ • HẬU HỌC VĂN */
+.blackboard-led-text {
+  position: relative;
+  z-index: 2;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Be Vietnam Pro', 'Montserrat', 'Inter', sans-serif;
+  font-size: 1.05rem;
+  font-weight: 850;
+  text-transform: uppercase;
+  letter-spacing: 2.6px;
+  white-space: nowrap;
+  display: inline-block;
+  
+  /* Màu vàng kim LED cao cấp */
+  color: #fef08a;
+  
+  /* Dải sáng LED quét ngược (từ phải sang trái) */
+  background: linear-gradient(
+    90deg,
+    #fde047 0%,
+    #fef08a 22%,
+    #ffffff 45%,
+    #ffffff 55%,
+    #fef08a 78%,
+    #fde047 100%
+  );
+  background-size: 240% 100%;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  
+  /* Ánh sáng đèn LED Neon tỏa rộng */
+  filter: drop-shadow(0 0 3px rgba(254, 240, 138, 0.85)) 
+          drop-shadow(0 0 9px rgba(250, 204, 21, 0.65))
+          drop-shadow(0 0 18px rgba(234, 88, 12, 0.35));
+          
+  animation: ledTextSweepReverse 3.2s cubic-bezier(0.25, 1, 0.5, 1) infinite;
+}
+
+/* Hiệu ứng quét sáng đèn LED chạy ngược từ PHẢI sang TRÁI (Right-to-Left) */
+@keyframes ledTextSweepReverse {
+  0% {
+    background-position: 180% 0;
+    filter: drop-shadow(0 0 3px rgba(254, 240, 138, 0.7)) 
+            drop-shadow(0 0 7px rgba(250, 204, 21, 0.5));
+  }
+  30% {
+    filter: drop-shadow(0 0 5px rgba(255, 255, 255, 0.95)) 
+            drop-shadow(0 0 12px rgba(254, 240, 138, 0.9)) 
+            drop-shadow(0 0 22px rgba(245, 158, 11, 0.65));
+  }
+  70% {
+    background-position: -80% 0;
+    filter: drop-shadow(0 0 4px rgba(254, 240, 138, 0.8)) 
+            drop-shadow(0 0 9px rgba(250, 204, 21, 0.55));
+  }
+  100% {
+    background-position: -80% 0;
+    filter: drop-shadow(0 0 3px rgba(254, 240, 138, 0.7)) 
+            drop-shadow(0 0 7px rgba(250, 204, 21, 0.5));
+  }
+}
+
+@media (max-width: 640px) {
+  .blackboard-box {
+    padding: 6px 14px;
+    gap: 8px;
+    max-width: 100%;
+  }
+  .blackboard-led-text {
+    font-size: 0.84rem;
+    letter-spacing: 1.5px;
+  }
+  .led-dot-indicator {
+    font-size: 0.62rem;
+  }
 }
 
 .teacher-desk {
@@ -869,11 +1032,13 @@
   font-size: 1.35rem;
 }
 
-/* Nút Cài đặt sơ đồ lớp khi thu gọn */
+/* Nút Cài đặt sơ đồ lớp khi thu gọn - Có đường phân cách và khoảng cách cách ly */
 .seating-modes-panel.collapsed .seating-panel-settings-box {
   justify-content: center;
   width: 100%;
-  margin: 2px 0;
+  margin-top: 8px;
+  padding-top: 8px;
+  border-top: 1.5px dashed #fed7aa;
 }
 
 .seating-modes-panel.collapsed .btn-seating-panel-settings {
@@ -892,6 +1057,12 @@
 .seating-modes-panel.collapsed .btn-seating-panel-settings .btn-icon {
   font-size: 1.3rem;
   margin: 0;
+  display: inline-block;
+  transition: transform 0.4s ease;
+}
+
+.seating-modes-panel.collapsed .btn-seating-panel-settings:hover .btn-icon {
+  transform: rotate(60deg);
 }
 
 /* Ẩn hộp trạng thái chữ dài khi thu gọn */
@@ -2350,8 +2521,17 @@ body.projector-mode .classroom-podium-bar {
 }
 
 body.projector-mode .blackboard-box {
-  font-size: 1.25rem;
-  padding: 8px 36px;
+  padding: 10px 36px;
+  max-width: 620px;
+}
+
+body.projector-mode .blackboard-led-text {
+  font-size: 1.28rem;
+  letter-spacing: 3.2px;
+}
+
+body.projector-mode .led-dot-indicator {
+  font-size: 0.95rem;
 }
 
 body.projector-mode .classroom-grid-wrapper {
@@ -3353,6 +3533,223 @@ body.stage-celebrate-group-4 .winner-headline {
   color: #ffffff;
   border-color: #ffedd5;
   box-shadow: 0 2px 6px rgba(234, 88, 12, 0.4);
+}
+
+/* ==============================================================================
+   HIỆU ỨNG VỆT SÁNG LASER & TIA SÉT BẮN TỪ BẢNG ĐEN XUỐNG BÀN HỌC SINH
+   ============================================================================== */
+.seating-classroom-column {
+  position: relative;
+}
+
+.seating-laser-svg {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  z-index: 55;
+  overflow: visible;
+  filter: drop-shadow(0 0 8px rgba(245, 158, 11, 0.6));
+}
+
+.laser-beam-outer {
+  stroke: rgba(245, 158, 11, 0.38);
+  stroke-width: 8px;
+  stroke-linecap: round;
+  fill: none;
+  animation: laserPulseGlow 0.25s ease-in-out infinite alternate;
+}
+
+.laser-lightning-bolt {
+  stroke: #fef08a;
+  stroke-width: 3.5px;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  fill: none;
+  filter: drop-shadow(0 0 6px #f59e0b) drop-shadow(0 0 12px #38bdf8);
+}
+
+.laser-lightning-core {
+  stroke: #ffffff;
+  stroke-width: 1.8px;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  fill: none;
+}
+
+.laser-branch {
+  stroke: #38bdf8;
+  stroke-width: 1.8px;
+  stroke-linecap: round;
+  fill: none;
+  opacity: 0.85;
+  filter: drop-shadow(0 0 5px #0284c7);
+}
+
+.laser-origin-flare {
+  fill: #f59e0b;
+  stroke: #ffffff;
+  stroke-width: 2.5px;
+  filter: drop-shadow(0 0 10px #f59e0b) drop-shadow(0 0 20px #38bdf8);
+  animation: laserFlarePulse 0.35s ease-in-out infinite alternate;
+}
+
+.laser-impact-ring {
+  fill: none;
+  stroke: #fbbf24;
+  stroke-width: 3px;
+  filter: drop-shadow(0 0 8px #f59e0b);
+  animation: laserImpactRingPulse 0.5s ease-out infinite;
+}
+
+.final-landing .laser-lightning-bolt {
+  stroke: #ffffff;
+  stroke-width: 4.8px;
+  filter: drop-shadow(0 0 8px #f97316) drop-shadow(0 0 18px #eab308) drop-shadow(0 0 28px #38bdf8);
+}
+
+.final-landing .laser-beam-outer {
+  stroke: rgba(249, 115, 22, 0.55);
+  stroke-width: 14px;
+}
+
+@keyframes laserPulseGlow {
+  0% { opacity: 0.65; stroke-width: 6px; }
+  100% { opacity: 1; stroke-width: 11px; }
+}
+
+@keyframes laserFlarePulse {
+  0% { transform: scale(0.9); opacity: 0.8; }
+  100% { transform: scale(1.25); opacity: 1; }
+}
+
+@keyframes laserImpactRingPulse {
+  0% { r: 6px; opacity: 1; stroke-width: 3.5px; }
+  100% { r: 26px; opacity: 0; stroke-width: 1px; }
+}
+
+/* Hiệu ứng chớp điện trên Bảng Đen khi phóng tia sét */
+.blackboard-box.blackboard-laser-pulse {
+  animation: blackboardFlash 0.5s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@keyframes blackboardFlash {
+  0% {
+    box-shadow: 0 4px 14px rgba(0, 0, 0, 0.28), inset 0 0 14px rgba(0, 0, 0, 0.7);
+    border-color: #b45309;
+    transform: scale(1);
+  }
+  30% {
+    box-shadow: 0 0 40px rgba(245, 158, 11, 1), 0 0 65px rgba(56, 189, 248, 0.75), inset 0 0 25px rgba(254, 240, 138, 0.6);
+    border-color: #fde047;
+    transform: scale(1.025);
+  }
+  100% {
+    box-shadow: 0 4px 14px rgba(0, 0, 0, 0.28), inset 0 0 14px rgba(0, 0, 0, 0.7), 0 0 12px rgba(245, 158, 11, 0.22);
+    border-color: #b45309;
+    transform: scale(1);
+  }
+}
+
+/* ==============================================================================
+   HIỆU ỨNG VÒM SÁNG SPOTLIGHT TỐI NỀN KHI TIA SÉT BẮN XUỐNG BÀN CHIẾN THẮNG
+   (Làm mờ nhẹ các bàn xung quanh xuống opacity 0.25 để cả lớp tập trung 100% vào bàn thắng)
+   ============================================================================== */
+
+/* Mượt mà khi chuyển đổi trạng thái sáng - tối trên các bàn */
+.classroom-grid-wrapper .desk-row-unit {
+  transition: opacity 0.45s cubic-bezier(0.16, 1, 0.3, 1), 
+              filter 0.45s ease, 
+              transform 0.45s cubic-bezier(0.16, 1, 0.3, 1),
+              box-shadow 0.3s ease,
+              border-color 0.3s ease;
+}
+
+/* Khi hiệu ứng tối nền được kích hoạt trên sân khấu */
+.classroom-grid-wrapper.stage-spotlight-dimmed {
+  background: radial-gradient(circle at 50% 30%, #ffffff 0%, #f1f5f9 100%) !important;
+  box-shadow: inset 0 0 60px rgba(15, 23, 42, 0.16) !important;
+  transition: all 0.5s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+/* Các dãy bàn và bàn ghế xung quanh mờ xuống opacity 0.25 */
+.classroom-grid-wrapper.stage-spotlight-dimmed .desk-row-unit {
+  opacity: 0.25 !important;
+  filter: grayscale(40%) brightness(0.88);
+  transform: scale(0.975);
+  transition: opacity 0.45s cubic-bezier(0.16, 1, 0.3, 1), 
+              filter 0.45s ease, 
+              transform 0.45s cubic-bezier(0.16, 1, 0.3, 1);
+  pointer-events: none;
+}
+
+/* Tiêu đề Dãy bàn mờ nhẹ */
+.classroom-grid-wrapper.stage-spotlight-dimmed .aisle-header {
+  opacity: 0.35 !important;
+  transition: opacity 0.45s ease;
+}
+
+/* Bàn học sinh trúng giải (Desk Row Unit) sáng bừng 100%, nổi bật tuyệt đối */
+.classroom-grid-wrapper.stage-spotlight-dimmed .desk-row-unit.winner-desk,
+.classroom-grid-wrapper.stage-spotlight-dimmed .desk-row-unit:has(.winner-seat) {
+  opacity: 1 !important;
+  filter: none !important;
+  transform: scale(1.04) !important;
+  z-index: 35 !important;
+  border-color: #f59e0b !important;
+  box-shadow: 0 0 45px rgba(245, 158, 11, 0.55), 0 14px 32px rgba(15, 23, 42, 0.18) !important;
+  pointer-events: auto;
+}
+
+/* Ghế chiến thắng giữ hào quang rực rỡ và scale nổi bật */
+.classroom-grid-wrapper.stage-spotlight-dimmed .seat-slot.winner-seat {
+  opacity: 1 !important;
+  z-index: 40 !important;
+}
+
+/* Bảng Đen bục giảng luôn giữ độ sáng và nổi bật vì là nơi phóng tia sét */
+.seating-classroom-column.stage-spotlight-dimmed #seatingBlackboardBox,
+body.stage-spotlight-dimmed #seatingBlackboardBox {
+  z-index: 45 !important;
+  box-shadow: 0 0 35px rgba(245, 158, 11, 0.55), 0 8px 24px rgba(0, 0, 0, 0.35) !important;
+}
+
+/* Cột chế độ bên trái mờ nhẹ để tập trung hoàn toàn vào sân khấu sơ đồ */
+body.stage-spotlight-dimmed .seating-modes-panel {
+  opacity: 0.4;
+  transition: opacity 0.45s ease;
+  pointer-events: none;
+}
+
+/* Khay học sinh chưa xếp chỗ bên phải cũng mờ nhẹ */
+body.stage-spotlight-dimmed .seating-unassigned-column {
+  opacity: 0.3;
+  transition: opacity 0.45s ease;
+  pointer-events: none;
+}
+
+/* Biến thể quầng sáng theo 4 Tổ cho bàn chiến thắng */
+body.stage-celebrate-group-1 .classroom-grid-wrapper.stage-spotlight-dimmed .desk-row-unit.winner-desk,
+body.stage-celebrate-group-1 .classroom-grid-wrapper.stage-spotlight-dimmed .desk-row-unit:has(.winner-seat) {
+  border-color: #0284c7 !important;
+  box-shadow: 0 0 50px rgba(56, 189, 248, 0.75), 0 14px 32px rgba(2, 132, 199, 0.25) !important;
+}
+body.stage-celebrate-group-2 .classroom-grid-wrapper.stage-spotlight-dimmed .desk-row-unit.winner-desk,
+body.stage-celebrate-group-2 .classroom-grid-wrapper.stage-spotlight-dimmed .desk-row-unit:has(.winner-seat) {
+  border-color: #16a34a !important;
+  box-shadow: 0 0 50px rgba(52, 211, 153, 0.75), 0 14px 32px rgba(22, 163, 74, 0.25) !important;
+}
+body.stage-celebrate-group-3 .classroom-grid-wrapper.stage-spotlight-dimmed .desk-row-unit.winner-desk,
+body.stage-celebrate-group-3 .classroom-grid-wrapper.stage-spotlight-dimmed .desk-row-unit:has(.winner-seat) {
+  border-color: #d97706 !important;
+  box-shadow: 0 0 50px rgba(251, 191, 36, 0.75), 0 14px 32px rgba(217, 119, 6, 0.25) !important;
+}
+body.stage-celebrate-group-4 .classroom-grid-wrapper.stage-spotlight-dimmed .desk-row-unit.winner-desk,
+body.stage-celebrate-group-4 .classroom-grid-wrapper.stage-spotlight-dimmed .desk-row-unit:has(.winner-seat) {
+  border-color: #db2777 !important;
+  box-shadow: 0 0 50px rgba(244, 114, 182, 0.75), 0 14px 32px rgba(219, 39, 119, 0.25) !important;
 }
 
 

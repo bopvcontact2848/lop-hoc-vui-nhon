@@ -4904,12 +4904,14 @@
   box-shadow: 0 5px 14px rgba(234, 88, 12, 0.28) !important;
 }
 
-/* 2. Nút Cài đặt Sơ Đồ Lớp trên Bảng điều khiển cột trái (seatingModesPanel) */
+/* 2. Nút Cài đặt Sơ Đồ Lớp trên Bảng điều khiển cột trái (seatingModesPanel) - Phân tách cách ly */
 .seating-panel-settings-box {
   width: 100%;
   display: flex;
   box-sizing: border-box;
-  margin-top: 2px;
+  margin-top: 6px;
+  padding-top: 10px;
+  border-top: 1.5px dashed #fed7aa;
 }
 
 .btn-seating-panel-settings {
@@ -4940,6 +4942,12 @@
 
 .btn-seating-panel-settings .btn-icon {
   font-size: 1.1rem;
+  display: inline-block;
+  transition: transform 0.4s ease;
+}
+
+.btn-seating-panel-settings:hover .btn-icon {
+  transform: rotate(45deg);
 }
 
 /* 3. Nút Cài đặt Sơ Đồ trên Bục Giảng */
@@ -5254,6 +5262,281 @@
   border-top: 1.5px solid #e2e8f0 !important;
   display: flex !important;
   justify-content: flex-end !important;
+}
+
+/* ==============================================================================
+   CHẾ ĐỘ GỌI NHÓM CHO VÒNG QUAY MAY MẮN (WHEEL GROUP MODE)
+   ============================================================================== */
+.wheel-mode-selector {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: #ffffff;
+  border: 1.5px solid #d7c7bb;
+  border-radius: var(--radius-xl);
+  padding: 4px 6px;
+  box-shadow: var(--shadow-sm);
+}
+
+.wheel-mode-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: transparent;
+  border: none;
+  color: var(--text-main);
+  padding: 7px 14px;
+  border-radius: var(--radius-lg);
+  font-size: 0.86rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.wheel-mode-pill:hover {
+  background: #fff7ed;
+  color: #ea580c;
+}
+
+.wheel-mode-pill.active {
+  background: linear-gradient(135deg, #fb923c, #ea580c);
+  color: #ffffff !important;
+  box-shadow: 0 4px 12px rgba(234, 88, 12, 0.3);
+}
+
+.group-count-badge {
+  background: rgba(255, 255, 255, 0.3);
+  color: #ffffff;
+  padding: 2px 8px;
+  border-radius: 999px;
+  font-size: 0.76rem;
+  font-weight: 800;
+}
+
+.wheel-mode-pill:not(.active) .group-count-badge {
+  background: #f1f5f9;
+  color: #475569;
+}
+
+.dropdown-chevron {
+  font-size: 0.72rem;
+  transition: transform 0.2s ease;
+}
+
+.wheel-group-dropdown-wrap {
+  position: relative;
+  display: inline-flex;
+}
+
+.wheel-group-dropdown-menu {
+  position: absolute;
+  top: calc(100% + 8px);
+  left: 0;
+  z-index: 1000;
+  background: #ffffff;
+  border: 1.5px solid #cbd5e1;
+  border-radius: var(--radius-md);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15);
+  padding: 10px;
+  min-width: 210px;
+  display: none;
+}
+
+.wheel-group-dropdown-menu.open {
+  display: block;
+  animation: fadeInDown 0.18s ease-out;
+}
+
+.wheel-group-dropdown-menu .dropdown-header {
+  font-size: 0.75rem;
+  color: #64748b;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-bottom: 8px;
+  padding: 0 4px;
+}
+
+.dropdown-group-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 6px;
+}
+
+.group-opt-btn {
+  background: #f8fafc;
+  border: 1.5px solid #e2e8f0;
+  color: #334155;
+  font-size: 0.84rem;
+  font-weight: 700;
+  padding: 8px 10px;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  text-align: center;
+}
+
+.group-opt-btn:hover {
+  background: #fff7ed;
+  border-color: #fdba74;
+  color: #ea580c;
+  transform: translateY(-1px);
+}
+
+.group-opt-btn.active {
+  background: linear-gradient(135deg, #fb923c, #ea580c);
+  border-color: #ea580c;
+  color: #ffffff;
+  box-shadow: 0 3px 10px rgba(234, 88, 12, 0.35);
+}
+
+.btn-view-group-members {
+  background: #f0fdf4 !important;
+  border: 1.5px solid #86efac !important;
+  color: #15803d !important;
+}
+
+.btn-view-group-members:hover {
+  background: #dcfce7 !important;
+  border-color: #22c55e !important;
+  color: #166534 !important;
+  transform: translateY(-1px);
+}
+
+/* Thẻ kết quả chiến thắng cho Nhóm */
+.wheel-winner-card .winner-group-card-content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+}
+
+.winner-group-badge {
+  font-size: 0.82rem;
+  letter-spacing: 1.5px;
+  color: #c2410c;
+  font-weight: 900;
+  text-transform: uppercase;
+}
+
+.winner-group-name {
+  font-size: 1.85rem;
+  font-weight: 900;
+  color: #ea580c;
+  text-shadow: 0 2px 8px rgba(234, 88, 12, 0.2);
+  line-height: 1.2;
+}
+
+.winner-group-members-box {
+  background: #ffffff;
+  border: 1.5px solid #fed7aa;
+  border-radius: var(--radius-md);
+  padding: 10px 16px;
+  width: 100%;
+  max-width: 520px;
+  margin-top: 6px;
+  box-shadow: 0 4px 12px rgba(251, 146, 60, 0.12);
+}
+
+.winner-group-members-label {
+  font-size: 0.82rem;
+  font-weight: 700;
+  color: #78350f;
+  margin-bottom: 6px;
+  text-align: left;
+}
+
+.winner-group-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  justify-content: center;
+}
+
+.winner-member-chip {
+  background: #fff7ed;
+  border: 1px solid #fdba74;
+  color: #9a3412;
+  font-size: 0.86rem;
+  font-weight: 700;
+  padding: 4px 10px;
+  border-radius: 999px;
+  box-shadow: 0 2px 4px rgba(251, 146, 60, 0.08);
+}
+
+/* Thẻ tổng quan từng nhóm trong Modal thành viên */
+.group-overview-card {
+  background: #ffffff;
+  border: 1.5px solid #e2e8f0;
+  border-radius: var(--radius-md);
+  padding: 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  box-shadow: var(--shadow-sm);
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.group-overview-card:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-md);
+}
+
+.group-overview-card.group-called {
+  opacity: 0.55;
+  background: #f8fafc;
+  border-color: #cbd5e1;
+}
+
+.group-overview-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  border-bottom: 1px dashed #e2e8f0;
+  padding-bottom: 8px;
+}
+
+.group-called-badge {
+  font-size: 0.74rem;
+  background: #fee2e2;
+  border: 1px solid #fca5a5;
+  color: #b91c1c;
+  font-weight: 800;
+  padding: 2px 8px;
+  border-radius: 999px;
+}
+
+.group-count-pill {
+  font-size: 0.74rem;
+  background: #e2e8f0;
+  color: #475569;
+  font-weight: 700;
+  padding: 2px 8px;
+  border-radius: 999px;
+}
+
+.group-members-list {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  max-height: 140px;
+  overflow-y: auto;
+}
+
+.group-member-item {
+  font-size: 0.86rem;
+  color: #334155;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.group-member-item .member-idx {
+  color: #94a3b8;
+  font-size: 0.78rem;
+  min-width: 18px;
 }
 
 

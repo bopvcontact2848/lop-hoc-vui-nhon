@@ -236,12 +236,18 @@ function updateUI() {
   renderClassSelector();
   renderStudentsList();
 
+  if (typeof updateWheelModeUI === 'function') {
+    updateWheelModeUI();
+  }
+
   if (state.viewMode === 'wheel' && typeof drawLuckyWheel === 'function') {
     drawLuckyWheel();
   }
 
   if (state.gameMode === 'seating' && window.SeatingChartModule && typeof window.SeatingChartModule.render === 'function') {
-    window.SeatingChartModule.render();
+    if (!window.SeatingChartModule.isBusy || !window.SeatingChartModule.isBusy()) {
+      window.SeatingChartModule.render();
+    }
   }
 
   // Tự động đồng bộ trạng thái mới nhất sang Remote trên điện thoại
@@ -438,6 +444,7 @@ function switchViewMode(mode) {
   const stageTitle = document.getElementById('classicGameStageTitle');
   const slotModeBar = document.getElementById('slotModeBar');
   const btnWheelSettings = document.getElementById('btnWheelStageSettings');
+  const wheelModeSelector = document.getElementById('wheelModeSelector');
 
   if (mode === 'slot') {
     if (DOM.displayScreen) DOM.displayScreen.classList.add('active');
@@ -447,6 +454,7 @@ function switchViewMode(mode) {
     if (stageTag) stageTag.className = 'current-game-stage-tag theme-slot';
     if (slotModeBar) slotModeBar.style.display = 'flex';
     if (btnWheelSettings) btnWheelSettings.style.display = 'none';
+    if (wheelModeSelector) wheelModeSelector.style.display = 'none';
     renderDefaultStage();
   } else {
     if (DOM.displayScreen) DOM.displayScreen.classList.remove('active');
@@ -457,6 +465,8 @@ function switchViewMode(mode) {
     if (stageTag) stageTag.className = 'current-game-stage-tag';
     if (slotModeBar) slotModeBar.style.display = 'none';
     if (btnWheelSettings) btnWheelSettings.style.display = 'inline-flex';
+    if (wheelModeSelector) wheelModeSelector.style.display = 'inline-flex';
+    if (typeof updateWheelModeUI === 'function') updateWheelModeUI();
     if (typeof drawLuckyWheel === 'function') drawLuckyWheel();
   }
   saveStateToStorage();
@@ -874,6 +884,201 @@ function copyGroupsToClipboard() {
     showToast('Đã sao chép danh sách nhóm vào bộ nhớ tạm!', 'success');
   }).catch(() => {
     showToast('Không thể sao chép tự động. Vui lòng thử lại!', 'warning');
+  });
+}
+
+// --- BỘ ĐIỀU PHỐI CHẾ ĐỘ GỌI NHÓM CHO VÒNG QUAY MAY MẮN ---
+function setWheelTargetType(type) {
+  if (!window.state) return;
+  window.state.wheelTargetType = type;
+  closeWheelGroupDropdown();
+  if (type === 'group') {
+    const fnPart = typeof partitionClassIntoWheelGroups === 'function' ? partitionClassIntoWheelGroups : window.partitionClassIntoWheelGroups;
+    const fnCount = typeof getWheelGroupCount === 'function' ? getWheelGroupCount : window.getWheelGroupCount;
+    if (fnPart && fnCount) {
+      fnPart(fnCount(), false);
+    }
+  }
+  updateWheelModeUI();
+  const fnDraw = typeof drawLuckyWheel === 'function' ? drawLuckyWheel : window.drawLuckyWheel;
+  if (fnDraw) fnDraw();
+  const fnSave = typeof saveStateToStorage === 'function' ? saveStateToStorage : window.saveStateToStorage;
+  if (fnSave) fnSave();
+  if (typeof updateUI === 'function') updateUI();
+}
+
+function selectWheelGroupCount(count) {
+  count = parseInt(count, 10);
+  if (isNaN(count) || count < 6 || count > 12) count = 6;
+  if (!window.state) return;
+  window.state.wheelGroupCount = count;
+  window.state.wheelTargetType = 'group';
+  closeWheelGroupDropdown();
+  const fnPart = typeof partitionClassIntoWheelGroups === 'function' ? partitionClassIntoWheelGroups : window.partitionClassIntoWheelGroups;
+  if (fnPart) {
+    fnPart(count, false);
+  }
+  updateWheelModeUI();
+  const fnDraw = typeof drawLuckyWheel === 'function' ? drawLuckyWheel : window.drawLuckyWheel;
+  if (fnDraw) fnDraw();
+  const fnSave = typeof saveStateToStorage === 'function' ? saveStateToStorage : window.saveStateToStorage;
+  if (fnSave) fnSave();
+  if (typeof updateUI === 'function') updateUI();
+  if (typeof showToast === 'function') {
+    showToast(`Đã chuyển sang Vòng quay ${count} nhóm!`, 'info');
+  }
+}
+
+function toggleWheelGroupDropdown(e) {
+  if (e) {
+    e.stopPropagation();
+    e.preventDefault();
+  }
+  const menu = document.getElementById('wheelGroupDropdownMenu');
+  if (menu) {
+    menu.classList.toggle('open');
+  }
+}
+
+function closeWheelGroupDropdown() {
+  const menu = document.getElementById('wheelGroupDropdownMenu');
+  if (menu) menu.classList.remove('open');
+}
+
+function updateWheelModeUI() {
+  const state = window.state;
+  if (!state) return;
+
+  const isGroup = (state.wheelTargetType === 'group');
+  const groupCount = (typeof getWheelGroupCount === 'function') ? getWheelGroupCount() : (state.wheelGroupCount || 6);
+
+  const btnStudent = document.getElementById('btnWheelModeStudent');
+  const btnGroup = document.getElementById('btnWheelModeGroup');
+  const badge = document.getElementById('wheelGroupCountBadge');
+  const btnMembers = document.getElementById('btnViewWheelGroupMembers');
+  const btnSpin = document.getElementById('btnSpin');
+
+  if (btnStudent) btnStudent.classList.toggle('active', !isGroup);
+  if (btnGroup) btnGroup.classList.toggle('active', isGroup);
+  if (badge) badge.textContent = `${groupCount} nhóm`;
+
+  if (btnMembers) {
+    btnMembers.style.display = isGroup ? 'inline-flex' : 'none';
+  }
+
+  // Cập nhật nhãn của nút quay lớn
+  if (btnSpin && state.viewMode === 'wheel') {
+    const spanText = btnSpin.querySelector('span');
+    if (spanText) {
+      spanText.textContent = isGroup ? 'QUAY NHÓM NGAY' : 'QUAY TÊN NGAY';
+    }
+  }
+
+  // Cập nhật nút active trong dropdown
+  const optBtns = document.querySelectorAll('.group-opt-btn');
+  optBtns.forEach(btn => {
+    const c = parseInt(btn.getAttribute('data-count'), 10);
+    btn.classList.toggle('active', isGroup && c === groupCount);
+  });
+}
+
+function openWheelGroupMembersModal() {
+  const modal = document.getElementById('wheelGroupMembersModal');
+  if (!modal) return;
+  renderWheelGroupsView();
+  modal.classList.add('open');
+}
+
+function closeWheelGroupMembersModal() {
+  const modal = document.getElementById('wheelGroupMembersModal');
+  if (modal) modal.classList.remove('open');
+}
+
+function renderWheelGroupsView() {
+  const container = document.getElementById('wheelGroupsContainer');
+  const countText = document.getElementById('wheelModalGroupCountText');
+  if (!container) return;
+
+  const groupCount = (typeof getWheelGroupCount === 'function') ? getWheelGroupCount() : 6;
+  if (countText) countText.textContent = `${groupCount} nhóm`;
+
+  const groups = (typeof getAllWheelGroups === 'function') ? getAllWheelGroups() : [];
+  const cls = (typeof getCurrentClass === 'function') ? getCurrentClass() : null;
+  const calledSet = new Set((cls && Array.isArray(cls.calledGroups)) ? cls.calledGroups : []);
+  const allocations = (typeof partitionClassIntoWheelGroups === 'function')
+    ? partitionClassIntoWheelGroups(groupCount, false)
+    : {};
+
+  container.innerHTML = groups.map(g => {
+    const members = allocations[g.num] || [];
+    const isCalled = calledSet.has(g.num);
+    return `
+      <div class="group-overview-card ${isCalled ? 'group-called' : ''}" style="border-top: 4px solid ${g.color};">
+        <div class="group-overview-header">
+          <div style="display: flex; align-items: center; gap: 8px;">
+            <span style="font-size: 1.4rem;">${g.mascot}</span>
+            <div>
+              <div style="font-weight: 800; color: #fff; font-size: 1.05rem;">${g.name}</div>
+              <div style="font-size: 0.8rem; color: #94a3b8; font-weight: 600;">${g.title}</div>
+            </div>
+          </div>
+          ${isCalled ? '<span class="group-called-badge">Đã gọi</span>' : `<span class="group-count-pill">${members.length} bạn</span>`}
+        </div>
+        <div class="group-members-list">
+          ${members.length > 0
+            ? members.map((m, idx) => `<div class="group-member-item"><span class="member-idx">${idx + 1}.</span> <span>${m}</span></div>`).join('')
+            : '<div style="color: #64748b; font-size: 0.85rem; font-style: italic;">Chưa có thành viên</div>'
+          }
+        </div>
+      </div>
+    `;
+  }).join('');
+}
+
+function reshuffleWheelGroupsAction() {
+  const groupCount = (typeof getWheelGroupCount === 'function') ? getWheelGroupCount() : 6;
+  if (typeof partitionClassIntoWheelGroups === 'function') {
+    partitionClassIntoWheelGroups(groupCount, true);
+  }
+  renderWheelGroupsView();
+  if (typeof showToast === 'function') {
+    showToast('Đã xáo trộn và chia lại học sinh vào các nhóm!', 'success');
+  }
+}
+
+function copyWheelGroupsToClipboard() {
+  const groupCount = (typeof getWheelGroupCount === 'function') ? getWheelGroupCount() : 6;
+  const groups = (typeof getAllWheelGroups === 'function') ? getAllWheelGroups() : [];
+  const cls = (typeof getCurrentClass === 'function') ? getCurrentClass() : null;
+  const className = cls ? cls.name : 'Lớp học';
+  const allocations = (typeof partitionClassIntoWheelGroups === 'function')
+    ? partitionClassIntoWheelGroups(groupCount, false)
+    : {};
+
+  let text = `DANH SÁCH ${groupCount} NHÓM - ${className.toUpperCase()}\n`;
+  text += `=====================================\n\n`;
+
+  groups.forEach(g => {
+    const members = allocations[g.num] || [];
+    text += `${g.mascot} ${g.name.toUpperCase()} (${g.title}) - ${members.length} bạn:\n`;
+    if (members.length > 0) {
+      members.forEach((m, i) => {
+        text += `  ${i + 1}. ${m}\n`;
+      });
+    } else {
+      text += `  (Trống)\n`;
+    }
+    text += `\n`;
+  });
+
+  navigator.clipboard.writeText(text).then(() => {
+    if (typeof showToast === 'function') {
+      showToast('📋 Đã sao chép danh sách nhóm vào bộ nhớ tạm!', 'success');
+    }
+  }).catch(() => {
+    if (typeof showToast === 'function') {
+      showToast('Không thể tự động sao chép danh sách!', 'warning');
+    }
   });
 }
 
@@ -1504,6 +1709,7 @@ function setupEventListeners() {
   }
 
   // 25. Đóng modal khi bấm ra ngoài nền tối
+  const wheelGroupModal = document.getElementById('wheelGroupMembersModal');
   [
     DOM.manualModal,
     DOM.allGroupsModal,
@@ -1515,12 +1721,21 @@ function setupEventListeners() {
     DOM.rewardsEditorModal,
     DOM.quizManagerModal,
     DOM.quizEditQuestionModal,
-    DOM.quizImageLightboxModal
+    DOM.quizImageLightboxModal,
+    wheelGroupModal
   ].forEach(modal => {
     if (modal) {
       modal.addEventListener('click', (e) => {
         if (e.target === modal) modal.classList.remove('open');
       });
+    }
+  });
+
+  // 26. Đóng menu dropdown nhóm khi bấm ra ngoài
+  document.addEventListener('click', (e) => {
+    const wrap = document.querySelector('.wheel-group-dropdown-wrap');
+    if (wrap && !wrap.contains(e.target)) {
+      closeWheelGroupDropdown();
     }
   });
 }
@@ -1810,6 +2025,14 @@ function closeGameSettingsModal() {
 
 // 1. Giao diện cài đặt riêng cho Sơ Đồ Lớp
 function renderSeatingSpecificSettings() {
+  const isLaserOn = window.SeatingChartModule ? window.SeatingChartModule.isLaserEnabled() : true;
+  const curDelay = window.SeatingChartModule ? window.SeatingChartModule.getPopupDelay() : 1.4;
+  let delayDesc = 'Vừa vặn';
+  if (curDelay === 0) delayDesc = 'Tức thì (0s)';
+  else if (curDelay <= 0.8) delayDesc = 'Nhanh gọn';
+  else if (curDelay <= 1.6) delayDesc = 'Vừa vặn';
+  else delayDesc = 'Hồi hộp';
+
   return `
     <!-- Mục 1: Kích thước Bàn Ghế & Sơ đồ -->
     <div class="game-setting-item-card">
@@ -1839,7 +2062,52 @@ function renderSeatingSpecificSettings() {
       </button>
     </div>
 
-    <!-- Mục 3: Làm mới vòng bốc thăm -->
+    <!-- Mục 3: Hiệu ứng Tia sét & Thời gian chờ mở Popup vinh danh (0s - 3s) -->
+    <div class="game-setting-item-card" style="flex-direction: column; align-items: stretch; gap: 10px;">
+      <div style="display: flex; justify-content: space-between; align-items: center; width: 100%;">
+        <div class="game-setting-item-left">
+          <div class="game-setting-item-icon">⚡</div>
+          <div>
+            <span class="game-setting-item-title">Tia Sét Laser & Thời Gian Chờ Mở Popup</span>
+            <span class="game-setting-item-desc">Bắn luồng sáng laser từ bảng đen và tùy chỉnh thời gian dừng ngắm trên sơ đồ (0s - 3s) trước khi mở bảng vinh danh.</span>
+          </div>
+        </div>
+        <button type="button" id="appBtnToggleLaser" class="btn-pill-choice ${isLaserOn ? 'active' : ''}" 
+          style="${isLaserOn ? 'background: rgba(245, 158, 11, 0.2); border-color: #f59e0b; color: #d97706; font-weight: 800;' : ''}"
+          onclick="if (window.SeatingChartModule) { window.SeatingChartModule.toggleLaserBeam(); updateAppLaserUI(); }">
+          <span id="appLaserStatusText">${isLaserOn ? '⚡ Hiệu ứng: BẬT' : '⚪ Hiệu ứng: TẮT'}</span>
+        </button>
+      </div>
+
+      <!-- Thanh trượt điều chỉnh độ trễ 0s - 3s -->
+      <div style="padding-top: 8px; border-top: 1px dashed #e2e8f0; width: 100%;">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
+          <label style="font-size: 0.82rem; font-weight: 700; color: #334155;">⏱️ Thời gian dừng ngắm trên sơ đồ trước khi mở Popup:</label>
+          <span id="appPopupDelayBadge" class="round-control-badge badge-progress" style="font-weight: 800; font-size: 0.8rem;">
+            ${curDelay.toFixed(1)}s (${delayDesc})
+          </span>
+        </div>
+
+        <div style="display: flex; align-items: center; gap: 12px; margin-top: 4px;">
+          <span style="font-size: 0.78rem; color: #64748b; font-weight: 700; min-width: 65px;">0s (Tức thì)</span>
+          <input type="range" id="appPopupDelayRange" min="0" max="3" step="0.2" value="${curDelay}"
+            style="flex: 1; accent-color: #ea580c; cursor: pointer; height: 6px;"
+            oninput="handleAppDelayInput(this.value)"
+            onchange="handleAppDelayChange(this.value)">
+          <span style="font-size: 0.78rem; color: #64748b; font-weight: 700; min-width: 65px; text-align: right;">3.0s (Hồi hộp)</span>
+        </div>
+
+        <!-- 4 nút chọn nhanh tiện lợi -->
+        <div style="display: flex; gap: 8px; margin-top: 8px; flex-wrap: wrap;">
+          <button type="button" class="btn-pill-choice ${curDelay === 0 ? 'active' : ''}" style="padding: 4px 10px; font-size: 0.78rem;" onclick="setAppPopupDelayPreset(0.0)" title="Mở bảng vinh danh ngay tức thì (0s)">⚡ Tức thì (0s)</button>
+          <button type="button" class="btn-pill-choice ${Math.abs(curDelay - 0.8) < 0.05 ? 'active' : ''}" style="padding: 4px 10px; font-size: 0.78rem;" onclick="setAppPopupDelayPreset(0.8)" title="Nhanh gọn lẹ cho tiết học gấp (0.8s)">🚀 Nhanh (0.8s)</button>
+          <button type="button" class="btn-pill-choice ${Math.abs(curDelay - 1.4) < 0.05 ? 'active' : ''}" style="padding: 4px 10px; font-size: 0.78rem;" onclick="setAppPopupDelayPreset(1.4)" title="Thời gian chuẩn cân bằng hoàn hảo (1.4s)">⚖️ Chuẩn (1.4s)</button>
+          <button type="button" class="btn-pill-choice ${Math.abs(curDelay - 2.2) < 0.05 ? 'active' : ''}" style="padding: 4px 10px; font-size: 0.78rem;" onclick="setAppPopupDelayPreset(2.2)" title="Hồi hộp kịch tính cho tiết thao giảng sôi nổi (2.2s)">🎉 Hồi hộp (2.2s)</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Mục 4: Làm mới vòng bốc thăm -->
     <div class="game-setting-item-card">
       <div class="game-setting-item-left">
         <div class="game-setting-item-icon">🔄</div>
@@ -1848,12 +2116,12 @@ function renderSeatingSpecificSettings() {
           <span class="game-setting-item-desc">Đưa toàn bộ học sinh đã gọi trên sơ đồ lớp trở lại danh sách chờ gọi để bắt đầu vòng bốc thăm mới từ đầu.</span>
         </div>
       </div>
-      <button type="button" class="btn-action-trigger" onclick="if (window.SeatingChartModule) SeatingChartModule.resetCalledRound(); showToast('Đã làm mới vòng bốc thăm sơ đồ lớp!', 'success');">
+      <button type="button" class="btn-action-trigger" onclick="if (window.SeatingChartModule) SeatingChartModule.resetCalledRound();">
         🔄 Làm Mới Lượt Gọi
       </button>
     </div>
 
-    <!-- Mục 4: Bàn Giáo Viên & Khay Chưa Xếp Chỗ -->
+    <!-- Mục 5: Bàn Giáo Viên & Khay Chưa Xếp Chỗ -->
     <div class="game-setting-item-card">
       <div class="game-setting-item-left">
         <div class="game-setting-item-icon">🧑‍🏫</div>
@@ -1873,6 +2141,71 @@ function renderSeatingSpecificSettings() {
     </div>
   `;
 }
+
+// CÁC HÀM XỬ LÝ SỰ KIỆN CÀI ĐẶT TIA SÉT & THỜI GIAN CHỜ SƠ ĐỒ LỚP
+function updateAppLaserUI() {
+  const isLaserOn = window.SeatingChartModule ? window.SeatingChartModule.isLaserEnabled() : true;
+  const btn = document.getElementById('appBtnToggleLaser');
+  const text = document.getElementById('appLaserStatusText');
+  if (btn && text) {
+    if (isLaserOn) {
+      btn.classList.add('active');
+      btn.style.background = 'rgba(245, 158, 11, 0.2)';
+      btn.style.borderColor = '#f59e0b';
+      btn.style.color = '#d97706';
+      btn.style.fontWeight = '800';
+      text.textContent = '⚡ Hiệu ứng: BẬT';
+    } else {
+      btn.classList.remove('active');
+      btn.style.background = '';
+      btn.style.borderColor = '';
+      btn.style.color = '';
+      btn.style.fontWeight = '600';
+      text.textContent = '⚪ Hiệu ứng: TẮT';
+    }
+  }
+}
+
+function handleAppDelayInput(val) {
+  const num = Math.max(0, Math.min(3.0, Math.round(Number(val) * 10) / 10));
+  const badge = document.getElementById('appPopupDelayBadge');
+  if (badge) {
+    let desc = 'Vừa vặn';
+    if (num === 0) desc = 'Tức thì (0s)';
+    else if (num <= 0.8) desc = 'Nhanh gọn';
+    else if (num <= 1.6) desc = 'Vừa vặn';
+    else desc = 'Hồi hộp';
+    badge.textContent = `${num.toFixed(1)}s (${desc})`;
+  }
+  if (window.SeatingChartModule) {
+    window.SeatingChartModule.handleDelaySliderChange(num);
+  }
+}
+
+function handleAppDelayChange(val) {
+  const num = Math.max(0, Math.min(3.0, Math.round(Number(val) * 10) / 10));
+  if (window.SeatingChartModule) {
+    window.SeatingChartModule.setPopupDelay(num, true);
+  }
+}
+
+function setAppPopupDelayPreset(seconds) {
+  const range = document.getElementById('appPopupDelayRange');
+  if (range) range.value = seconds;
+  handleAppDelayInput(seconds);
+  if (window.SeatingChartModule) {
+    window.SeatingChartModule.setPopupDelay(seconds, true);
+  }
+  const container = document.getElementById('gameSpecificSettingsContainer');
+  if (container) {
+    container.innerHTML = renderSeatingSpecificSettings();
+  }
+}
+
+window.updateAppLaserUI = updateAppLaserUI;
+window.handleAppDelayInput = handleAppDelayInput;
+window.handleAppDelayChange = handleAppDelayChange;
+window.setAppPopupDelayPreset = setAppPopupDelayPreset;
 
 // 2. Giao diện cài đặt riêng cho Đấu Trường Trắc Nghiệm
 function renderQuizSpecificSettings() {
@@ -1961,6 +2294,57 @@ function renderWheelSpecificSettings() {
           🔥 7 Giây (Hồi hộp)
         </button>
       </div>
+    </div>
+
+    <!-- Mục 2: Chế độ quay Cá nhân vs Gọi Nhóm (6 đến 12 nhóm) -->
+    <div class="game-setting-item-card">
+      <div class="game-setting-item-left">
+        <div class="game-setting-item-icon">👥</div>
+        <div>
+          <span class="game-setting-item-title">Chế Độ Bốc Thăm Vòng Quay</span>
+          <span class="game-setting-item-desc">Chọn quay ngẫu nhiên theo Cá nhân học sinh hoặc theo Nhóm (6 đến 12 nhóm).</span>
+        </div>
+      </div>
+      <div class="game-setting-btn-row" style="flex-wrap: wrap;">
+        <button type="button" class="btn-pill-choice ${(!window.state || window.state.wheelTargetType !== 'group') ? 'active' : ''}" onclick="setWheelTargetType('student'); openGameSettingsModal('wheel');">
+          👤 Cá nhân
+        </button>
+        <button type="button" class="btn-pill-choice ${(window.state && window.state.wheelTargetType === 'group' && window.state.wheelGroupCount === 6) ? 'active' : ''}" onclick="selectWheelGroupCount(6); openGameSettingsModal('wheel');">
+          6 Nhóm
+        </button>
+        <button type="button" class="btn-pill-choice ${(window.state && window.state.wheelTargetType === 'group' && window.state.wheelGroupCount === 7) ? 'active' : ''}" onclick="selectWheelGroupCount(7); openGameSettingsModal('wheel');">
+          7 Nhóm
+        </button>
+        <button type="button" class="btn-pill-choice ${(window.state && window.state.wheelTargetType === 'group' && window.state.wheelGroupCount === 8) ? 'active' : ''}" onclick="selectWheelGroupCount(8); openGameSettingsModal('wheel');">
+          8 Nhóm
+        </button>
+        <button type="button" class="btn-pill-choice ${(window.state && window.state.wheelTargetType === 'group' && window.state.wheelGroupCount === 9) ? 'active' : ''}" onclick="selectWheelGroupCount(9); openGameSettingsModal('wheel');">
+          9 Nhóm
+        </button>
+        <button type="button" class="btn-pill-choice ${(window.state && window.state.wheelTargetType === 'group' && window.state.wheelGroupCount === 10) ? 'active' : ''}" onclick="selectWheelGroupCount(10); openGameSettingsModal('wheel');">
+          10 Nhóm
+        </button>
+        <button type="button" class="btn-pill-choice ${(window.state && window.state.wheelTargetType === 'group' && window.state.wheelGroupCount === 11) ? 'active' : ''}" onclick="selectWheelGroupCount(11); openGameSettingsModal('wheel');">
+          11 Nhóm
+        </button>
+        <button type="button" class="btn-pill-choice ${(window.state && window.state.wheelTargetType === 'group' && window.state.wheelGroupCount === 12) ? 'active' : ''}" onclick="selectWheelGroupCount(12); openGameSettingsModal('wheel');">
+          12 Nhóm
+        </button>
+      </div>
+    </div>
+
+    <!-- Mục 3: Quản lý danh sách thành viên các nhóm -->
+    <div class="game-setting-item-card">
+      <div class="game-setting-item-left">
+        <div class="game-setting-item-icon">📋</div>
+        <div>
+          <span class="game-setting-item-title">Danh Sách Thành Viên Phân Bổ Các Nhóm</span>
+          <span class="game-setting-item-desc">Xem danh sách học sinh thuộc từng nhóm và xáo trộn chia ngẫu nhiên lại khi cần.</span>
+        </div>
+      </div>
+      <button type="button" class="btn-action-trigger" onclick="closeGameSettingsModal(); openWheelGroupMembersModal();">
+        📋 Mở Danh Sách Nhóm ➔
+      </button>
     </div>
 
     <!-- Mục 2: Chống gọi trùng lặp -->
@@ -2205,3 +2589,13 @@ window.setWheelDuration = setWheelDuration;
 window.setQuizCountdownTime = setQuizCountdownTime;
 window.setGameSettingNoRepeat = setGameSettingNoRepeat;
 window.setSlotModeFromSettings = setSlotModeFromSettings;
+window.setWheelTargetType = setWheelTargetType;
+window.selectWheelGroupCount = selectWheelGroupCount;
+window.toggleWheelGroupDropdown = toggleWheelGroupDropdown;
+window.closeWheelGroupDropdown = closeWheelGroupDropdown;
+window.updateWheelModeUI = updateWheelModeUI;
+window.openWheelGroupMembersModal = openWheelGroupMembersModal;
+window.closeWheelGroupMembersModal = closeWheelGroupMembersModal;
+window.renderWheelGroupsView = renderWheelGroupsView;
+window.reshuffleWheelGroupsAction = reshuffleWheelGroupsAction;
+window.copyWheelGroupsToClipboard = copyWheelGroupsToClipboard;

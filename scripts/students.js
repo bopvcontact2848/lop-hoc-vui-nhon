@@ -169,6 +169,22 @@ function generateSeatingLayoutForClass(classId, students, config = {}) {
   return layout;
 }
 
+// --- DANH SÁCH 12 LINH VẬT & MÀU SẮC DÀNH CHO GỌI NHÓM VÒNG QUAY ---
+const WHEEL_GROUP_MASCOTS = [
+  { num: 1, name: 'Nhóm 1', mascot: '🦁', title: 'Sư Tử', color: '#4f46e5' },
+  { num: 2, name: 'Nhóm 2', mascot: '🦅', title: 'Đại Bàng', color: '#ec4899' },
+  { num: 3, name: 'Nhóm 3', mascot: '🐬', title: 'Cá Heo', color: '#06b6d4' },
+  { num: 4, name: 'Nhóm 4', mascot: '🐯', title: 'Bạch Hổ', color: '#f59e0b' },
+  { num: 5, name: 'Nhóm 5', mascot: '🦊', title: 'Hồ Ly', color: '#10b981' },
+  { num: 6, name: 'Nhóm 6', mascot: '🐼', title: 'Gấu Trúc', color: '#8b5cf6' },
+  { num: 7, name: 'Nhóm 7', mascot: '🦄', title: 'Kỳ Lân', color: '#ef4444' },
+  { num: 8, name: 'Nhóm 8', mascot: '🚀', title: 'Tàu Bay', color: '#14b8a6' },
+  { num: 9, name: 'Nhóm 9', mascot: '🌟', title: 'Ngôi Sao', color: '#f97316' },
+  { num: 10, name: 'Nhóm 10', mascot: '⚡', title: 'Tia Chớp', color: '#3b82f6' },
+  { num: 11, name: 'Nhóm 11', mascot: '🎯', title: 'Thiện Xạ', color: '#84cc16' },
+  { num: 12, name: 'Nhóm 12', mascot: '🏆', title: 'Quán Quân', color: '#d946ef' }
+];
+
 // --- KHÓA LƯU TRỮ TRÌNH DUYỆT (LOCALSTORAGE) ---
 const STORAGE_KEY = 'vong_quay_lop_hoc_v2_store';
 
@@ -178,6 +194,9 @@ window.state = {
   currentClassId: '',       // ID của lớp đang chọn
   currentMode: 'single',    // 'single', 'pair', 'group4', 'group6'
   viewMode: 'slot',         // 'slot' hoặc 'wheel'
+  wheelTargetType: 'student', // 'student' (cá nhân) hoặc 'group' (gọi nhóm)
+  wheelGroupCount: 6,       // Số nhóm cho vòng quay: 6, 7, 8, 9, 10, 11, 12
+  calledGroups: [],          // Danh sách nhóm đã gọi trong chế độ gọi nhóm
   noRepeat: true,           // Toggle chống trùng lặp
   isSpinning: false,        // Trạng thái đang quay
   soundEnabled: true,       // Bật/tắt âm thanh
@@ -224,6 +243,80 @@ function getAvailableStudents() {
   return all.filter(name => !calledSet.has(name));
 }
 
+// --- CÁC HÀM TRUY VẤN VÀ QUẢN LÝ GỌI NHÓM VÒNG QUAY ---
+function getWheelGroupCount() {
+  const state = window.state;
+  const count = (state && state.wheelGroupCount) ? parseInt(state.wheelGroupCount, 10) : 6;
+  return Math.min(Math.max(count, 6), 12);
+}
+
+function getAllWheelGroups() {
+  const count = getWheelGroupCount();
+  return WHEEL_GROUP_MASCOTS.slice(0, count);
+}
+
+function getAvailableWheelGroups() {
+  const allGroups = getAllWheelGroups();
+  const state = window.state;
+  if (!state || !state.noRepeat) {
+    return allGroups;
+  }
+  const cls = getCurrentClass();
+  const called = new Set((cls && Array.isArray(cls.calledGroups)) ? cls.calledGroups : (state.calledGroups || []));
+  return allGroups.filter(g => !called.has(g.num));
+}
+
+function getWheelGroupMembers(groupNum) {
+  const cls = getCurrentClass();
+  if (!cls) return [];
+  const count = getWheelGroupCount();
+  if (!cls.groupAllocations || !cls.groupAllocations[count]) {
+    partitionClassIntoWheelGroups(count, false);
+  }
+  return (cls.groupAllocations && cls.groupAllocations[count] && cls.groupAllocations[count][groupNum]) || [];
+}
+
+function partitionClassIntoWheelGroups(groupCount = getWheelGroupCount(), forceReshuffle = false) {
+  const cls = getCurrentClass();
+  if (!cls) return {};
+  cls.groupAllocations = cls.groupAllocations || {};
+  if (!forceReshuffle && cls.groupAllocations[groupCount] && Object.keys(cls.groupAllocations[groupCount]).length === groupCount) {
+    return cls.groupAllocations[groupCount];
+  }
+  const students = [...(cls.students || [])];
+  if (forceReshuffle) {
+    for (let i = students.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [students[i], students[j]] = [students[j], students[i]];
+    }
+  }
+  const alloc = {};
+  for (let g = 1; g <= groupCount; g++) {
+    alloc[g] = [];
+  }
+  students.forEach((student, idx) => {
+    const g = (idx % groupCount) + 1;
+    alloc[g].push(student);
+  });
+  cls.groupAllocations[groupCount] = alloc;
+  saveStateToStorage();
+  return alloc;
+}
+
+function resetCalledGroups(notify = true) {
+  const cls = getCurrentClass();
+  if (cls) cls.calledGroups = [];
+  if (window.state) window.state.calledGroups = [];
+  if (window.state && window.state.viewMode === 'wheel' && typeof drawLuckyWheel === 'function') {
+    drawLuckyWheel();
+  }
+  if (typeof updateUI === 'function') updateUI();
+  saveStateToStorage();
+  if (notify && typeof showToast === 'function') {
+    showToast('Đã làm mới danh sách nhóm đã gọi!', 'success');
+  }
+}
+
 // Lưu trạng thái vào bộ nhớ LocalStorage
 function saveStateToStorage() {
   try {
@@ -233,6 +326,8 @@ function saveStateToStorage() {
       currentClassId: state.currentClassId,
       viewMode: state.viewMode,
       currentMode: state.currentMode,
+      wheelTargetType: state.wheelTargetType || 'student',
+      wheelGroupCount: state.wheelGroupCount || 6,
       gameMode: state.gameMode || 'classic',
       noRepeat: state.noRepeat,
       soundEnabled: state.soundEnabled,
@@ -256,11 +351,16 @@ function loadStateFromStorage() {
         state.classes = data.classes.map(cls => ({
           ...cls,
           callCounts: cls.callCounts || {},
-          history: Array.isArray(cls.history) ? cls.history : []
+          history: Array.isArray(cls.history) ? cls.history : [],
+          calledGroups: Array.isArray(cls.calledGroups) ? cls.calledGroups : [],
+          groupAllocations: cls.groupAllocations || {}
         }));
         state.currentClassId = data.currentClassId || data.classes[0].id;
         state.viewMode = data.viewMode || 'slot';
         state.currentMode = data.currentMode || 'single';
+        state.wheelTargetType = data.wheelTargetType || 'student';
+        state.wheelGroupCount = data.wheelGroupCount || 6;
+        state.calledGroups = [];
         state.gameMode = data.gameMode || 'classic';
         state.noRepeat = typeof data.noRepeat === 'boolean' ? data.noRepeat : true;
         state.soundEnabled = typeof data.soundEnabled === 'boolean' ? data.soundEnabled : true;
@@ -803,8 +903,10 @@ function resetCalledList(notify = true) {
   const cls = getCurrentClass();
   if (!cls) return;
   cls.called = [];
+  cls.calledGroups = [];
   window.state.lastResult = [];
   if (window.state) {
+    window.state.calledGroups = [];
     window.state.wheelStudents = null;
     window.state.wheelWinnerIdx = null;
   }
@@ -1509,4 +1611,11 @@ window.submitCreateNewClassFromManager = submitCreateNewClassFromManager;
 window.generateSeatingLayoutForClass = generateSeatingLayoutForClass;
 window.SAMPLE_CLASSES_DEFINITIONS = SAMPLE_CLASSES_DEFINITIONS;
 window.deleteSampleClasses = deleteSampleClasses;
+window.WHEEL_GROUP_MASCOTS = WHEEL_GROUP_MASCOTS;
+window.getWheelGroupCount = getWheelGroupCount;
+window.getAllWheelGroups = getAllWheelGroups;
+window.getAvailableWheelGroups = getAvailableWheelGroups;
+window.getWheelGroupMembers = getWheelGroupMembers;
+window.partitionClassIntoWheelGroups = partitionClassIntoWheelGroups;
+window.resetCalledGroups = resetCalledGroups;
 

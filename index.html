@@ -750,6 +750,36 @@
             <span id="classicGameStageTitle">Vòng Quay May Mắn</span>
           </div>
 
+          <!-- Thanh chọn Chế độ Gọi cho Vòng Quay (Cá nhân hoặc 6-12 Nhóm) -->
+          <div id="wheelModeSelector" class="wheel-mode-selector">
+            <button id="btnWheelModeStudent" class="wheel-mode-pill active" onclick="setWheelTargetType('student')" title="Quay ngẫu nhiên từng học sinh trong lớp">
+              <span>👤 Cá nhân</span>
+            </button>
+            <div class="wheel-group-dropdown-wrap">
+              <button id="btnWheelModeGroup" class="wheel-mode-pill" onclick="toggleWheelGroupDropdown(event)" title="Quay ngẫu nhiên theo nhóm (6 đến 12 nhóm)">
+                <span>👥 Gọi Nhóm</span>
+                <span id="wheelGroupCountBadge" class="group-count-badge">6 nhóm</span>
+                <span class="dropdown-chevron">▾</span>
+              </button>
+              <div id="wheelGroupDropdownMenu" class="wheel-group-dropdown-menu">
+                <div class="dropdown-header">Chọn số lượng nhóm:</div>
+                <div class="dropdown-group-grid">
+                  <button type="button" class="group-opt-btn active" data-count="6" onclick="selectWheelGroupCount(6)">6 nhóm</button>
+                  <button type="button" class="group-opt-btn" data-count="7" onclick="selectWheelGroupCount(7)">7 nhóm</button>
+                  <button type="button" class="group-opt-btn" data-count="8" onclick="selectWheelGroupCount(8)">8 nhóm</button>
+                  <button type="button" class="group-opt-btn" data-count="9" onclick="selectWheelGroupCount(9)">9 nhóm</button>
+                  <button type="button" class="group-opt-btn" data-count="10" onclick="selectWheelGroupCount(10)">10 nhóm</button>
+                  <button type="button" class="group-opt-btn" data-count="11" onclick="selectWheelGroupCount(11)">11 nhóm</button>
+                  <button type="button" class="group-opt-btn" data-count="12" onclick="selectWheelGroupCount(12)">12 nhóm</button>
+                </div>
+              </div>
+            </div>
+            <!-- Nút tiện ích xem danh sách thành viên phân bổ vào các nhóm -->
+            <button id="btnViewWheelGroupMembers" class="wheel-mode-pill btn-view-group-members" style="display: none;" onclick="openWheelGroupMembersModal()" title="Xem và tự động phân chia học sinh vào các nhóm">
+              <span>📋 DS Thành viên</span>
+            </button>
+          </div>
+
           <!-- Nút Cài đặt riêng cho Vòng Quay (Ẩn khi đang chơi Slot) -->
           <button id="btnWheelStageSettings" class="btn-subbar btn-subbar-primary" onclick="openGameSettingsModal('wheel')" title="Cài đặt Vòng Quay May Mắn: Thời gian quay, chống trùng lặp, âm thanh...">
             <span>⚙️</span> Cài đặt Vòng Quay
@@ -959,6 +989,9 @@
             <div class="seating-main-workspace">
               <!-- CỘT TRÁI: BỤC GIẢNG & LƯỚI BÀN GHẾ PHÒNG HỌC -->
               <div class="seating-classroom-column">
+                <!-- SVG Hiệu ứng Vệt sáng Laser / Tia sét bắn từ Bảng đen xuống Bàn học sinh -->
+                <svg id="seatingLaserSvg" class="seating-laser-svg" aria-hidden="true"></svg>
+
                 <!-- Bục giảng & Bảng đen Trung Tâm -->
                 <div class="classroom-podium-bar" id="classroomPodiumBar">
                   <!-- Vùng thả Bàn Giáo Viên bên Trái (Dropzone) -->
@@ -966,9 +999,11 @@
                     <span>📍 Đặt bàn GV (Trái)</span>
                   </div>
 
-                  <!-- Bảng Đen Bục Giảng Trung Tâm -->
-                  <div class="blackboard-box" title="Bảng đen & Bục giảng (Hướng nhìn từ trên xuống)">
-                    <span>Tiên Học Lễ - Hậu Học Văn</span>
+                  <!-- Bảng Đen Bục Giảng Trung Tâm (Biểu Ngữ LED Khẩu Hiệu) -->
+                  <div class="blackboard-box blackboard-led-sign" id="seatingBlackboardBox" title="Bảng đen Bục Giảng: TIÊN HỌC LỄ • HẬU HỌC VĂN">
+                    <span class="led-dot-indicator left" aria-hidden="true">✦</span>
+                    <span class="blackboard-led-text" data-text="TIÊN HỌC LỄ • HẬU HỌC VĂN">TIÊN HỌC LỄ • HẬU HỌC VĂN</span>
+                    <span class="led-dot-indicator right" aria-hidden="true">✦</span>
                   </div>
 
                   <!-- Vùng thả Bàn Giáo Viên bên Phải (Dropzone) -->
@@ -1076,14 +1111,6 @@
                       </button>
                     </div>
 
-                    <!-- Nút Mở Cài Đặt Sơ Đồ Lớp Nổi Bật -->
-                    <div class="seating-panel-settings-box">
-                      <button type="button" id="btnSeatingPanelSettings" class="btn-seating-panel-settings" onclick="openGameSettingsModal('seating')" title="Cài đặt sơ đồ lớp: Dãy bàn, phương án xếp chỗ, tên 4 tổ thi đua, học sinh, âm thanh...">
-                        <span class="btn-icon">⚙️</span>
-                        <span class="btn-text">CÀI ĐẶT SƠ ĐỒ LỚP</span>
-                      </button>
-                    </div>
-
                     <!-- Hộp trạng thái chế độ đang chọn -->
                     <div class="seating-mode-status-box">
                       <div class="mode-status-label">Đang áp dụng:</div>
@@ -1123,6 +1150,14 @@
                         <span>Làm Mới Danh Sách</span>
                       </button>
                       <div class="round-control-hint">Bắt đầu lượt mới (bốc lại từ đầu)</div>
+                    </div>
+
+                    <!-- Nút Mở Cài Đặt Sơ Đồ Lớp Nổi Bật (Chuyển xuống vị trí cuối cùng) -->
+                    <div class="seating-panel-settings-box">
+                      <button type="button" id="btnSeatingPanelSettings" class="btn-seating-panel-settings" onclick="openGameSettingsModal('seating')" title="Cài đặt sơ đồ lớp: Dãy bàn, phương án xếp chỗ, tên 4 tổ thi đua, học sinh, âm thanh...">
+                        <span class="btn-icon">⚙️</span>
+                        <span class="btn-text">CÀI ĐẶT SƠ ĐỒ LỚP</span>
+                      </button>
                     </div>
                   </aside>
 
@@ -1302,6 +1337,42 @@
       <div class="modal-footer">
         <button id="btnCopyGroups" class="btn-secondary">📋 Sao chép danh sách nhóm</button>
         <button id="closeAllGroupsModalBtn" class="btn-primary">Đóng</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ==================== MODAL XEM & PHÂN BỔ THÀNH VIÊN VÒNG QUAY NHÓM ==================== -->
+  <div id="wheelGroupMembersModal" class="modal-overlay">
+    <div class="modal-card groups-overview-modal">
+      <div class="modal-header">
+        <div class="modal-title">
+          <span>👥 Danh Sách Thành Viên Các Nhóm (Vòng Quay)</span>
+        </div>
+        <button id="closeWheelGroupMembersModal" class="modal-close" onclick="closeWheelGroupMembersModal()">&times;</button>
+      </div>
+      <div class="modal-body">
+        <div style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 10px; margin-bottom: 16px;">
+          <div style="display: flex; align-items: center; gap: 10px;">
+            <span style="font-size: 0.95rem; color: #cbd5e1; font-weight: 600;">Số nhóm hiện tại:</span>
+            <span id="wheelModalGroupCountText" style="background: var(--primary); color: #fff; padding: 4px 14px; border-radius: 999px; font-weight: 700; font-size: 0.85rem;">6 nhóm</span>
+          </div>
+          <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+            <button id="btnReshuffleWheelGroups" class="btn-secondary" style="background: var(--primary); color: #fff;" onclick="reshuffleWheelGroupsAction()">
+              🎲 Chia ngẫu nhiên lại
+            </button>
+            <button id="btnResetWheelCalledGroups" class="btn-secondary" onclick="resetCalledGroups(true)">
+              🔄 Làm mới lượt gọi
+            </button>
+          </div>
+        </div>
+
+        <div id="wheelGroupsContainer" class="groups-result-grid">
+          <!-- Bảng các nhóm và danh sách thành viên sẽ được render bằng JS -->
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button id="btnCopyWheelGroups" class="btn-secondary" onclick="copyWheelGroupsToClipboard()">📋 Sao chép danh sách nhóm</button>
+        <button id="closeWheelGroupMembersModalBtn" class="btn-primary" onclick="closeWheelGroupMembersModal()">Đóng</button>
       </div>
     </div>
   </div>
@@ -2162,6 +2233,54 @@
           </div>
           <div style="font-size: 0.78rem; color: #64748b; margin-top: 8px; line-height: 1.4;">
             💡 Khi vòng quay dừng lại tại bàn nào, loa máy tính sẽ tự động đọc to: <b>"Mời bạn [Họ và Tên]"</b> để cả lớp cùng chú ý và hào hứng.
+          </div>
+        </div>
+
+        <!-- 6. HIỆU ỨNG TIA SÉT LASER & THỜI GIAN CHỜ MỞ POPUP -->
+        <div class="seating-settings-card">
+          <div class="seating-settings-card-title">
+            <span>⚡</span>
+            <span>6. Hiệu Ứng Tia Sét Laser & Thời Gian Chờ Vinh Danh</span>
+          </div>
+
+          <!-- BẬT/TẮT TIA SÉT LASER -->
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+            <div>
+              <div style="font-weight: 700; font-size: 0.9rem; color: #1e293b;">⚡ Vệt sáng laser / Tia sét gọi tên:</div>
+              <div style="font-size: 0.76rem; color: #64748b; margin-top: 2px;">Bắn luồng sáng rực rỡ từ bảng đen xuống bàn học sinh ở 3 bước cuối cùng</div>
+            </div>
+            <button type="button" id="btnToggleLaserBeam" class="seating-btn-action active" onclick="SeatingChartModule.toggleLaserBeam()" style="padding: 6px 14px; font-weight: 700; background: rgba(245, 158, 11, 0.15); border-color: rgba(245, 158, 11, 0.4); color: #d97706;" title="Bật/Tắt hiệu ứng tia sét laser">
+              <span id="laserBeamStatusText">⚡ Hiệu ứng: BẬT</span>
+            </button>
+          </div>
+
+          <!-- THANH TRƯỢT THỜI GIAN CHỜ POPUP (0s - 3s) -->
+          <div class="seating-settings-field" style="padding-top: 10px; border-top: 1px dashed #e2e8f0;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
+              <label class="seating-field-label" style="margin-bottom: 0;">⏱️ Thời gian dừng ngắm trên sơ đồ trước khi mở Popup:</label>
+              <span id="seatingPopupDelayBadge" class="round-control-badge badge-progress" style="font-weight: 800; font-size: 0.82rem;">1.4s (Vừa vặn)</span>
+            </div>
+
+            <div style="display: flex; align-items: center; gap: 12px; margin-top: 8px;">
+              <span style="font-size: 0.78rem; color: #64748b; font-weight: 700; min-width: 70px;">0s (Tức thì)</span>
+              <input type="range" id="seatingPopupDelayRange" min="0" max="3" step="0.2" value="1.4" 
+                style="flex: 1; accent-color: #ea580c; cursor: pointer; height: 6px;"
+                oninput="SeatingChartModule.handleDelaySliderChange(this.value)"
+                onchange="SeatingChartModule.saveDelaySliderChange(this.value)">
+              <span style="font-size: 0.78rem; color: #64748b; font-weight: 700; min-width: 70px; text-align: right;">3.0s (Hồi hộp)</span>
+            </div>
+
+            <!-- Các nút chọn nhanh (Quick presets) -->
+            <div style="display: flex; gap: 8px; margin-top: 10px; flex-wrap: wrap;">
+              <button type="button" class="btn-seating-mini" onclick="SeatingChartModule.setPopupDelay(0.0)" title="Mở bảng vinh danh ngay tức thì (0s)">⚡ Tức thì (0s)</button>
+              <button type="button" class="btn-seating-mini" onclick="SeatingChartModule.setPopupDelay(0.8)" title="Nhanh gọn lẹ cho tiết học gấp (0.8s)">🚀 Nhanh (0.8s)</button>
+              <button type="button" class="btn-seating-mini" onclick="SeatingChartModule.setPopupDelay(1.4)" title="Thời gian chuẩn cân bằng hoàn hảo (1.4s)">⚖️ Chuẩn (1.4s)</button>
+              <button type="button" class="btn-seating-mini" onclick="SeatingChartModule.setPopupDelay(2.2)" title="Hồi hộp, kịch tính cho tiết thao giảng sôi nổi (2.2s)">🎉 Hồi hộp (2.2s)</button>
+            </div>
+
+            <div style="font-size: 0.76rem; color: #64748b; margin-top: 8px; line-height: 1.4;">
+              💡 <b>0s</b>: Bật Popup ngay lập tức. <b>0.8s - 1.4s</b>: Đủ thời gian để cả lớp kịp ồ lên nhìn thấy vị trí bàn ghế và nghe Loa AI xướng tên trước khi Popup vinh danh che sơ đồ.
+            </div>
           </div>
         </div>
       </div>
