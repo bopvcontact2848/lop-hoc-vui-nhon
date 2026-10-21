@@ -449,6 +449,7 @@ function switchViewMode(mode) {
   const wheelControlPanel = document.getElementById('wheelControlPanel');
 
   if (mode === 'slot') {
+    document.body.classList.remove('wheel-spotlight-dimmed');
     if (subbarClassic) subbarClassic.style.display = 'flex';
     if (wheelControlPanel) wheelControlPanel.style.display = 'none';
     if (DOM.displayScreen) DOM.displayScreen.classList.add('active');

@@ -498,6 +498,10 @@ function switchGameMode(mode) {
     if (btn) btn.classList.remove('active');
   });
 
+  if (mode !== 'classic') {
+    document.body.classList.remove('wheel-spotlight-dimmed');
+  }
+
   if (mode === 'quiz') {
     if (btnQuiz) btnQuiz.classList.add('active');
     if (subbarClassic) subbarClassic.style.display = 'none';

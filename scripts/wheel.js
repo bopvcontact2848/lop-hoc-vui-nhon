@@ -212,6 +212,7 @@ function spinLuckyWheel() {
   }
 
   state.isSpinning = true;
+  document.body.classList.add('wheel-spotlight-dimmed');
   if (DOM.btnSpin) DOM.btnSpin.disabled = true;
   if (DOM.wheelWinnerCard) DOM.wheelWinnerCard.style.display = 'none';
   if (DOM.postSpinActions) DOM.postSpinActions.classList.remove('visible');
@@ -284,6 +285,7 @@ function finalizeWheelSpin(winnerItem) {
   const DOM = window.DOM;
 
   state.isSpinning = false;
+  document.body.classList.remove('wheel-spotlight-dimmed');
   if (DOM.btnSpin) DOM.btnSpin.disabled = false;
 
   const isGroupMode = (state.wheelTargetType === 'group');
@@ -746,6 +748,16 @@ function resetDefaultRewards() {
   }
 }
 
+function enableWheelSpotlight() {
+  document.body.classList.add('wheel-spotlight-dimmed');
+}
+
+function disableWheelSpotlight() {
+  document.body.classList.remove('wheel-spotlight-dimmed');
+}
+
+window.enableWheelSpotlight = enableWheelSpotlight;
+window.disableWheelSpotlight = disableWheelSpotlight;
 window.WHEEL_COLORS = WHEEL_COLORS;
 window.BONUS_REWARDS = BONUS_REWARDS;
 window.drawLuckyWheel = drawLuckyWheel;
