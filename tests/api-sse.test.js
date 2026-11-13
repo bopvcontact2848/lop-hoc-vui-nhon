@@ -399,4 +399,107 @@ test('API & SSE Integration Suite', async (t) => {
       sse.close();
     }
   });
+
+  await t.test('Giải Mã Bí Mật Tô Tranh & Ảnh Giấy: paint -> finish-artwork -> upload-artwork -> artworks', async () => {
+    const sse = openSseClient(`${baseUrl}/api/sync/events?role=host&cid=test_host_artwork`);
+    try {
+      await sse.waitForEvent((e) => e.type === 'connected');
+
+      const resetFirst = await fetch(`${baseUrl}/api/gmm/reset`, { method: 'POST' });
+      assert.equal(resetFirst.status, 200);
+
+      // 1. Tô màu 1 mảng trên điện thoại/máy chiếu -> 200 + SSE gmm_region_colored + lưu state
+      const paintRes = await fetch(`${baseUrl}/api/gmm/paint`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ team: 'teamA', regionId: 'code_1B', color: '#ef4444' })
+      });
+      assert.equal(paintRes.status, 200);
+      const paintJson = await paintRes.json();
+      assert.equal(paintJson.success, true);
+      assert.equal(paintJson.regionId, 'code_1B');
+
+      const paintEvt = await sse.waitForEvent((e) => e.type === 'gmm_region_colored' && e.team === 'teamA');
+      assert.equal(paintEvt.regionId, 'code_1B');
+      assert.equal(paintEvt.color, '#ef4444');
+
+      // 2. Đội A báo hoàn thành tô tranh sớm -> 200 + cộng điểm thưởng + SSE gmm_artwork_finished
+      const finishRes = await fetch(`${baseUrl}/api/gmm/finish-artwork`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          team: 'teamA',
+          finishTime: '02:15',
+          finishSeconds: 135,
+          remainingSeconds: 165,
+          speedBonus: 2
+        })
+      });
+      assert.equal(finishRes.status, 200);
+      const finishJson = await finishRes.json();
+      assert.equal(finishJson.success, true);
+      assert.equal(finishJson.speedBonus, 2);
+      assert.equal(finishJson.bonusScore, 2);
+      assert.equal(finishJson.state.teamA.isArtworkFinished, true);
+
+      const finishEvt = await sse.waitForEvent((e) => e.type === 'gmm_artwork_finished' && e.team === 'teamA');
+      assert.equal(finishEvt.finishTime, '02:15');
+      assert.equal(finishEvt.bonusScore, 2);
+
+      // Kiểm tra 400 khi gửi sai tên đội tới finish-artwork
+      const badFinishRes = await fetch(`${baseUrl}/api/gmm/finish-artwork`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ team: 'teamInvalid' })
+      });
+      assert.equal(badFinishRes.status, 400);
+
+      // 3. Upload ảnh tác phẩm tranh giấy (hỗ trợ team: 'A' -> 'teamA') -> 200 + SSE gmm_artwork_photo
+      const fakePhotoData = 'data:image/jpeg;base64,/9j/4AAQSkZJRgABAQEASABIAAD/2wBDAA==';
+      const uploadRes = await fetch(`${baseUrl}/api/gmm/upload-artwork`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ team: 'A', photoData: fakePhotoData })
+      });
+      assert.equal(uploadRes.status, 200);
+      const uploadJson = await uploadRes.json();
+      assert.equal(uploadJson.success, true);
+      assert.equal(uploadJson.team, 'teamA');
+      assert.ok(typeof uploadJson.timestamp === 'number' && uploadJson.timestamp > 0);
+
+      const photoEvt = await sse.waitForEvent((e) => e.type === 'gmm_artwork_photo' && e.team === 'teamA');
+      assert.equal(photoEvt.photoData, fakePhotoData);
+
+      // Kiểm tra 400 khi thiếu photoData
+      const badUploadRes = await fetch(`${baseUrl}/api/gmm/upload-artwork`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ team: 'teamA', photoData: '' })
+      });
+      assert.equal(badUploadRes.status, 400);
+
+      // 4. Kênh polling dự phòng GET /api/gmm/artworks?tsA=0&tsB=0 trả đúng ảnh mới nhất
+      const artworksRes = await fetch(`${baseUrl}/api/gmm/artworks?tsA=0&tsB=0`);
+      assert.equal(artworksRes.status, 200);
+      const artworksJson = await artworksRes.json();
+      assert.equal(artworksJson.success, true);
+      assert.equal(artworksJson.hasUpdate, true);
+      assert.equal(artworksJson.teamA.photoData, fakePhotoData);
+
+      const noNewRes = await fetch(`${baseUrl}/api/gmm/artworks?tsA=${uploadJson.timestamp}&tsB=${uploadJson.timestamp}`);
+      const noNewJson = await noNewRes.json();
+      assert.equal(noNewJson.hasUpdate, false);
+
+      // Xác nhận state hiện tại ghi nhận coloredRegions & hasArtworkPhoto
+      const stateRes = await fetch(`${baseUrl}/api/gmm/state`);
+      const stateJson = await stateRes.json();
+      assert.equal(stateJson.state.teamA.coloredRegions.code_1B, '#ef4444');
+      assert.equal(stateJson.state.teamA.hasArtworkPhoto, true);
+
+      const finalReset = await fetch(`${baseUrl}/api/gmm/reset`, { method: 'POST' });
+      assert.equal(finalReset.status, 200);
+    } finally {
+      sse.close();
+    }
+  });
 });

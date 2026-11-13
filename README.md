@@ -86,9 +86,12 @@
 │   ├── giaiMaPuzzleDecorators.js # Trang trí và hiển thị chi tiết ma trận tranh
 │   ├── giaiMaPuzzleGenerator.js  # Sinh ma trận SVG tranh tô màu theo tọa độ
 │   ├── giaiMaTeacherKey.js       # Màn hình đáp án chuẩn & nhạc nền cho giáo viên
+│   ├── gmmArtworkHost.js         # Bộ lọc Canvas AI, thu phóng tranh & nhận ảnh giấy trên Máy chiếu
 │   ├── gmmExport.js              # Xuất phiếu PDF/Word/PNG/SVG & ảnh kỷ niệm lớp 2K
 │   ├── gmmHostArena.js           # Đấu trường 2 đội trên máy chiếu, nhạc nền & SSE Host
+│   ├── gmmLobbyQr.js             # Phòng chờ mã QR 2 đội & tự động dò địa chỉ IP Wi-Fi LAN
 │   ├── gmmMobileSync.js          # Đấu trường điện thoại học sinh, hàng đợi offline & SSE Reconnect
+│   ├── gmmQuestionBank.js        # Bộ 10 câu hỏi chuẩn, trình soạn thảo & nhập/xuất Excel (XLSX)
 │   ├── landing.js                # Giao diện trang chủ và danh mục trò chơi
 │   ├── matThuCoordinator.js      # Điều phối trò chơi lớn Giải Mã Mật Thư 20/11 & BXH SSE
 │   ├── matThuData.js             # Dữ liệu các trạm, chi đội và bộ đề Giải Mã Mật Thư
