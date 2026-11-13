@@ -174,6 +174,7 @@ function initDOM() {
     btnTimerReset: document.getElementById('btnTimerReset'),
     btnTimer15: document.getElementById('btnTimer15'),
     btnTimer30: document.getElementById('btnTimer30'),
+    btnTimer45: document.getElementById('btnTimer45'),
     btnTimer60: document.getElementById('btnTimer60'),
     timerSvgProgress: document.getElementById('timerSvgProgress'),
 
@@ -238,6 +239,10 @@ function updateUI() {
 
   if (typeof updateWheelModeUI === 'function') {
     updateWheelModeUI();
+  }
+
+  if (typeof renderWheelHistoryPanel === 'function') {
+    renderWheelHistoryPanel();
   }
 
   if (state.viewMode === 'wheel' && typeof drawLuckyWheel === 'function') {
@@ -447,11 +452,13 @@ function switchViewMode(mode) {
   const wheelModeSelector = document.getElementById('wheelModeSelector');
   const subbarClassic = document.getElementById('subbarClassic');
   const wheelControlPanel = document.getElementById('wheelControlPanel');
+  const wheelRightWidgetsCol = document.getElementById('wheelRightWidgetsCol');
 
   if (mode === 'slot') {
     document.body.classList.remove('wheel-spotlight-dimmed');
     if (subbarClassic) subbarClassic.style.display = 'flex';
     if (wheelControlPanel) wheelControlPanel.style.display = 'none';
+    if (wheelRightWidgetsCol) wheelRightWidgetsCol.style.display = 'none';
     if (DOM.displayScreen) DOM.displayScreen.classList.add('active');
     if (DOM.wheelStage) DOM.wheelStage.classList.remove('active');
     if (stageIcon) stageIcon.textContent = '🎰';
@@ -462,9 +469,10 @@ function switchViewMode(mode) {
     if (wheelModeSelector) wheelModeSelector.style.display = 'none';
     renderDefaultStage();
   } else {
-    // Chế độ Vòng Quay May Mắn (Các tính năng đã chuyển sang cột bên trái tương tự sơ đồ lớp)
+    // Chế độ Vòng Quay May Mắn (Các tính năng đã chuyển sang cột bên trái & hộp quà + đồng hồ bên phải)
     if (subbarClassic) subbarClassic.style.display = 'none';
     if (wheelControlPanel) wheelControlPanel.style.display = 'flex';
+    if (wheelRightWidgetsCol) wheelRightWidgetsCol.style.display = 'flex';
     if (DOM.displayScreen) DOM.displayScreen.classList.remove('active');
     if (DOM.wheelStage) DOM.wheelStage.classList.add('active');
     if (DOM.wheelWinnerCard) DOM.wheelWinnerCard.style.display = 'none';
@@ -474,6 +482,7 @@ function switchViewMode(mode) {
     if (slotModeBar) slotModeBar.style.display = 'none';
     if (typeof updateWheelModeUI === 'function') updateWheelModeUI();
     if (typeof drawLuckyWheel === 'function') drawLuckyWheel();
+    if (typeof renderWheelHistoryPanel === 'function') renderWheelHistoryPanel();
   }
   saveStateToStorage();
 
@@ -676,6 +685,9 @@ function finalizeSpin(winners) {
   if (typeof recordStudentCall === 'function') {
     winners.forEach(w => recordStudentCall(w));
   }
+  if (window.MysteryBoxesModule && typeof window.MysteryBoxesModule.onNewWinnerCalled === 'function' && winners.length > 0) {
+    window.MysteryBoxesModule.onNewWinnerCalled(winners[0]);
+  }
 
   if (window.sound) window.sound.playVictory();
   if (typeof triggerCelebrationConfetti === 'function') triggerCelebrationConfetti();
@@ -720,6 +732,10 @@ function setTimerDuration(seconds) {
   stopTimer();
   timerState.totalSeconds = seconds;
   timerState.remainingSeconds = seconds;
+  document.querySelectorAll('.timer-preset-btn').forEach(btn => {
+    const btnSec = parseInt(btn.getAttribute('data-sec'), 10);
+    btn.classList.toggle('active', btnSec === seconds);
+  });
   updateTimerUI();
   broadcastTimerIfAvailable();
   if (typeof showToast === 'function') {
@@ -765,6 +781,9 @@ function startTimer() {
       if (typeof showToast === 'function') {
         showToast('⏰ HẾT GIỜ! Đã kết thúc thời gian suy nghĩ trả lời!', 'warning');
       }
+      if (window.MysteryBoxesModule && typeof window.MysteryBoxesModule.onTimerStateChanged === 'function') {
+        window.MysteryBoxesModule.onTimerStateChanged();
+      }
     }
   }, 1000);
 }
@@ -799,18 +818,22 @@ function resetTimer() {
 
 function updateTimerUI() {
   const digits = document.getElementById('timerDigits');
+  const popupDigits = document.getElementById('mysteryPopupTimerDigits');
   const ring = document.getElementById('timerSvgProgress');
+  const badge = document.getElementById('externalTimerStatusBadge');
+
+  const mins = Math.floor(timerState.remainingSeconds / 60);
+  const secs = timerState.remainingSeconds % 60;
+  const formattedTime = `${mins > 0 ? mins + ':' : ''}${secs < 10 ? '0' : ''}${secs}s`;
+  const isUrgent = timerState.remainingSeconds <= 5 && timerState.remainingSeconds > 0;
 
   if (digits) {
-    const mins = Math.floor(timerState.remainingSeconds / 60);
-    const secs = timerState.remainingSeconds % 60;
-    digits.textContent = `${mins > 0 ? mins + ':' : ''}${secs < 10 ? '0' : ''}${secs}s`;
-
-    if (timerState.remainingSeconds <= 5 && timerState.remainingSeconds > 0) {
-      digits.classList.add('urgent');
-    } else {
-      digits.classList.remove('urgent');
-    }
+    digits.textContent = formattedTime;
+    digits.classList.toggle('urgent', isUrgent);
+  }
+  if (popupDigits) {
+    popupDigits.textContent = formattedTime;
+    popupDigits.classList.toggle('urgent', isUrgent);
   }
 
   if (ring) {
@@ -820,6 +843,26 @@ function updateTimerUI() {
     ring.style.strokeDashoffset = offset;
     ring.style.stroke = timerState.remainingSeconds <= 5 ? '#ef4444' : '#38bdf8';
   }
+
+  if (badge) {
+    badge.classList.remove('running', 'urgent');
+    if (timerState.remainingSeconds <= 0) {
+      badge.textContent = '⏰ Hết giờ!';
+      badge.classList.add('urgent');
+    } else if (timerState.isRunning) {
+      if (timerState.remainingSeconds <= 5) {
+        badge.textContent = '🔥 Nước rút!';
+        badge.classList.add('urgent');
+      } else {
+        badge.textContent = '⏳ Đang đếm...';
+        badge.classList.add('running');
+      }
+    } else if (timerState.remainingSeconds < timerState.totalSeconds) {
+      badge.textContent = '⏸️ Tạm dừng';
+    } else {
+      badge.textContent = 'Sẵn sàng';
+    }
+  }
 }
 
 function updateTimerButtons() {
@@ -828,6 +871,12 @@ function updateTimerButtons() {
     toggleBtn.innerHTML = timerState.isRunning ? '⏸️ Tạm dừng' : '▶️ Bắt đầu';
     toggleBtn.classList.toggle('running', timerState.isRunning);
   }
+  const popupToggleBtn = document.getElementById('btnMysteryPopupTimerToggle');
+  if (popupToggleBtn) {
+    popupToggleBtn.innerHTML = timerState.isRunning ? '⏸️ Tạm dừng' : '▶️ Đếm ngược';
+    popupToggleBtn.classList.toggle('running', timerState.isRunning);
+  }
+  updateTimerUI();
 }
 
 // --- TÍNH NĂNG CHIA CẢ LỚP THÀNH CÁC NHÓM ---
@@ -957,6 +1006,7 @@ function closeWheelGroupDropdown() {
 function toggleWheelPanelCollapse() {
   const panel = document.getElementById('wheelControlPanel');
   const arrow = document.getElementById('wheelPanelToggleArrow');
+  const btn = document.getElementById('btnToggleWheelPanel');
   if (!panel) return;
 
   panel.classList.toggle('collapsed');
@@ -965,10 +1015,129 @@ function toggleWheelPanelCollapse() {
   if (arrow) {
     arrow.textContent = isCollapsed ? '▶' : '◀';
   }
+  if (btn) {
+    btn.title = isCollapsed
+      ? 'Mở rộng bảng điều khiển Vòng Quay May Mắn'
+      : 'Thu gọn bảng điều khiển (Chỉ hiện icon để mở rộng vòng quay)';
+  }
+
+  const tooltipEl = document.getElementById('seatingSmartTooltip');
+  if (tooltipEl) tooltipEl.classList.remove('show');
 
   try {
     localStorage.setItem('wheel_panel_collapsed_v1', isCollapsed ? '1' : '0');
-  } catch (e) {}
+  } catch (_e) {}
+
+  if (typeof showToast === 'function') {
+    showToast(
+      isCollapsed
+        ? '📐 Đã thu gọn bảng điều khiển sát mép trang!'
+        : '📋 Đã mở rộng bảng điều khiển Vòng Quay May Mắn.',
+      'info'
+    );
+  }
+}
+
+/**
+ * Gắn Bong bóng chú thích nổi (Smart Tooltip) & tương tác nhanh khi Cột điều khiển Vòng Quay thu gọn
+ */
+let isWheelSmartTooltipsBound = false;
+function initWheelPanelSmartTooltips() {
+  if (isWheelSmartTooltipsBound) return;
+  const panel = document.getElementById('wheelControlPanel');
+  if (!panel) return;
+  isWheelSmartTooltipsBound = true;
+
+  let tooltipEl = document.getElementById('seatingSmartTooltip');
+  if (!tooltipEl) {
+    tooltipEl = document.createElement('div');
+    tooltipEl.id = 'seatingSmartTooltip';
+    tooltipEl.className = 'seating-smart-tooltip';
+    document.body.appendChild(tooltipEl);
+  }
+
+  const items = [
+    {
+      selector: '#btnToggleWheelPanel',
+      getHtml: () => '<span class="tooltip-text">▶ Mở Rộng Menu Tính Năng</span>'
+    },
+    {
+      selector: '#btnSpin',
+      getHtml: () => {
+        const isGroup = window.state && window.state.wheelTargetType === 'group';
+        return `<span class="tooltip-text">🎡 ${isGroup ? 'Quay Nhóm Ngay' : 'Quay Tên Ngay'}</span><span class="tooltip-badge">Space</span>`;
+      },
+      isDice: true
+    },
+    {
+      selector: '#btnWheelCardStudent',
+      getHtml: () => '<span class="tooltip-text">👤 Chế Độ Cá Nhân</span><span class="tooltip-badge">Học sinh</span>'
+    },
+    {
+      selector: '#btnWheelCardGroup',
+      getHtml: () => {
+        const cnt = (typeof getWheelGroupCount === 'function') ? getWheelGroupCount() : ((window.state && window.state.wheelGroupCount) || 6);
+        return `<span class="tooltip-text">👥 Gọi Theo Nhóm</span><span class="tooltip-badge">${cnt} Nhóm</span>`;
+      }
+    },
+    {
+      selector: '#btnWheelCardMysteryBoxes',
+      getHtml: () => {
+        const desc = document.getElementById('wheelPanelMysteryDesc');
+        const subText = desc ? desc.textContent.split('•')[0].trim() : '6 Hộp';
+        return `<span class="tooltip-text">🎁 Mở 6 Hộp Quà Bí Ẩn</span><span class="tooltip-badge">${subText}</span>`;
+      }
+    },
+    {
+      selector: '#countdownTimerWidget',
+      getHtml: () => {
+        const d = document.getElementById('timerDigits');
+        return `<span class="tooltip-text">⏱️ Đồng Hồ Đếm Ngược</span><span class="tooltip-badge">${d ? d.textContent : '30s'}</span>`;
+      }
+    },
+    {
+      selector: '#btnWheelPanelSettings',
+      getHtml: () => '<span class="tooltip-text">⚙️ Cài Đặt Vòng Quay May Mắn</span>'
+    },
+    {
+      selector: '#btnWheelPanelReset',
+      getHtml: () => '<span class="tooltip-text">🔄 Làm Mới Lượt Gọi Từ Đầu</span>'
+    }
+  ];
+
+  items.forEach(item => {
+    const el = panel.querySelector(item.selector);
+    if (!el) return;
+
+    el.addEventListener('mouseenter', () => {
+      if (!panel.classList.contains('collapsed')) return;
+
+      if (el.hasAttribute('title') && el.getAttribute('title')) {
+        el.setAttribute('data-stored-title', el.getAttribute('title'));
+        el.removeAttribute('title');
+      }
+
+      tooltipEl.innerHTML = item.getHtml();
+      tooltipEl.classList.toggle('dice-tooltip', !!item.isDice);
+
+      const rect = el.getBoundingClientRect();
+      tooltipEl.style.left = `${rect.right + 12}px`;
+      tooltipEl.style.top = `${rect.top + rect.height / 2}px`;
+      tooltipEl.classList.add('show');
+    });
+
+    el.addEventListener('mouseleave', () => {
+      tooltipEl.classList.remove('show');
+      const stored = el.getAttribute('data-stored-title');
+      if (stored) {
+        el.setAttribute('title', stored);
+      }
+    });
+
+    el.addEventListener('click', () => {
+      tooltipEl.classList.remove('show');
+    });
+  });
 }
 
 function updateWheelModeUI() {
@@ -1667,6 +1836,9 @@ function setupEventListeners() {
   if (DOM.btnTimer30) {
     DOM.btnTimer30.addEventListener('click', () => setTimerDuration(30));
   }
+  if (DOM.btnTimer45) {
+    DOM.btnTimer45.addEventListener('click', () => setTimerDuration(45));
+  }
   if (DOM.btnTimer60) {
     DOM.btnTimer60.addEventListener('click', () => setTimerDuration(60));
   }
@@ -1759,11 +1931,19 @@ function setupEventListeners() {
     DOM.quizManagerModal,
     DOM.quizEditQuestionModal,
     DOM.quizImageLightboxModal,
-    wheelGroupModal
+    wheelGroupModal,
+    document.getElementById('classManagerModal'),
+    document.getElementById('matThuCoordinatorModal')
   ].forEach(modal => {
     if (modal) {
       modal.addEventListener('click', (e) => {
-        if (e.target === modal) modal.classList.remove('open');
+        if (e.target === modal) {
+          if (modal.id === 'classManagerModal' && typeof closeClassManagerModal === 'function') {
+            closeClassManagerModal();
+          } else {
+            modal.classList.remove('open');
+          }
+        }
       });
     }
   });
@@ -1849,7 +2029,7 @@ function init() {
   updateUI();
   renderDefaultStage();
 
-  // Khôi phục trạng thái thu gọn của Cột điều khiển Vòng Quay
+  // Khôi phục trạng thái thu gọn của Cột điều khiển Vòng Quay & gắn Smart Tooltips
   try {
     if (localStorage.getItem('wheel_panel_collapsed_v1') === '1') {
       const panel = document.getElementById('wheelControlPanel');
@@ -1857,7 +2037,10 @@ function init() {
       if (panel) panel.classList.add('collapsed');
       if (arrow) arrow.textContent = '▶';
     }
-  } catch (e) {}
+  } catch (_e) {}
+  initWheelPanelSmartTooltips();
+  if (typeof initWheelHistoryCollapseState === 'function') initWheelHistoryCollapseState();
+  if (typeof renderWheelHistoryPanel === 'function') renderWheelHistoryPanel();
 
   console.log("Ứng dụng Vòng Quay Lớp Học (Mô-đun hóa) đã sẵn sàng!");
 }
@@ -1876,6 +2059,10 @@ function selectGame(gameId) {
     window.state.currentGameId = gameId;
   }
 
+  if (window.LandingRouter && typeof window.LandingRouter.saveLastPlayedGame === 'function') {
+    window.LandingRouter.saveLastPlayedGame(gameId);
+  }
+
   if (gameId === 'wheel') {
     if (typeof switchGameMode === 'function') switchGameMode('classic');
     if (typeof switchViewMode === 'function') switchViewMode('wheel');
@@ -1890,6 +2077,14 @@ function selectGame(gameId) {
     if (typeof openBonusWheelModal === 'function') openBonusWheelModal();
   } else if (gameId === 'groups') {
     if (typeof openAllGroupsModal === 'function') openAllGroupsModal();
+  } else if (gameId === 'mat_thu') {
+    if (window.MatThuCoordinator && typeof window.MatThuCoordinator.openCoordinatorModal === 'function') {
+      window.MatThuCoordinator.openCoordinatorModal('play');
+    }
+  } else if (gameId === 'giai_ma_bi_mat') {
+    if (window.GiaiMaBiMat && typeof window.GiaiMaBiMat.openCoordinatorModal === 'function') {
+      window.GiaiMaBiMat.openCoordinatorModal('home');
+    }
   } else if (gameId === 'golden_bell') {
     if (typeof showToast === 'function') showToast('🔔 Trò chơi Rung Chuông Vàng đang được hoàn thiện, sẽ sớm ra mắt!', 'info');
   }
@@ -1932,16 +2127,11 @@ function openClassManagementAction() {
 
 function openStudentListAction() {
   closeSettingsDropdown();
-  if (window.LandingRouter && window.LandingRouter.currentScreen === 'home') {
-    window.LandingRouter.navigateTo('game');
+  if (typeof openClassManagementAction === 'function') {
+    openClassManagementAction();
+  } else if (typeof openClassManagerModal === 'function') {
+    openClassManagerModal();
   }
-  const sidebar = document.getElementById('sidebar');
-  const backdrop = document.getElementById('sidebarBackdrop');
-  if (sidebar) {
-    sidebar.classList.remove('collapsed');
-    sidebar.classList.add('open');
-  }
-  if (backdrop) backdrop.classList.add('open');
 }
 
 function openQuizBankAction() {
@@ -1960,6 +2150,7 @@ function syncGameNavSidebar(mode, viewMode) {
   if (mode === 'seating') targetGame = 'seating';
   else if (mode === 'quiz') targetGame = 'quiz';
   else if (mode === 'minigames') targetGame = 'bonus';
+  else if (mode === 'mat_thu') targetGame = 'mat_thu';
   else if (mode === 'classic') {
     targetGame = viewMode === 'slot' ? 'slot' : 'wheel';
   }
@@ -1991,6 +2182,10 @@ function openGameSettingsModal(targetGameId) {
   const gameId = targetGameId || getCurrentGameId();
   if (window.state) {
     window.state.currentGameId = gameId;
+  }
+
+  if (window.LandingRouter && typeof window.LandingRouter.saveLastPlayedGame === 'function') {
+    window.LandingRouter.saveLastPlayedGame(gameId);
   }
 
   const modal = document.getElementById('gameSettingsModal');

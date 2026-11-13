@@ -81,6 +81,7 @@
       themeBorder: '#fef08a',
       isComingSoon: false,
       action: () => {
+        saveLastPlayedGame('bonus');
         if (typeof window.openBonusWheelModal === 'function') {
           window.openBonusWheelModal();
         } else {
@@ -101,10 +102,53 @@
       themeBorder: '#fbcfe8',
       isComingSoon: false,
       action: () => {
+        saveLastPlayedGame('groups');
         if (typeof window.openAllGroupsModal === 'function') {
           window.openAllGroupsModal();
         } else {
           window.LandingRouter.playGame('classic');
+        }
+      }
+    },
+    {
+      id: 'mat_thu',
+      title: 'Giải Mã Mật Thư 20/11',
+      desc: 'Trò chơi lớn vượt 5 cửa ải tri thức chào mừng 20/11: Mỗi lớp 1 mã QR riêng, bộ đề độc quyền cho 4 khối 6, 7, 8, 9, Bảng Xếp Hạng trực tiếp.',
+      icon: '🔐',
+      category: 'quiz',
+      categoryLabel: 'Đố vui & Trò chơi lớn',
+      tag: 'Trò chơi lớn',
+      tagColor: '#8d2341',
+      themeBg: '#fff1f3',
+      themeBorder: '#fecdd3',
+      isComingSoon: false,
+      action: () => {
+        saveLastPlayedGame('mat_thu');
+        if (window.MatThuCoordinator && typeof window.MatThuCoordinator.openCoordinatorModal === 'function') {
+          window.MatThuCoordinator.openCoordinatorModal('play');
+        } else if (typeof window.selectGame === 'function') {
+          window.selectGame('mat_thu');
+        }
+      }
+    },
+    {
+      id: 'giai_ma_bi_mat',
+      title: 'Giải Mã Bí Mật - Trường Học Hạnh Phúc',
+      desc: 'Đấu trí 2 Đội (10 câu trắc nghiệm): Mở khóa Tọa độ ô màu bí mật để tô tranh giấy A1, giải mã biểu tượng: Đội 1 "Ngôi trường hạnh phúc không bạo lực" & Đội 2 "Trái tim thấu cảm – Tự tin tỏa sáng" (Tối đa 20 điểm).',
+      icon: '🎨',
+      category: 'quiz',
+      categoryLabel: 'Hoạt động trải nghiệm & Đấu trí 2 Đội',
+      tag: 'Đấu trí 2 Đội',
+      tagColor: '#059669',
+      themeBg: '#ecfdf5',
+      themeBorder: '#a7f3d0',
+      isComingSoon: false,
+      action: () => {
+        saveLastPlayedGame('giai_ma_bi_mat');
+        if (window.GiaiMaBiMat && typeof window.GiaiMaBiMat.openCoordinatorModal === 'function') {
+          window.GiaiMaBiMat.openCoordinatorModal('home');
+        } else if (typeof window.selectGame === 'function') {
+          window.selectGame('giai_ma_bi_mat');
         }
       }
     },
@@ -128,13 +172,55 @@
     }
   ];
 
+  // Quản lý trò chơi vừa chơi gần nhất trong LocalStorage
+  const LAST_PLAYED_GAME_KEY = 'happy_classroom_last_game_v1';
+
+  function getLastPlayedGame() {
+    try {
+      const savedId = localStorage.getItem(LAST_PLAYED_GAME_KEY);
+      if (!savedId) return null;
+      const found = GAMES_DATA.find(g => g.id === savedId && !g.isComingSoon);
+      return found || null;
+    } catch (_e) {
+      return null;
+    }
+  }
+
+  function saveLastPlayedGame(gameId) {
+    try {
+      const found = GAMES_DATA.find(g => g.id === gameId && !g.isComingSoon);
+      if (!found) return;
+      localStorage.setItem(LAST_PLAYED_GAME_KEY, found.id);
+      updateHeroPlayButton();
+    } catch (e) {
+      console.warn('Could not save last played game to localStorage:', e);
+    }
+  }
+
+  function updateHeroPlayButton() {
+    const btn = document.getElementById('btnHeroPlayNow');
+    const badge = document.getElementById('heroLastGameBadge');
+    if (!btn || !badge) return;
+
+    const lastGame = getLastPlayedGame();
+    if (lastGame) {
+      badge.textContent = `${lastGame.icon} ${lastGame.title}`;
+      badge.style.display = 'inline-flex';
+      btn.title = `Mở ngay trò chơi vừa dùng gần nhất: ${lastGame.title}`;
+    } else {
+      badge.textContent = '';
+      badge.style.display = 'none';
+      btn.title = 'Mở trò chơi mặc định: Vòng Quay May Mắn';
+    }
+  }
+
   // Quản lý danh sách yêu thích trong LocalStorage
   const FAVORITES_STORAGE_KEY = 'happy_classroom_favorites_v1';
   function getFavorites() {
     try {
       const raw = localStorage.getItem(FAVORITES_STORAGE_KEY);
       return raw ? JSON.parse(raw) : ['wheel', 'quiz'];
-    } catch (e) {
+    } catch (_e) {
       return ['wheel', 'quiz'];
     }
   }
@@ -287,9 +373,86 @@
       if (navClassName && currentClass) {
         navClassName.textContent = `${currentClass.name} (${studentCount} HS)`;
       }
+
+      renderLandingClassDropdown();
     } catch (e) {
       console.warn('updateLiveMetrics error:', e);
     }
+  }
+
+  // --- 3B. DANH SÁCH ĐỔI LỚP NHANH TRÊN HEADER TRANG CHỦ ---
+  function renderLandingClassDropdown() {
+    const listEl = document.getElementById('landingClassDropdownList');
+    const countBadge = document.getElementById('landingClassCountBadge');
+    const state = window.state;
+    if (!listEl || !state || !Array.isArray(state.classes)) return;
+
+    if (countBadge) {
+      countBadge.textContent = `${state.classes.length} lớp`;
+    }
+
+    listEl.innerHTML = '';
+
+    state.classes.forEach(cls => {
+      const isCurrent = cls.id === state.currentClassId;
+      const studentCount = Array.isArray(cls.students) ? cls.students.length : 0;
+
+      const btn = document.createElement('button');
+      btn.type = 'button';
+      btn.className = `nav-class-dropdown-item ${isCurrent ? 'active' : ''}`;
+      btn.innerHTML = `
+        <div class="nav-class-item-left">
+          <span class="nav-class-item-check">✔</span>
+          <span class="nav-class-item-name"></span>
+        </div>
+        <span class="nav-class-item-meta">${studentCount} HS</span>
+      `;
+      const nameSpan = btn.querySelector('.nav-class-item-name');
+      if (nameSpan) {
+        nameSpan.textContent = cls.name;
+        nameSpan.title = cls.name;
+      }
+
+      btn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        selectQuickClass(cls.id);
+      });
+
+      listEl.appendChild(btn);
+    });
+  }
+
+  function toggleClassDropdown(e) {
+    if (e) e.stopPropagation();
+    const wrap = document.getElementById('landingClassDropdownWrap');
+    if (!wrap) return;
+    const isOpening = !wrap.classList.contains('open');
+    if (isOpening) {
+      renderLandingClassDropdown();
+      wrap.classList.add('open');
+      setTimeout(() => {
+        const listEl = document.getElementById('landingClassDropdownList');
+        const activeItem = listEl ? listEl.querySelector('.nav-class-dropdown-item.active') : null;
+        if (activeItem) {
+          activeItem.scrollIntoView({ block: 'nearest' });
+        }
+      }, 20);
+    } else {
+      wrap.classList.remove('open');
+    }
+  }
+
+  function closeClassDropdown() {
+    const wrap = document.getElementById('landingClassDropdownWrap');
+    if (wrap) wrap.classList.remove('open');
+  }
+
+  function selectQuickClass(classId) {
+    if (typeof window.switchClass === 'function') {
+      window.switchClass(classId);
+    }
+    updateLiveMetrics();
+    closeClassDropdown();
   }
 
   // --- 4. HỆ THỐNG ROUTER ĐIỀU HƯỚNG MÀN HÌNH (LANDING <-> GAME ARENA) ---
@@ -344,6 +507,7 @@
         if (homeView) homeView.classList.add('active');
 
         updateLiveMetrics();
+        updateHeroPlayButton();
         window.scrollTo({ top: 0, behavior: 'smooth' });
       }
 
@@ -355,8 +519,25 @@
     },
 
     playGame(gameId) {
-      this.navigateTo('game', gameId);
+      const targetId = gameId || 'wheel';
+      saveLastPlayedGame(targetId);
+      this.navigateTo('game', targetId);
     },
+
+    playLastGame() {
+      const lastGame = getLastPlayedGame();
+      if (lastGame && typeof lastGame.action === 'function') {
+        lastGame.action();
+      } else {
+        this.playGame('wheel');
+      }
+    },
+
+    saveLastPlayedGame,
+    updateHeroPlayButton,
+    toggleClassDropdown,
+    closeClassDropdown,
+    selectQuickClass,
 
     scrollToSection(sectionId) {
       if (this.currentScreen !== 'home') {
@@ -484,15 +665,25 @@
       });
     }
 
-    // Lắng nghe phím ESC để đóng modal
+    // Lắng nghe click ngoài để đóng dropdown chọn lớp nhanh
+    document.addEventListener('click', (e) => {
+      const wrap = document.getElementById('landingClassDropdownWrap');
+      if (wrap && !wrap.contains(e.target)) {
+        closeClassDropdown();
+      }
+    });
+
+    // Lắng nghe phím ESC để đóng modal và dropdown
     document.addEventListener('keydown', (e) => {
       if (e.key === 'Escape') {
         closeHowToPlayModal();
+        closeClassDropdown();
       }
     });
 
     renderGameCatalog();
     updateLiveMetrics();
+    updateHeroPlayButton();
     syncSoundBtnState();
   }
 

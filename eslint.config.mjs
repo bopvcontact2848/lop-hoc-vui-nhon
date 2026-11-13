@@ -3,7 +3,8 @@ export default [
     ignores: [
       "**/node_modules/**",
       ".agent/**",
-      "assets/**"
+      "assets/**",
+      "scripts/*.min.js"
     ]
   },
   {
@@ -32,7 +33,7 @@ export default [
       "no-unreachable": "error",
       "no-duplicate-case": "error",
       "no-empty": ["warn", { "allowEmptyCatch": true }],
-      "no-unused-vars": ["warn", { "argsIgnorePattern": "^_", "varsIgnorePattern": "^_" }]
+      "no-unused-vars": ["warn", { "argsIgnorePattern": "^_", "varsIgnorePattern": "^_", "caughtErrorsIgnorePattern": "^_" }]
     }
   },
   {
@@ -84,7 +85,7 @@ export default [
       "no-unreachable": "error",
       "no-duplicate-case": "error",
       "no-empty": ["warn", { "allowEmptyCatch": true }],
-      "no-unused-vars": ["warn", { "argsIgnorePattern": "^_", "varsIgnorePattern": "^_" }]
+      "no-unused-vars": ["warn", { "argsIgnorePattern": "^_", "varsIgnorePattern": "^_", "caughtErrorsIgnorePattern": "^_" }]
     }
   }
 ];

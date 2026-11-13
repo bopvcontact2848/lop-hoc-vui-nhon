@@ -8,25 +8,32 @@
 
 1. **Vòng quay may mắn & Chế độ chọn tên đa dạng:**
    - 🎯 Vòng quay tên trực quan kèm hiệu ứng âm thanh và pháo hoa ăn mừng (Confetti).
-   - 🎁 Mở hộp quà bí mật, lật thẻ bài may mắn.
-   - 🪑 Sơ đồ chỗ ngồi lớp học (Seating Chart): Chọn học sinh trực quan theo vị trí ngồi thực tế.
+   - 🎁 **6 Hộp Quà Bí Ẩn (`mysteryBoxes.js`):** Mở hộp quà may mắn săn Ngôi Sao Hy Vọng x2, hỗ trợ kho phần thưởng tùy chỉnh và chế độ không mở trùng.
+   - 🪑 Sơ đồ chỗ ngồi lớp học (Seating Chart): Chọn học sinh trực quan theo vị trí ngồi thực tế (cá nhân, theo bàn, PK 1vs1, đại chiến 4 tổ).
 
-2. **📱 Điều khiển từ xa qua Wi-Fi (Remote Sync):**
-   - Thầy/Cô chỉ cần quét mã QR bằng điện thoại để mở giao diện điều khiển.
+2. **🔐 Trò chơi lớn: Giải Mã Mật Thư 20/11 (`matThuCoordinator.js`, `matThuData.js`):**
+   - Hành trình vượt 5 cửa ải tri thức với bộ đề riêng cho 4 khối (6, 7, 8, 9), hỗ trợ quét mã QR theo từng chi đội & áp phích trạm.
+   - Bảng xếp hạng trực tiếp đồng bộ thời gian thực qua SSE và xuất giấy chứng nhận điện tử.
+
+3. **🎨 Đấu trí 2 đội: Giải Mã Bí Mật (`giaiMaBiMat.js` & các mô-đun `giaiMa*.js`):**
+   - 2 đội thi đấu 10 câu trắc nghiệm qua điện thoại để mở khóa tọa độ tô tranh giấy A1.
+   - Tích hợp giám sát nhịp tim trực tiếp (Live Monitor), đồng hồ đếm ngược tô tranh đồng bộ SSE, quét ảnh bài thi (`giaiMaArtworkScanner.js`), in bộ đề/tranh (`giaiMaPrintBundle.js`) và đáp án máy chiếu (`giaiMaTeacherKey.js`).
+
+4. **📱 Điều khiển từ xa qua Wi-Fi (Remote Sync):**
+   - Thầy/Cô chỉ cần quét mã QR bằng điện thoại để mở giao diện điều khiển (`remote.html`).
    - Thầy/Cô có thể di chuyển tự do khắp lớp học và bấm nút quay, dừng, chuyển câu hỏi trên điện thoại.
    - Tự động đồng bộ màn hình máy chiếu lớp học tức thời qua kênh truyền dữ liệu thời gian thực (SSE - Server-Sent Events).
 
-3. **❓ Ngân hàng câu hỏi & Quizz tương tác:**
-   - Hỗ trợ câu hỏi trắc nghiệm nhanh, đếm ngược thời gian.
+5. **❓ Ngân hàng câu hỏi & Quizz tương tác:**
+   - Hỗ trợ câu hỏi trắc nghiệm nhanh, đếm ngược thời gian, trợ giúp 50:50 và gọi bạn.
    - Hỗ trợ hiển thị công thức Toán học / Lý / Hóa đẹp mắt chuẩn LaTeX bằng KaTeX.
 
-4. **👥 Quản lý danh sách học sinh thông minh:**
-   - Hỗ trợ lưu trữ theo từng khối, từng lớp.
-   - Nhập/Xuất danh sách học sinh từ file Excel (`.xlsx`, `.csv`) nhanh chóng.
+6. **👥 Quản lý lớp học & danh sách học sinh (`classManager.js`, `students.js`):**
+   - Tạo/sửa danh sách học sinh thật theo từng khối, từng lớp; dán văn bản nhanh hoặc nhập/xuất file Excel (`.xlsx`, `.csv`).
    - Lưu trữ an toàn trên trình duyệt của máy tính (LocalStorage).
 
-5. **🚀 Máy chủ siêu nhẹ & Tự phục hồi cổng (Port Fallback):**
-   - Server Node.js thuần, không cần cài đặt `node_modules` rườm rà.
+7. **🚀 Máy chủ siêu nhẹ & Tự phục hồi cổng (Port Fallback):**
+   - Server Node.js thuần, không cần cài đặt `node_modules` rườm rà để chạy ứng dụng.
    - Cơ chế tự động chuyển cổng thông minh (`3000` ➔ `3001`...) nếu cổng mặc định bị phần mềm khác chiếm dụng.
 
 ---
@@ -56,23 +63,42 @@
 ## 📂 Cấu Trúc Thư Mục Dự Án
 
 ```
-├── assets/                 # Hình ảnh, âm thanh, biểu tượng
+├── assets/                       # Hình ảnh minh họa, tài nguyên tĩnh
 ├── scripts/
-│   ├── app.js              # Khởi tạo và điều hướng logic chính của ứng dụng
-│   ├── audio.js            # Hiệu ứng âm thanh trò chơi (quay, vỗ tay, nhạc nền)
-│   ├── landing.js          # Giao diện trang chủ và giới thiệu
-│   ├── quiz.js             # Logic ngân hàng câu hỏi trắc nghiệm & giải toán LaTeX
-│   ├── remoteSync.js       # Đồng bộ hóa điều khiển từ xa (SSE Client)
-│   ├── seatingChart.js     # Sơ đồ chỗ ngồi lớp học
-│   ├── students.js         # Quản lý danh sách học sinh, nhập/xuất Excel
-│   └── wheel.js            # Thuật toán quay và vẽ vòng quay Canvas
-├── styles/                 # Toàn bộ mã định dạng CSS giao diện
-├── index.html              # Trang giao diện chính (Hiển thị lớp học / Máy chiếu)
-├── remote.html             # Trang giao diện dành riêng cho điện thoại điều khiển
-├── server.js               # Máy chủ Node.js phục vụ file tĩnh & kênh đồng bộ SSE
-├── start.bat               # File chạy nhanh cho giáo viên trên Windows
-├── package.json            # Cấu hình dự án Node.js
-└── README.md               # Tài liệu hướng dẫn sử dụng
+│   ├── app.js                    # Khởi tạo và điều hướng logic chính của ứng dụng
+│   ├── audio.js                  # Hiệu ứng âm thanh trò chơi & giọng đọc AI
+│   ├── classManager.js           # Quản lý lớp học, nhập/chỉnh sửa danh sách học sinh thật
+│   ├── confetti.browser.min.js   # Thư viện hiệu ứng pháo hoa (chạy offline)
+│   ├── giaiMaArtworkScanner.js   # Chụp/quét và tối ưu ảnh tranh giấy A1 từ điện thoại
+│   ├── giaiMaBiMat.js            # Điều phối trò chơi đấu trí 2 đội Giải Mã Bí Mật
+│   ├── giaiMaLiveMonitor.js      # Giám sát kết nối nhịp tim & mở khóa từng đội (SSE)
+│   ├── giaiMaPrintBundle.js      # Xuất & in bộ đề, phiếu tô màu và đáp án
+│   ├── giaiMaPuzzleData.js       # Dữ liệu ma trận tọa độ tranh Giải Mã Bí Mật
+│   ├── giaiMaPuzzleDecorators.js # Trang trí và hiển thị chi tiết ma trận tranh
+│   ├── giaiMaPuzzleGenerator.js  # Sinh ma trận SVG tranh tô màu theo tọa độ
+│   ├── giaiMaTeacherKey.js       # Màn hình đáp án chuẩn & nhạc nền cho giáo viên
+│   ├── landing.js                # Giao diện trang chủ và danh mục trò chơi
+│   ├── matThuCoordinator.js      # Điều phối trò chơi lớn Giải Mã Mật Thư 20/11 & BXH SSE
+│   ├── matThuData.js             # Dữ liệu các trạm, chi đội và bộ đề Giải Mã Mật Thư
+│   ├── mysteryBoxes.js           # Trò chơi 6 Hộp Quà Bí Ẩn & kho phần thưởng mở rộng
+│   ├── qrcode.min.js             # Thư viện tạo mã QR (chạy offline)
+│   ├── quiz.js                   # Logic ngân hàng câu hỏi trắc nghiệm & toán LaTeX
+│   ├── remoteSync.js             # Đồng bộ hóa điều khiển từ xa (SSE Client)
+│   ├── seatingChart.js           # Sơ đồ chỗ ngồi lớp học (4 tổ thi đua)
+│   ├── students.js               # Quản lý danh sách học sinh, nhập/xuất Excel & sao lưu
+│   └── wheel.js                  # Thuật toán quay và vẽ vòng quay Canvas
+├── styles/                       # Toàn bộ mã định dạng CSS giao diện từng phân hệ
+├── tools/                        # Công cụ kiểm tra cú pháp & pre-commit hook
+├── index.html                    # Trang giao diện chính (Hiển thị lớp học / Máy chiếu)
+├── remote.html                   # Trang giao diện dành riêng cho điện thoại điều khiển
+├── server.js                     # Máy chủ Node.js phục vụ file tĩnh & kênh đồng bộ SSE
+├── start.bat                     # File chạy nhanh cho giáo viên trên Windows
+├── mo-tuong-lua-firewall.bat     # Script mở cổng tường lửa Windows cho mạng Wi-Fi LAN
+├── logo-truong-thcs-Tan-Hai.jpg  # Logo trường hiển thị mặc định trên giao diện & phiếu in
+├── eslint.config.mjs             # Cấu hình chuẩn kiểm tra mã nguồn ESLint
+├── package.json                  # Cấu hình dự án Node.js & kịch bản validate
+├── LICENSE                       # Giấy phép mã nguồn mở MIT
+└── README.md                     # Tài liệu hướng dẫn sử dụng
 ```
 
 ---

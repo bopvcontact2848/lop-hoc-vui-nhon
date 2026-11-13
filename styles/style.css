@@ -142,6 +142,23 @@
       animation: pulse-icon 3s infinite ease-in-out;
     }
 
+    .brand-icon.school-brand-logo {
+      background: #ffffff !important;
+      border-radius: 50% !important;
+      border: 2px solid #38bdf8 !important;
+      overflow: hidden !important;
+      padding: 0 !important;
+      box-shadow: 0 4px 14px rgba(56, 189, 248, 0.35) !important;
+    }
+
+    .brand-icon.school-brand-logo img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      border-radius: 50%;
+      display: block;
+    }
+
     @keyframes pulse-icon {
       0%, 100% { transform: scale(1) rotate(0deg); }
       50% { transform: scale(1.05) rotate(4deg); }
@@ -643,6 +660,27 @@
       box-shadow: 0 4px 15px rgba(251, 146, 60, 0.35);
     }
 
+    #btnHeaderClassManager {
+      background: #f8fafc;
+      border-color: #cbd5e1;
+      color: #1e293b;
+    }
+
+    #btnHeaderClassManager:hover {
+      background: #eff6ff;
+      border-color: #93c5fd;
+      color: #1d4ed8;
+    }
+
+    @media (max-width: 1200px) and (min-width: 769px) {
+      #btnHeaderClassManager span:last-child {
+        display: none;
+      }
+      #btnHeaderClassManager {
+        padding: 8px 12px;
+      }
+    }
+
     /* --- Bố cục Trung tâm (Content Area) --- */
     .app-body {
       display: flex;
@@ -651,47 +689,15 @@
       position: relative;
     }
 
-    /* Backdrop phủ mờ khi mở Sidebar Drawer */
-    .sidebar-backdrop {
-      position: absolute;
-      inset: 0;
-      background: rgba(56, 43, 38, 0.35);
-      backdrop-filter: blur(4px);
-      z-index: 40;
-      opacity: 0;
-      pointer-events: none;
-      transition: opacity 0.25s ease;
-    }
-
-    .sidebar-backdrop.open {
-      opacity: 1;
-      pointer-events: auto;
-    }
-
-    /* --- Sidebar Drawer (Ngăn kéo quản lý học sinh bên trái) --- */
-    .sidebar {
-      position: absolute;
-      top: 0;
-      left: 0;
-      bottom: 0;
-      width: 380px;
-      max-width: 90vw;
-      background: #fffdfa;
-      border-right: 1px solid var(--card-glass-border);
-      display: flex;
-      flex-direction: column;
-      flex-shrink: 0;
-      z-index: 50;
-      transform: translateX(-100%);
-      transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1);
-      box-shadow: 10px 0 35px rgba(74, 59, 50, 0.12);
-    }
-
-    .sidebar.open, .sidebar:not(.collapsed) {
-      transform: translateX(0);
-    }
-
-    .sidebar.collapsed {
+    /* Backdrop phủ mờ & Sidebar Drawer quản lý học sinh cũ: ĐÃ GỠ BỎ THEO YÊU CẦU */
+    .sidebar-backdrop, #sidebarBackdrop,
+    .sidebar, #sidebar {
+      display: none !important;
+      visibility: hidden !important;
+      pointer-events: none !important;
+      width: 0 !important;
+      height: 0 !important;
+      opacity: 0 !important;
       transform: translateX(-100%) !important;
     }
 
@@ -1370,6 +1376,34 @@
       100% { transform: translateX(-50%) rotate(0deg); }
     }
 
+    /* Hiệu ứng kim gạt chậm rãi kèm sức cản trong 3 giây cuối (Super Slow-mo Tension Drag) */
+    .wheel-pointer.slow-twitch {
+      animation: pointer-slow-drag 0.28s ease-out !important;
+    }
+
+    @keyframes pointer-slow-drag {
+      0% { transform: translateX(-50%) rotate(0deg); }
+      32% { transform: translateX(-50%) rotate(-20deg); }
+      68% { transform: translateX(-50%) rotate(4deg); }
+      100% { transform: translateX(-50%) rotate(0deg); }
+    }
+
+    /* Hiệu ứng mũi kim gật gù đàn hồi cơ học khi bánh xe dừng hẳn (Damped Spring Oscillation) */
+    .wheel-pointer.spring-bounce {
+      animation: pointer-damped-spring 0.72s cubic-bezier(0.22, 1, 0.36, 1) forwards !important;
+    }
+
+    @keyframes pointer-damped-spring {
+      0% { transform: translateX(-50%) rotate(0deg); }
+      14% { transform: translateX(-50%) rotate(-18deg); }
+      30% { transform: translateX(-50%) rotate(12deg); }
+      46% { transform: translateX(-50%) rotate(-7.5deg); }
+      62% { transform: translateX(-50%) rotate(4.2deg); }
+      78% { transform: translateX(-50%) rotate(-2deg); }
+      90% { transform: translateX(-50%) rotate(0.8deg); }
+      100% { transform: translateX(-50%) rotate(0deg); }
+    }
+
     .wheel-center-cap {
       position: absolute;
       top: 50%;
@@ -1775,6 +1809,14 @@
     /* ==========================================================================
        3. MODAL HỘP THOẠI (NHẬP TAY & CHIA NHÓM TOÀN BỘ LỚP)
        ========================================================================== */
+    /* Khóa cuộn trang nền khi có bất kỳ modal hộp thoại nào đang mở */
+    html:has(.modal-overlay.open),
+    body:has(.modal-overlay.open),
+    body.modal-open,
+    body.matthu-modal-open {
+      overflow: hidden !important;
+    }
+
     .modal-overlay {
       position: fixed;
       inset: 0;
@@ -4276,8 +4318,8 @@
 .arena-container.classic-mode {
   display: flex;
   flex-direction: column;
-  align-items: center;
-  justify-content: center;
+  align-items: stretch;
+  justify-content: flex-start;
   width: 100%;
 }
 .arena-container.classic-mode .quiz-arena-section {
@@ -4287,7 +4329,7 @@
   width: 100%;
   display: flex;
   flex-direction: column;
-  align-items: center;
+  align-items: stretch;
 }
 .arena-container.classic-mode .stage-picker-header {
   display: none !important;
@@ -5644,19 +5686,19 @@
   display: flex;
   gap: 20px;
   align-items: stretch;
-  justify-content: center;
+  justify-content: flex-start;
   width: 100%;
-  max-width: 1400px;
-  margin: 0 auto;
+  max-width: 100%;
+  margin: 0;
   box-sizing: border-box;
   min-height: 560px;
 }
 
-/* Cột điều khiển bên trái Vòng Quay (Khung đồng bộ với Sơ Đồ Lớp Học) */
+/* Cột điều khiển bên trái Vòng Quay (Đặt sát mép trái trang, đồng bộ với Sơ Đồ Lớp Học) */
 .wheel-control-panel {
-  width: 250px;
-  min-width: 240px;
-  max-width: 265px;
+  width: 256px;
+  min-width: 248px;
+  max-width: 266px;
   flex-shrink: 0;
   background: #ffffff;
   border: 2px solid #ebdcd0;
@@ -5697,13 +5739,15 @@
 }
 
 .wheel-panel-icon {
-  font-size: 1.25rem;
+  font-size: 1.3rem;
   line-height: 1;
+  flex-shrink: 0;
 }
 
 .wheel-panel-text {
   display: flex;
   flex-direction: column;
+  min-width: 0;
 }
 
 .wheel-panel-title {
@@ -5724,13 +5768,13 @@
   background: #fff7ed;
   border: 1.5px solid #fed7aa;
   color: #ea580c;
-  border-radius: 6px;
-  width: 22px;
-  height: 22px;
+  border-radius: 8px;
+  width: 26px;
+  height: 26px;
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  font-size: 0.72rem;
+  font-size: 0.75rem;
   font-weight: 800;
   cursor: pointer;
   transition: all 0.2s ease;
@@ -5742,7 +5786,7 @@
   background: #ea580c;
   color: #ffffff;
   border-color: #ea580c;
-  transform: scale(1.12);
+  transform: scale(1.1);
 }
 
 .toggle-wheel-panel-arrow {
@@ -5751,29 +5795,46 @@
   transition: transform 0.2s ease;
 }
 
-/* Nút quay siêu nổi bật ở đầu bảng điều khiển */
+/* Nút quay siêu nổi bật ở đầu bảng điều khiển (Xếp cột để dòng gợi ý nằm gọn bên dưới) */
+.wheel-control-panel .panel-spin-wrapper,
 .wheel-panel-spin-wrapper {
   width: 100%;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 4px;
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: center !important;
+  gap: 6px !important;
 }
 
 .wheel-spin-btn {
-  width: 100%;
-  justify-content: center;
-  padding: 11px 14px;
-  font-size: 0.95rem;
-  font-weight: 900;
-  box-sizing: border-box;
+  width: 100% !important;
+  justify-content: center !important;
+  padding: 11px 12px !important;
+  font-size: 0.88rem !important;
+  font-weight: 900 !important;
+  gap: 7px !important;
+  border-radius: 14px !important;
+  background: linear-gradient(135deg, #fb923c 0%, #ea580c 100%) !important;
+  color: #ffffff !important;
+  border: 1.5px solid rgba(255, 255, 255, 0.45) !important;
+  box-shadow: 0 6px 18px rgba(234, 88, 12, 0.38) !important;
+  box-sizing: border-box !important;
+  white-space: nowrap !important;
   animation: dicePanelPulse 2.2s cubic-bezier(0.4, 0, 0.2, 1) infinite !important;
 }
 
+.wheel-spin-btn .spin-wheel-icon {
+  font-size: 1.2rem;
+  line-height: 1;
+  flex-shrink: 0;
+}
+
 .wheel-panel-spin-hint {
-  font-size: 0.74rem;
-  color: #94a3b8;
-  margin-top: 2px;
+  font-size: 0.73rem;
+  color: #64748b;
+  margin-top: 0;
+  text-align: center;
+  width: 100%;
+  justify-content: center;
 }
 
 .wheel-panel-spin-hint kbd {
@@ -5782,7 +5843,7 @@
   color: #475569;
   padding: 1px 5px;
   border-radius: 4px;
-  font-size: 0.7rem;
+  font-size: 0.68rem;
 }
 
 /* Tiêu đề section trong panel */
@@ -5794,7 +5855,7 @@
 }
 
 .wheel-panel-section-title {
-  font-size: 0.74rem;
+  font-size: 0.72rem;
   font-weight: 800;
   color: #94a3b8;
   letter-spacing: 0.5px;
@@ -5814,7 +5875,7 @@
   align-items: center;
   gap: 10px;
   padding: 8px 10px;
-  background: #ffffff;
+  background: #fdfaf6;
   border: 1.5px solid #ebdcd0;
   border-radius: 12px;
   cursor: pointer;
@@ -5831,35 +5892,44 @@
 }
 
 .wheel-mode-card.active {
-  background: linear-gradient(135deg, #fff7ed, #ffedd5);
-  border-color: #ea580c;
+  background: linear-gradient(135deg, #fff7ed 0%, #ffedd5 100%);
+  border: 2px solid #ea580c;
   box-shadow: 0 4px 14px rgba(234, 88, 12, 0.18);
 }
 
+.wheel-control-panel .mode-card-icon,
 .wheel-card-icon {
-  width: 32px;
-  height: 32px;
-  border-radius: 8px;
-  background: #f8fafc;
+  width: 34px;
+  height: 34px;
+  border-radius: 9px;
+  background: #ffffff;
+  border: 1px solid #fed7aa;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 1.1rem;
+  font-size: 1.15rem;
   flex-shrink: 0;
+  transition: all 0.2s ease;
 }
 
+.wheel-mode-card.active .mode-card-icon,
 .wheel-mode-card.active .wheel-card-icon {
   background: #ea580c;
   color: #ffffff;
+  border-color: #ea580c;
+  box-shadow: 0 3px 8px rgba(234, 88, 12, 0.35);
 }
 
+.wheel-control-panel .mode-card-info,
 .wheel-card-info {
   display: flex;
   flex-direction: column;
   flex: 1;
   min-width: 0;
+  gap: 2px;
 }
 
+.wheel-control-panel .mode-card-top,
 .wheel-card-top {
   display: flex;
   align-items: center;
@@ -5867,27 +5937,31 @@
   gap: 6px;
 }
 
+.wheel-control-panel .mode-card-title,
 .wheel-card-title {
-  font-size: 0.86rem;
+  font-size: 0.84rem;
   font-weight: 800;
-  color: #334155;
+  color: #1e293b;
 }
 
+.wheel-mode-card.active .mode-card-title,
 .wheel-mode-card.active .wheel-card-title {
   color: #c2410c;
 }
 
+.wheel-control-panel .mode-card-badge,
 .wheel-card-badge {
-  font-size: 0.7rem;
-  padding: 1px 6px;
-  border-radius: 999px;
-  font-weight: 700;
+  font-size: 0.64rem;
+  padding: 2px 6px;
+  border-radius: 6px;
+  font-weight: 800;
 }
 
+.wheel-control-panel .mode-card-desc,
 .wheel-card-desc {
-  font-size: 0.72rem;
+  font-size: 0.7rem;
   color: #64748b;
-  margin-top: 2px;
+  margin-top: 1px;
 }
 
 /* Khối chọn nhanh số nhóm (6..12 nhóm) */
@@ -6074,36 +6148,80 @@
   background: #fee2e2;
 }
 
-/* Footer bảng điều khiển */
+/* Footer bảng điều khiển (Nút Cài đặt & Làm mới lượt gọi) */
 .wheel-panel-footer,
 .wheel-panel-bottom-tools {
   display: flex;
-  gap: 6px;
+  gap: 8px;
   width: 100%;
   margin-top: auto;
-  padding-top: 8px;
+  padding-top: 10px;
   border-top: 1.5px dashed #fed7aa;
 }
 
+.btn-panel-footer,
 .btn-panel-tool {
   flex: 1;
-  padding: 7px 10px;
-  font-size: 0.78rem;
-  font-weight: 700;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 8px 10px;
+  font-size: 0.8rem;
+  font-weight: 800;
   background: #f8fafc;
   border: 1.5px solid #cbd5e1;
-  border-radius: 8px;
-  color: #475569;
+  border-radius: 10px;
+  color: #334155;
   cursor: pointer;
-  transition: all 0.15s ease;
+  transition: all 0.2s ease;
   text-align: center;
+  box-sizing: border-box;
+  white-space: nowrap;
 }
 
-.btn-panel-tool:hover {
-  background: #fff7ed;
-  border-color: #fb923c;
-  color: #ea580c;
+.btn-panel-footer .footer-btn-icon {
+  font-size: 1rem;
+  line-height: 1;
+  display: inline-block;
+  transition: transform 0.3s ease;
+}
+
+.btn-panel-footer.btn-footer-settings {
+  background: #f0fdfa;
+  border-color: #99f6e4;
+  color: #0f766e;
+}
+
+.btn-panel-footer.btn-footer-settings:hover {
+  background: linear-gradient(135deg, #0d9488, #059669);
+  border-color: #0d9488;
+  color: #ffffff;
   transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(13, 148, 136, 0.28);
+}
+
+.btn-panel-footer.btn-footer-settings:hover .footer-btn-icon {
+  transform: rotate(45deg);
+}
+
+.btn-panel-footer.btn-footer-reset {
+  background: #fff7ed;
+  border-color: #fed7aa;
+  color: #c2410c;
+}
+
+.btn-panel-footer.btn-footer-reset:hover,
+.btn-panel-tool:hover {
+  background: linear-gradient(135deg, #fb923c, #ea580c);
+  border-color: #ea580c;
+  color: #ffffff;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(234, 88, 12, 0.28);
+}
+
+.btn-panel-footer.btn-footer-reset:hover .footer-btn-icon {
+  transform: rotate(-180deg);
 }
 
 /* Sân khấu bên phải chứa Vòng quay bánh xe */
@@ -6127,33 +6245,37 @@
 }
 
 /* ==============================================================================
-   TRẠNG THÁI THU GỌN BẢNG ĐIỀU KHIỂN VÒNG QUAY (COLLAPSED PANEL - 62PX)
+   TRẠNG THÁI THU GỌN BẢNG ĐIỀU KHIỂN VÒNG QUAY (COLLAPSED PANEL - 68PX RÕ NÉT)
    ============================================================================== */
 .wheel-control-panel.collapsed {
-  width: 62px;
-  min-width: 62px;
-  max-width: 62px;
+  width: 68px;
+  min-width: 68px;
+  max-width: 68px;
   padding: 10px 6px;
   align-items: center;
+  gap: 10px;
 }
 
 .wheel-control-panel.collapsed .wheel-panel-text,
 .wheel-control-panel.collapsed .wheel-panel-spin-hint,
 .wheel-control-panel.collapsed .wheel-panel-section-title,
+.wheel-control-panel.collapsed .mode-card-info,
 .wheel-control-panel.collapsed .wheel-card-info,
 .wheel-control-panel.collapsed .wheel-group-quick-select,
-.wheel-control-panel.collapsed .timer-info-text,
+.wheel-control-panel.collapsed .timer-label,
 .wheel-control-panel.collapsed .timer-controls-col,
 .wheel-control-panel.collapsed .wheel-panel-post-actions,
-.wheel-control-panel.collapsed .wheel-panel-bottom-tools {
+.wheel-control-panel.collapsed .wheel-panel-bottom-tools,
+.wheel-control-panel.collapsed .footer-btn-text {
   display: none !important;
 }
 
 .wheel-control-panel.collapsed .wheel-panel-header {
   flex-direction: column;
   justify-content: center;
-  gap: 4px;
-  padding-bottom: 6px;
+  align-items: center;
+  gap: 5px;
+  padding-bottom: 8px;
 }
 
 .wheel-control-panel.collapsed .wheel-panel-header-main {
@@ -6161,19 +6283,25 @@
 }
 
 .wheel-control-panel.collapsed .btn-toggle-wheel-panel {
-  width: 100%;
-  height: 20px;
+  width: 48px;
+  height: 24px;
   margin-top: 2px;
+  border-radius: 8px;
 }
 
 .wheel-control-panel.collapsed .wheel-spin-btn {
-  padding: 0;
-  width: 44px;
-  height: 44px;
-  min-width: 44px;
-  border-radius: 12px;
-  justify-content: center;
+  padding: 0 !important;
+  width: 48px !important;
+  height: 48px !important;
+  min-width: 48px !important;
+  border-radius: 14px !important;
+  justify-content: center !important;
+  align-items: center !important;
   animation: dicePanelPulseCollapsed 2.2s cubic-bezier(0.4, 0, 0.2, 1) infinite !important;
+}
+
+.wheel-control-panel.collapsed .wheel-spin-btn .spin-wheel-icon {
+  font-size: 1.45rem !important;
 }
 
 .wheel-control-panel.collapsed .wheel-spin-btn .spin-btn-label,
@@ -6181,30 +6309,115 @@
   display: none !important;
 }
 
-.wheel-control-panel.collapsed .wheel-mode-card {
-  padding: 6px 0;
-  justify-content: center;
-  width: 100%;
-  border-radius: 10px;
+.wheel-control-panel.collapsed .wheel-modes-list {
+  align-items: center;
+  gap: 8px;
 }
 
+.wheel-control-panel.collapsed .wheel-group-mode-wrapper {
+  align-items: center;
+}
+
+.wheel-control-panel.collapsed .wheel-mode-card {
+  padding: 0 !important;
+  width: 48px !important;
+  height: 48px !important;
+  min-width: 48px !important;
+  justify-content: center !important;
+  align-items: center !important;
+  border-radius: 12px !important;
+  margin: 0 auto !important;
+}
+
+.wheel-control-panel.collapsed .wheel-mode-card:hover {
+  transform: scale(1.07);
+}
+
+.wheel-control-panel.collapsed .wheel-mode-card .mode-card-icon,
+.wheel-control-panel.collapsed .wheel-mode-card .wheel-card-icon {
+  width: 36px !important;
+  height: 36px !important;
+  font-size: 1.25rem !important;
+  border-radius: 9px !important;
+}
+
+/* Đồng hồ đếm ngược khi thu gọn: Hiển thị rõ icon đồng hồ + số giây đếm ngược */
 .wheel-control-panel.collapsed .wheel-panel-timer {
-  padding: 6px 0 !important;
-  width: 100% !important;
+  padding: 6px 2px !important;
+  width: 48px !important;
+  min-width: 48px !important;
+  margin: 0 auto !important;
   align-items: center !important;
   justify-content: center !important;
-  border: none !important;
-  background: transparent !important;
+  border: 1.5px solid #fed7aa !important;
+  background: #fff7ed !important;
+  border-radius: 12px !important;
+  cursor: pointer !important;
+  transition: all 0.2s ease !important;
+}
+
+.wheel-control-panel.collapsed .wheel-panel-timer:hover {
+  border-color: #ea580c !important;
+  background: #ffedd5 !important;
+  transform: scale(1.06);
+}
+
+.wheel-control-panel.collapsed .wheel-panel-timer .timer-display-col {
+  flex-direction: column !important;
+  align-items: center !important;
+  justify-content: center !important;
+  gap: 2px !important;
 }
 
 .wheel-control-panel.collapsed .timer-dial-wrapper {
-  width: 42px !important;
-  height: 42px !important;
+  width: 34px !important;
+  height: 34px !important;
 }
 
 .wheel-control-panel.collapsed .timer-svg {
-  width: 42px !important;
-  height: 42px !important;
+  width: 34px !important;
+  height: 34px !important;
+}
+
+.wheel-control-panel.collapsed .timer-dial-icon {
+  font-size: 0.95rem !important;
+}
+
+.wheel-control-panel.collapsed .timer-info-text {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+}
+
+.wheel-control-panel.collapsed .timer-digits {
+  font-size: 0.75rem !important;
+  font-weight: 900 !important;
+  line-height: 1.1 !important;
+  color: #ea580c !important;
+}
+
+/* Nút Cài đặt & Làm mới ở cuối cột khi thu gọn: Xếp dọc rõ nét 2 nút icon */
+.wheel-control-panel.collapsed .wheel-panel-footer {
+  flex-direction: column !important;
+  align-items: center !important;
+  gap: 8px !important;
+  padding-top: 10px !important;
+}
+
+.wheel-control-panel.collapsed .btn-panel-footer {
+  width: 48px !important;
+  height: 44px !important;
+  min-width: 48px !important;
+  flex: 0 0 auto !important;
+  padding: 0 !important;
+  border-radius: 12px !important;
+  justify-content: center !important;
+  align-items: center !important;
+}
+
+.wheel-control-panel.collapsed .btn-panel-footer .footer-btn-icon {
+  font-size: 1.22rem !important;
+  line-height: 1 !important;
 }
 
 /* Tối ưu phản hồi đa màn hình (Responsive) */
@@ -6315,6 +6528,391 @@ body.wheel-spotlight-dimmed .wheel-center-cap {
 body.wheel-spotlight-dimmed .wheel-pointer {
   filter: drop-shadow(0 4px 14px rgba(239, 68, 68, 0.8)) !important;
 }
+
+/* ==============================================================================
+   CỘT PHẢI: BẢNG LỊCH SỬ ĐÃ GỌI VÒNG QUAY (WHEEL CALLED HISTORY PANEL)
+   ============================================================================== */
+.wheel-history-panel {
+  width: 260px;
+  min-width: 248px;
+  max-width: 275px;
+  flex-shrink: 0;
+  background: #ffffff;
+  border: 2px solid #ebdcd0;
+  border-radius: var(--radius-lg);
+  padding: 12px;
+  box-shadow: 0 10px 30px rgba(92, 71, 60, 0.08);
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  box-sizing: border-box;
+  max-height: calc(100vh - 120px);
+  min-height: 540px;
+  transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.history-panel-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding-bottom: 8px;
+  border-bottom: 1.5px solid #f1f5f9;
+}
+
+.history-header-left {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.history-panel-icon {
+  font-size: 1.3rem;
+  line-height: 1;
+}
+
+.history-header-text {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.history-panel-title {
+  font-size: 0.85rem;
+  font-weight: 800;
+  color: #1e293b;
+  letter-spacing: 0.5px;
+}
+
+.history-count-badge {
+  font-size: 0.72rem;
+  font-weight: 700;
+  color: #ea580c;
+  background: #fff7ed;
+  border: 1px solid #fed7aa;
+  padding: 1px 6px;
+  border-radius: 999px;
+  width: fit-content;
+}
+
+.history-header-actions {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.btn-history-tool,
+.btn-toggle-history-panel {
+  background: #f8fafc;
+  border: 1px solid #cbd5e1;
+  border-radius: 8px;
+  padding: 4px 8px;
+  font-size: 0.82rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  color: #64748b;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.btn-history-tool:hover {
+  background: #fee2e2;
+  border-color: #fca5a5;
+  color: #ef4444;
+}
+
+.btn-toggle-history-panel:hover {
+  background: #f1f5f9;
+  border-color: #94a3b8;
+  color: #334155;
+}
+
+/* Danh sách cuộn chứa các thẻ học sinh đã gọi */
+.wheel-history-list {
+  flex: 1;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+  padding-right: 2px;
+  max-height: 480px;
+}
+
+.wheel-history-list::-webkit-scrollbar {
+  width: 5px;
+}
+
+.wheel-history-list::-webkit-scrollbar-thumb {
+  background: #cbd5e1;
+  border-radius: 999px;
+}
+
+/* Thẻ từng lượt gọi trong lịch sử */
+.wheel-history-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 10px;
+  background: #fdfaf6;
+  border: 1px solid #f1e6dc;
+  border-radius: 10px;
+  transition: all 0.2s ease;
+  position: relative;
+}
+
+.wheel-history-item:hover {
+  background: #fff7ed;
+  border-color: #fed7aa;
+  transform: translateX(-2px);
+  box-shadow: 0 3px 10px rgba(234, 88, 12, 0.08);
+}
+
+.wheel-history-item.is-latest {
+  background: linear-gradient(135deg, #fff7ed, #fef2f2);
+  border: 1.5px solid #f97316;
+  box-shadow: 0 4px 14px rgba(249, 115, 22, 0.16);
+  animation: historyItemPop 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@keyframes historyItemPop {
+  0% {
+    transform: scale(0.92);
+    opacity: 0;
+  }
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+.history-item-badge {
+  font-size: 0.72rem;
+  font-weight: 800;
+  color: #94a3b8;
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 6px;
+  padding: 2px 5px;
+  min-width: 22px;
+  text-align: center;
+  flex-shrink: 0;
+}
+
+.wheel-history-item.is-latest .history-item-badge {
+  color: #ea580c;
+  border-color: #fed7aa;
+  background: #ffffff;
+}
+
+.history-item-body {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.history-item-name {
+  font-size: 0.86rem;
+  font-weight: 700;
+  color: #1e293b;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.wheel-history-item.is-latest .history-item-name {
+  color: #c2410c;
+  font-weight: 800;
+}
+
+.history-item-meta {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.7rem;
+  color: #94a3b8;
+}
+
+.history-item-reward {
+  color: #16a34a;
+  background: #f0fdf4;
+  border: 1px solid #bbf7d0;
+  padding: 1px 5px;
+  border-radius: 4px;
+  font-weight: 700;
+  font-size: 0.68rem;
+}
+
+.btn-history-remove-one {
+  background: transparent;
+  border: none;
+  color: #cbd5e1;
+  cursor: pointer;
+  padding: 4px;
+  font-size: 0.78rem;
+  line-height: 1;
+  border-radius: 4px;
+  transition: all 0.15s ease;
+  flex-shrink: 0;
+}
+
+.btn-history-remove-one:hover {
+  color: #ef4444;
+  background: #fee2e2;
+}
+
+/* Trạng thái trống (Empty State) */
+.wheel-history-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 40px 14px;
+  text-align: center;
+  color: #94a3b8;
+  gap: 8px;
+}
+
+.history-empty-icon {
+  font-size: 2.2rem;
+  opacity: 0.7;
+}
+
+.history-empty-title {
+  font-size: 0.88rem;
+  font-weight: 700;
+  color: #64748b;
+}
+
+.history-empty-sub {
+  font-size: 0.76rem;
+  line-height: 1.4;
+  color: #94a3b8;
+}
+
+/* Chân bảng lịch sử */
+.history-panel-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding-top: 8px;
+  border-top: 1.5px solid #f1f5f9;
+}
+
+.history-footer-stat {
+  font-size: 0.78rem;
+  color: #64748b;
+}
+
+.history-footer-stat b {
+  color: #ea580c;
+}
+
+.btn-history-clear-all {
+  background: #ffffff;
+  border: 1px solid #fed7aa;
+  color: #c2410c;
+  font-size: 0.75rem;
+  font-weight: 700;
+  padding: 4px 10px;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.btn-history-clear-all:hover {
+  background: #fff7ed;
+  border-color: #ea580c;
+}
+
+/* Trạng thái thu gọn bảng lịch sử (Collapsed) */
+.wheel-history-panel.collapsed {
+  width: 52px !important;
+  min-width: 52px !important;
+  max-width: 52px !important;
+  padding: 12px 6px !important;
+  align-items: center !important;
+}
+
+.wheel-history-panel.collapsed .history-header-text,
+.wheel-history-panel.collapsed #btnResetWheelHistory,
+.wheel-history-panel.collapsed .wheel-history-list,
+.wheel-history-panel.collapsed .history-panel-footer {
+  display: none !important;
+}
+
+.wheel-history-panel.collapsed .history-panel-header {
+  flex-direction: column !important;
+  align-items: center !important;
+  gap: 8px !important;
+  border: none !important;
+  padding: 0 !important;
+}
+
+.wheel-history-panel.collapsed .btn-toggle-history-panel {
+  width: 36px;
+  height: 36px;
+  border-radius: 9px;
+}
+
+/* Spotlight dimming */
+body.wheel-spotlight-dimmed .wheel-history-panel {
+  opacity: 0.32 !important;
+  filter: grayscale(18%) brightness(0.92) !important;
+  pointer-events: none !important;
+  user-select: none !important;
+  transform: scale(0.985);
+  box-shadow: 0 4px 15px rgba(92, 71, 60, 0.04) !important;
+}
+
+/* Thẻ chúc mừng người chiến thắng siêu rực rỡ (Winner Celebrate Glow) */
+.winner-celebrate-glow {
+  background: linear-gradient(135deg, #fff7ed 0%, #fef2f2 50%, #fefce8 100%) !important;
+  border: 2.5px solid #f59e0b !important;
+  box-shadow: 0 0 25px rgba(245, 158, 11, 0.35), 0 10px 30px rgba(234, 88, 12, 0.2) !important;
+  animation: winnerFestivePulse 1.8s ease-in-out infinite !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  gap: 10px !important;
+}
+
+.winner-sparkle-icon {
+  font-size: 1.5rem;
+  animation: sparkleTwinkle 1.2s ease-in-out infinite alternate;
+}
+
+@keyframes sparkleTwinkle {
+  0% { transform: scale(0.85) rotate(-10deg); opacity: 0.7; }
+  100% { transform: scale(1.25) rotate(15deg); opacity: 1; }
+}
+
+@keyframes winnerFestivePulse {
+  0%, 100% {
+    transform: scale(1);
+    box-shadow: 0 0 25px rgba(245, 158, 11, 0.35), 0 10px 30px rgba(234, 88, 12, 0.2);
+  }
+  50% {
+    transform: scale(1.035);
+    box-shadow: 0 0 40px rgba(245, 158, 11, 0.55), 0 14px 40px rgba(234, 88, 12, 0.3);
+  }
+}
+
+/* Responsive khi màn hình hẹp */
+@media (max-width: 1200px) {
+  .wheel-history-panel {
+    width: 220px;
+    min-width: 210px;
+  }
+}
+
+@media (max-width: 1040px) {
+  .wheel-history-panel {
+    display: none !important;
+  }
+}
+
 
 
 

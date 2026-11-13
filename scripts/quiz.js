@@ -468,6 +468,13 @@ function useLifelineCallFriend() {
 
 // Chuyển đổi chế độ hoạt động lớn (Activity / Game Mode Hub)
 function switchGameMode(mode) {
+  if (mode === 'mat_thu') {
+    if (window.MatThuCoordinator && typeof window.MatThuCoordinator.openCoordinatorModal === 'function') {
+      window.MatThuCoordinator.openCoordinatorModal('play');
+    }
+    return;
+  }
+
   if (window.state) {
     window.state.gameMode = mode;
     if (mode === 'quiz') window.state.currentGameId = 'quiz';
@@ -572,8 +579,9 @@ function switchGameMode(mode) {
     isQuizModeActive = false;
   } else {
     // Mode 'classic' (Mặc định: Chỉ gọi tên)
+    const isWheelView = window.state && window.state.viewMode === 'wheel';
     if (btnClassic) btnClassic.classList.add('active');
-    if (subbarClassic) subbarClassic.style.display = 'flex';
+    if (subbarClassic) subbarClassic.style.display = isWheelView ? 'none' : 'flex';
     if (subbarQuiz) subbarQuiz.style.display = 'none';
     if (subbarSeating) subbarSeating.style.display = 'none';
     if (subbarMini) subbarMini.style.display = 'none';
@@ -710,7 +718,7 @@ function handleQuizTypeChange(type) {
   updateQuizLiveMathPreview();
 }
 
-function handleQuizDifficultyChange(diff) {
+function handleQuizDifficultyChange(_diff) {
   updateQuizLiveMathPreview();
 }
 
@@ -1401,7 +1409,6 @@ function parseRawQuizText(rawText) {
     const singleOptMatch = line.match(/^([*✓]?)([A-D])([*]?)(?:[\s:.)\-\]]+)(.*)/i);
     if (singleOptMatch) {
       const starBefore = Boolean(singleOptMatch[1]);
-      const letter = singleOptMatch[2].toUpperCase();
       const starAfter = Boolean(singleOptMatch[3]);
       let text = singleOptMatch[4].trim();
 

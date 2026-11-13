@@ -22,6 +22,9 @@ jobs:
           node-version: 20
           cache: ''
 
+      - name: 📦 Cai dat cong cu kiem tra (devDependencies)
+        run: npm install --no-audit --no-fund
+
       - name: 🔍 Kiem tra cu phap cac file JavaScript (Syntax Check)
         run: node tools/checkSyntax.js
 

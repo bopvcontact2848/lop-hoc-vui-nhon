@@ -24,7 +24,7 @@ function drawLuckyWheel(customRotation) {
 
   const ctx = canvas.getContext('2d');
   const dpr = window.devicePixelRatio || 1;
-  const size = 520;
+  const size = 560;
 
   if (canvas.width !== size * dpr || canvas.height !== size * dpr) {
     canvas.width = size * dpr;
@@ -36,7 +36,7 @@ function drawLuckyWheel(customRotation) {
 
   const cx = size / 2;
   const cy = size / 2;
-  const radius = 236;
+  const radius = 262;
 
   ctx.clearRect(0, 0, size, size);
 
@@ -45,12 +45,24 @@ function drawLuckyWheel(customRotation) {
   let emptyMsg = '';
 
   if (isGroupMode) {
-    items = typeof getAvailableWheelGroups === 'function' ? getAvailableWheelGroups() : [];
+    // Nếu đang có danh sách nhóm cố định của lượt quay hiện tại thì giữ nguyên
+    if (window.state && Array.isArray(window.state.wheelGroups) && window.state.wheelGroups.length > 0) {
+      items = window.state.wheelGroups;
+    } else {
+      items = typeof getAvailableWheelGroups === 'function' ? getAvailableWheelGroups() : [];
+      if (window.state) window.state.wheelGroups = [...items];
+    }
     if (items.length === 0) {
       emptyMsg = 'Tất cả các nhóm đã được gọi';
     }
   } else {
-    items = typeof getAvailableStudents === 'function' ? getAvailableStudents() : [];
+    // Nếu đang có danh sách học sinh cố định của lượt quay hiện tại thì giữ nguyên (tránh bị co giật làm lệch mũi kim)
+    if (window.state && Array.isArray(window.state.wheelStudents) && window.state.wheelStudents.length > 0) {
+      items = window.state.wheelStudents;
+    } else {
+      items = typeof getAvailableStudents === 'function' ? getAvailableStudents() : [];
+      if (window.state) window.state.wheelStudents = [...items];
+    }
     if (items.length === 0) {
       const all = typeof getAllStudents === 'function' ? getAllStudents() : [];
       emptyMsg = all.length === 0 ? 'Lớp trống (Chưa có học sinh)' : 'Tất cả học sinh đã được gọi';
@@ -78,12 +90,14 @@ function drawLuckyWheel(customRotation) {
   }
 
   const arc = (2 * Math.PI) / count;
+  const winnerIdx = (window.state && typeof window.state.wheelWinnerIdx === 'number') ? window.state.wheelWinnerIdx : -1;
 
   // Vẽ từng nan quạt (học sinh hoặc nhóm)
   for (let i = 0; i < count; i++) {
     const startAngle = rotation + i * arc;
     const endAngle = startAngle + arc;
     const item = items[i];
+    const isWinner = (i === winnerIdx);
 
     let color = isGroupMode ? (item.color || WHEEL_COLORS[i % WHEEL_COLORS.length]) : WHEEL_COLORS[i % WHEEL_COLORS.length];
     if (i === count - 1 && (i % WHEEL_COLORS.length) === 0 && count > 1 && !isGroupMode) {
@@ -97,9 +111,16 @@ function drawLuckyWheel(customRotation) {
     ctx.fillStyle = color;
     ctx.fill();
 
-    ctx.strokeStyle = 'rgba(255, 255, 255, 0.28)';
-    ctx.lineWidth = 1.5;
-    ctx.stroke();
+    if (isWinner) {
+      // Nan quạt chiến thắng: Viền vàng kim rực rỡ và phát sáng nổi bật
+      ctx.strokeStyle = '#ffd700';
+      ctx.lineWidth = 4;
+      ctx.stroke();
+    } else {
+      ctx.strokeStyle = 'rgba(255, 255, 255, 0.28)';
+      ctx.lineWidth = 1.5;
+      ctx.stroke();
+    }
 
     // Vẽ tên học sinh hoặc nhóm theo góc nan quạt
     ctx.save();
@@ -108,33 +129,43 @@ function drawLuckyWheel(customRotation) {
 
     ctx.textAlign = 'right';
     ctx.textBaseline = 'middle';
-    ctx.fillStyle = '#ffffff';
-    ctx.shadowColor = 'rgba(0, 0, 0, 0.8)';
-    ctx.shadowBlur = 4;
-    ctx.shadowOffsetX = 1;
-    ctx.shadowOffsetY = 1;
+
+    if (isWinner) {
+      ctx.fillStyle = '#fef08a'; // Màu vàng sáng ánh kim
+      ctx.shadowColor = 'rgba(0, 0, 0, 0.95)';
+      ctx.shadowBlur = 6;
+      ctx.shadowOffsetX = 1;
+      ctx.shadowOffsetY = 1;
+    } else {
+      ctx.fillStyle = '#ffffff';
+      ctx.shadowColor = 'rgba(0, 0, 0, 0.8)';
+      ctx.shadowBlur = 4;
+      ctx.shadowOffsetX = 1;
+      ctx.shadowOffsetY = 1;
+    }
 
     if (isGroupMode) {
       // Nhãn nan quạt chế độ Gọi Nhóm
-      ctx.font = 'bold 17px system-ui, -apple-system, sans-serif';
+      ctx.font = isWinner ? 'bold 19px system-ui, -apple-system, sans-serif' : 'bold 18px system-ui, -apple-system, sans-serif';
       const label = `${item.mascot} ${item.name}`;
       ctx.fillText(label, radius - 26, -5);
 
-      ctx.font = '600 11.5px system-ui, -apple-system, sans-serif';
-      ctx.fillStyle = 'rgba(255, 255, 255, 0.9)';
-      ctx.fillText(item.title, radius - 26, 13);
+      ctx.font = '600 12.5px system-ui, -apple-system, sans-serif';
+      ctx.fillStyle = isWinner ? '#ffffff' : 'rgba(255, 255, 255, 0.92)';
+      ctx.fillText(item.title, radius - 26, 14);
     } else {
-      // Nhãn nan quạt chế độ Học sinh
-      let fontSize = 15;
-      if (count > 45) fontSize = 11;
-      else if (count > 32) fontSize = 12;
-      else if (count > 20) fontSize = 13.5;
+      // Nhãn nan quạt chế độ Học sinh (mở rộng kích thước chữ rõ ràng hơn)
+      let fontSize = 16;
+      if (count > 45) fontSize = 12;
+      else if (count > 32) fontSize = 13;
+      else if (count > 20) fontSize = 14.5;
+      if (isWinner) fontSize += 1;
 
       ctx.font = `bold ${fontSize}px system-ui, -apple-system, sans-serif`;
 
       let displayName = item;
-      if (displayName.length > 17) {
-        displayName = displayName.slice(0, 15) + '..';
+      if (displayName.length > 18) {
+        displayName = displayName.slice(0, 16) + '..';
       }
 
       ctx.fillText(displayName, radius - 26, 0);
@@ -178,6 +209,11 @@ function spinLuckyWheel() {
   if (!state || state.isSpinning) return;
 
   const isGroupMode = (state.wheelTargetType === 'group');
+
+  // Làm mới trạng thái hiển thị cho lượt quay mới
+  state.wheelWinnerIdx = null;
+  state.isShowingResult = false;
+
   let available = [];
 
   if (isGroupMode) {
@@ -191,6 +227,8 @@ function spinLuckyWheel() {
       if (typeof showToast === 'function') showToast('Không có nhóm khả dụng để quay!', 'warning');
       return;
     }
+    // Cố định danh sách các nhóm cho trọn vẹn lượt quay này
+    state.wheelGroups = [...available];
   } else {
     available = typeof getAvailableStudents === 'function' ? getAvailableStudents() : [];
     const all = typeof getAllStudents === 'function' ? getAllStudents() : [];
@@ -209,6 +247,8 @@ function spinLuckyWheel() {
       if (typeof showToast === 'function') showToast('Không có học sinh khả dụng để quay!', 'warning');
       return;
     }
+    // Cố định danh sách học sinh cho trọn vẹn lượt quay này (bảo đảm nan quạt không bị thay đổi)
+    state.wheelStudents = [...available];
   }
 
   state.isSpinning = true;
@@ -224,7 +264,8 @@ function spinLuckyWheel() {
 
   const winnerIdx = Math.floor(Math.random() * count);
   const winnerItem = available[winnerIdx];
-  state.lastResult = [isGroupMode ? winnerItem.name : winnerItem];
+  state.wheelWinnerIdx = winnerIdx;
+  state.lastResult = [isGroupMode ? `${winnerItem.name} (${winnerItem.title})` : winnerItem];
 
   const winnerCenterAngle = winnerIdx * arc + arc / 2;
   const targetR = topAngle - winnerCenterAngle;
@@ -236,22 +277,35 @@ function spinLuckyWheel() {
     deltaAngle += 2 * Math.PI;
   }
 
-  // Thời gian quay hồi hộp (đọc từ cấu hình state hoặc mặc định 4.5s)
-  const duration = (window.state && window.state.wheelDuration) ? window.state.wheelDuration : 4500;
+  // Thời gian quay kịch tính (mặc định 6.6 giây để có trọn vẹn 3 giây cuối Super Slow-mo)
+  const baseDuration = (window.state && window.state.wheelDuration) ? window.state.wheelDuration : 6600;
+  const duration = Math.max(baseDuration, 6200);
   const startTime = performance.now();
   let lastHoverIdx = -1;
 
-  function easeOutQuart(t) {
-    return 1 - Math.pow(1 - t, 4);
+  // Đường cong giảm tốc Hybrid Tension: 60% thời gian đầu lướt nhanh, 3 giây cuối trượt chậm rãi nghẹt thở
+  function tensionEasing(t) {
+    if (t <= 0) return 0;
+    if (t >= 1) return 1;
+    const s = 1 - t;
+    const w2 = 0.022;
+    const w1 = 1 - w2;
+    return 1 - (w1 * Math.pow(s, 5.2) + w2 * Math.pow(s, 1.85));
   }
 
   function animate(currentTime) {
     const elapsed = currentTime - startTime;
     const progress = Math.min(elapsed / duration, 1);
-    const eased = easeOutQuart(progress);
+    const eased = tensionEasing(progress);
 
     state.wheelRotation = startAngle + deltaAngle * eased;
     drawLuckyWheel(state.wheelRotation);
+
+    // Tính toán số nan quạt và thời gian còn lại để kích hoạt chế độ Super Slow-mo Tension
+    const remainingAngle = Math.max(0, deltaAngle * (1 - eased));
+    const remainingSlices = remainingAngle / arc;
+    const msLeft = duration - elapsed;
+    const isSlowMoTension = (remainingSlices <= 3.2 || msLeft <= 3000);
 
     // Hiệu ứng kim giật và âm thanh click khi nan quạt đi qua kim chỉ
     let rel = (topAngle - state.wheelRotation) % (2 * Math.PI);
@@ -260,17 +314,48 @@ function spinLuckyWheel() {
 
     if (currHoverIdx !== lastHoverIdx) {
       lastHoverIdx = currHoverIdx;
-      if (window.sound) window.sound.playTick(550 + progress * 250);
+
+      // Phát âm thanh nhịp tim thót tim + click cơ học khi ở 3 giây cuối
+      if (window.sound) {
+        if (isSlowMoTension && typeof window.sound.playTensionTick === 'function') {
+          window.sound.playTensionTick(progress, remainingSlices);
+        } else if (typeof window.sound.playTick === 'function') {
+          window.sound.playTick(550 + progress * 250);
+        }
+      }
+
+      // Kim gạt chậm rãi theo lực cản ở 3 giây cuối hoặc gạt nhanh bình thường
       if (DOM.wheelPointer) {
-        DOM.wheelPointer.classList.add('twitch');
-        setTimeout(() => DOM.wheelPointer.classList.remove('twitch'), 60);
+        DOM.wheelPointer.classList.remove('twitch', 'slow-twitch');
+        void DOM.wheelPointer.offsetWidth; // Buộc reflow để animation kích hoạt mượt mà
+        if (isSlowMoTension) {
+          DOM.wheelPointer.classList.add('slow-twitch');
+        } else {
+          DOM.wheelPointer.classList.add('twitch');
+        }
       }
     }
 
     if (progress < 1) {
       requestAnimationFrame(animate);
     } else {
-      finalizeWheelSpin(winnerItem);
+      // Khi bánh xe dừng hẳn: Kích hoạt hiệu ứng mũi kim gật gù đàn hồi (Spring Bounce) & âm thanh nảy nắp
+      if (DOM.wheelPointer) {
+        DOM.wheelPointer.classList.remove('twitch', 'slow-twitch');
+        void DOM.wheelPointer.offsetWidth;
+        DOM.wheelPointer.classList.add('spring-bounce');
+        setTimeout(() => {
+          if (DOM.wheelPointer) DOM.wheelPointer.classList.remove('spring-bounce');
+        }, 750);
+      }
+      if (window.sound && typeof window.sound.playPointerSpringSnap === 'function') {
+        window.sound.playPointerSpringSnap();
+      }
+
+      // Chờ kim đàn hồi bật nhẹ 160ms rồi bung thẻ vinh danh và pháo hoa rực rỡ
+      setTimeout(() => {
+        finalizeWheelSpin(winnerItem, winnerIdx);
+      }, 160);
     }
   }
 
@@ -280,11 +365,15 @@ function spinLuckyWheel() {
 /**
  * Xử lý kết quả sau khi vòng quay dừng hẳn
  */
-function finalizeWheelSpin(winnerItem) {
+function finalizeWheelSpin(winnerItem, winnerIdx) {
   const state = window.state;
   const DOM = window.DOM;
 
   state.isSpinning = false;
+  state.isShowingResult = true;
+  if (typeof winnerIdx === 'number') {
+    state.wheelWinnerIdx = winnerIdx;
+  }
   document.body.classList.remove('wheel-spotlight-dimmed');
   if (DOM.btnSpin) DOM.btnSpin.disabled = false;
 
@@ -333,15 +422,24 @@ function finalizeWheelSpin(winnerItem) {
     }
 
     // Ghi nhận lịch sử gọi
+    const groupHistoryName = `${winnerGroup.name} (${winnerGroup.title})`;
     if (typeof recordStudentCall === 'function') {
-      recordStudentCall(`${winnerGroup.name} (${winnerGroup.title})`);
+      recordStudentCall(groupHistoryName);
+    }
+    if (window.MysteryBoxesModule && typeof window.MysteryBoxesModule.onNewWinnerCalled === 'function') {
+      window.MysteryBoxesModule.onNewWinnerCalled(groupHistoryName);
     }
 
     if (window.sound) window.sound.playVictory();
-    if (typeof triggerCelebrationConfetti === 'function') triggerCelebrationConfetti();
+    if (typeof triggerGrandWheelFireworks === 'function') {
+      triggerGrandWheelFireworks(winnerGroup.mascot);
+    } else if (typeof triggerCelebrationConfetti === 'function') {
+      triggerCelebrationConfetti();
+    }
 
     if (DOM.postSpinActions) DOM.postSpinActions.classList.add('visible');
     if (typeof updateUI === 'function') updateUI();
+    if (typeof renderWheelHistoryPanel === 'function') renderWheelHistoryPanel();
     if (typeof saveStateToStorage === 'function') saveStateToStorage();
 
     // Đồng bộ kết quả sang Remote trên điện thoại
@@ -362,7 +460,12 @@ function finalizeWheelSpin(winnerItem) {
     const winnerName = winnerItem;
 
     if (DOM.wheelWinnerCard) {
-      DOM.wheelWinnerCard.innerHTML = `<div class="winner-individual-text">🎉 CHÚC MỪNG: ${winnerName} 🎉</div>`;
+      DOM.wheelWinnerCard.className = 'wheel-winner-card winner-celebrate-glow';
+      DOM.wheelWinnerCard.innerHTML = `
+        <span class="winner-sparkle-icon">✨</span>
+        <div class="winner-individual-text">🎉 CHÚC MỪNG: <b>${winnerName}</b> 🎉</div>
+        <span class="winner-sparkle-icon">⭐</span>
+      `;
       DOM.wheelWinnerCard.style.display = 'flex';
     }
 
@@ -377,6 +480,9 @@ function finalizeWheelSpin(winnerItem) {
     if (typeof recordStudentCall === 'function') {
       recordStudentCall(winnerName);
     }
+    if (window.MysteryBoxesModule && typeof window.MysteryBoxesModule.onNewWinnerCalled === 'function') {
+      window.MysteryBoxesModule.onNewWinnerCalled(winnerName);
+    }
 
     // Ghi nhận tên học sinh vừa trúng để tạo hiệu ứng mờ dần 0.3s
     window.lastCalledWinnerName = winnerName;
@@ -387,10 +493,15 @@ function finalizeWheelSpin(winnerItem) {
     }, 1500);
 
     if (window.sound) window.sound.playVictory();
-    if (typeof triggerCelebrationConfetti === 'function') triggerCelebrationConfetti();
+    if (typeof triggerGrandWheelFireworks === 'function') {
+      triggerGrandWheelFireworks();
+    } else if (typeof triggerCelebrationConfetti === 'function') {
+      triggerCelebrationConfetti();
+    }
 
     if (DOM.postSpinActions) DOM.postSpinActions.classList.add('visible');
     if (typeof updateUI === 'function') updateUI();
+    if (typeof renderWheelHistoryPanel === 'function') renderWheelHistoryPanel();
     if (typeof saveStateToStorage === 'function') saveStateToStorage();
 
     // Đồng bộ kết quả người chiến thắng sang Remote trên điện thoại
@@ -537,12 +648,22 @@ function drawBonusWheel(customRotation = bonusRotation) {
   ctx.restore();
 }
 
-function openBonusWheelModal() {
+function openBonusWheelModal(targetStudentName) {
   const modal = document.getElementById('bonusWheelModal');
   if (!modal) return;
-  const currentStudentName = (window.state.lastResult && window.state.lastResult[0]) || 'Học sinh';
+  const currentStudentName = targetStudentName || 
+    (window.SeatingChartModule && typeof window.SeatingChartModule.getLastWinner === 'function' && window.SeatingChartModule.getLastWinner()) ||
+    (window.state && window.state.lastResult && window.state.lastResult[0]) || 
+    window.lastCalledWinnerName || 
+    'Học sinh';
+
+  if (window.state) {
+    if (!Array.isArray(window.state.lastResult)) window.state.lastResult = [];
+    window.state.lastResult[0] = currentStudentName;
+  }
+
   const titleEl = document.getElementById('bonusStudentTitle');
-  if (titleEl) titleEl.textContent = `Vòng Quay Điểm Thưởng Cho: ${currentStudentName}`;
+  if (titleEl) titleEl.textContent = `🎁 Vòng Quay Thưởng Cho: ${currentStudentName}`;
   const winnerCard = document.getElementById('bonusWinnerCard');
   if (winnerCard) {
     winnerCard.style.display = 'none';
@@ -646,6 +767,11 @@ function finalizeBonusSpin(reward) {
 
   if (typeof showToast === 'function') {
     showToast(`🎁 Đã tặng "${reward.icon} ${reward.text}" cho ${currentStudent}!`, 'success');
+  }
+
+  // Thông báo tới SeatingChartModule để cập nhật trạng thái menu sơ đồ lớp
+  if (window.SeatingChartModule && typeof window.SeatingChartModule.onRewardGranted === 'function') {
+    window.SeatingChartModule.onRewardGranted(currentStudent, reward);
   }
 }
 
@@ -756,8 +882,197 @@ function disableWheelSpotlight() {
   document.body.classList.remove('wheel-spotlight-dimmed');
 }
 
+// ==============================================================================
+// BẢNG LỊCH SỬ ĐÃ GỌI BÊN PHẢI MÀN HÌNH VÒNG QUAY (WHEEL CALLED HISTORY PANEL)
+// ==============================================================================
+
+function renderWheelHistoryPanel() {
+  const historyListEl = document.getElementById('wheelHistoryList');
+  const countBadgeEl = document.getElementById('wheelHistoryCountBadge');
+  const footerTotalEl = document.getElementById('wheelHistoryFooterTotal');
+  if (!historyListEl) return;
+
+  const cls = (typeof getCurrentClass === 'function') ? getCurrentClass() : null;
+  if (!cls) return;
+
+  // Tự động đồng bộ phục hồi: Chỉ chạy 1 lần duy nhất cho dữ liệu cũ chưa từng khởi tạo history
+  if (!cls._historyInitialized && Array.isArray(cls.called) && cls.called.length > 0 && (!Array.isArray(cls.history) || cls.history.length === 0)) {
+    cls._historyInitialized = true;
+    cls.history = cls.called.map((name, i) => ({
+      id: 'h_sync_' + i + '_' + Date.now(),
+      name: name,
+      time: 'Trước đó',
+      bonusReward: null
+    })).reverse();
+    if (typeof saveStateToStorage === 'function') saveStateToStorage();
+  }
+
+  const history = (cls && Array.isArray(cls.history)) ? cls.history : [];
+
+  if (countBadgeEl) countBadgeEl.textContent = `${history.length} lượt`;
+  if (footerTotalEl) footerTotalEl.textContent = history.length;
+
+  if (history.length === 0) {
+    historyListEl.innerHTML = `
+      <div class="wheel-history-empty">
+        <div class="history-empty-icon">🎯</div>
+        <div class="history-empty-title">Chưa có lượt gọi nào</div>
+        <div class="history-empty-sub">Nhấn phím <b>Space</b> hoặc nút <b>QUAY TÊN NGAY</b> để bốc thăm học sinh đầu tiên!</div>
+      </div>
+    `;
+    return;
+  }
+
+  const total = history.length;
+  let html = '';
+  history.forEach((item, idx) => {
+    const isLatest = idx === 0;
+    const callOrder = total - idx;
+    html += `
+      <div class="wheel-history-item ${isLatest ? 'is-latest' : ''}" data-id="${item.id}">
+        <span class="history-item-badge">#${callOrder}</span>
+        <div class="history-item-body">
+          <div class="history-item-name" title="${item.name}">${item.name}</div>
+          <div class="history-item-meta">
+            <span class="history-item-time">🕒 ${item.time || ''}</span>
+            ${item.bonusReward ? `<span class="history-item-reward">🎁 ${item.bonusReward}</span>` : ''}
+          </div>
+        </div>
+        <button type="button" class="btn-history-remove-one" onclick="removeSingleHistoryItem('${item.id}', '${item.name.replace(/'/g, "\\'")}')" title="Xóa lượt này và đưa học sinh trở lại vòng quay">✕</button>
+      </div>
+    `;
+  });
+
+  historyListEl.innerHTML = html;
+}
+
+function removeSingleHistoryItem(historyId, studentName) {
+  const cls = (typeof getCurrentClass === 'function') ? getCurrentClass() : null;
+  if (!cls || !Array.isArray(cls.history)) return;
+
+  const idx = cls.history.findIndex(h => h.id === historyId);
+  if (idx !== -1) {
+    cls.history.splice(idx, 1);
+  } else {
+    const nameIdx = cls.history.findIndex(h => h.name === studentName);
+    if (nameIdx !== -1) cls.history.splice(nameIdx, 1);
+  }
+
+  // Giảm số lần gọi
+  if (cls.callCounts && cls.callCounts[studentName]) {
+    cls.callCounts[studentName] = Math.max(0, cls.callCounts[studentName] - 1);
+  }
+
+  // Nếu không còn lượt gọi nào, đưa lại vào danh sách chờ gọi
+  if (Array.isArray(cls.called)) {
+    const remainingCalls = cls.history.filter(h => h.name === studentName).length;
+    if (remainingCalls === 0) {
+      cls.called = cls.called.filter(n => n !== studentName);
+    }
+  }
+
+  cls._historyInitialized = true;
+
+  if (window.state) {
+    window.state.wheelStudents = null;
+    window.state.wheelGroups = null;
+    window.state.wheelWinnerIdx = null;
+    window.state.isShowingResult = false;
+  }
+
+  if (typeof saveStateToStorage === 'function') saveStateToStorage();
+  if (typeof updateUI === 'function') updateUI();
+  if (typeof drawLuckyWheel === 'function') drawLuckyWheel();
+  renderWheelHistoryPanel();
+
+  if (typeof showToast === 'function') {
+    showToast(`Đã xóa lượt gọi của "${studentName}" và hoàn lại vào vòng quay!`, 'info');
+  }
+}
+
+function resetWheelHistoryAction() {
+  const cls = (typeof getCurrentClass === 'function') ? getCurrentClass() : null;
+  if (!cls) return;
+
+  const historyCount = (Array.isArray(cls.history) ? cls.history.length : 0);
+  const calledCount = (Array.isArray(cls.called) ? cls.called.length : 0);
+  const totalCount = Math.max(historyCount, calledCount);
+
+  if (totalCount === 0) {
+    if (typeof showToast === 'function') showToast('Lịch sử các lượt gọi hiện tại đang trống!', 'info');
+    return;
+  }
+
+  const studentTotal = (cls.students && cls.students.length) ? cls.students.length : 0;
+  if (confirm(`Thầy/Cô có muốn làm mới toàn bộ lượt gọi của lớp "${cls.name}" để tất cả ${studentTotal} học sinh có thể quay lại từ đầu cho tiết học mới không?`)) {
+    cls.history = [];
+    cls._historyInitialized = true;
+    cls.called = [];
+    cls.callCounts = {};
+    if (Array.isArray(cls.calledGroups)) cls.calledGroups = [];
+    if (window.state) {
+      window.state.calledGroups = [];
+      window.state.lastResult = [];
+      window.state.wheelStudents = null;
+      window.state.wheelGroups = null;
+      window.state.wheelWinnerIdx = null;
+      window.state.isShowingResult = false;
+    }
+
+    // Ẩn bảng vinh danh học sinh trúng giải của lượt quay trước (nếu có)
+    const winnerCard = document.getElementById('wheelWinnerCard');
+    if (winnerCard) {
+      winnerCard.style.display = 'none';
+      winnerCard.innerHTML = '';
+    }
+    const postActions = document.getElementById('postSpinActions');
+    if (postActions) {
+      postActions.classList.remove('visible');
+    }
+
+    // Lưu vào LocalStorage và cập nhật đồng bộ các màn hình
+    if (typeof saveStateToStorage === 'function') saveStateToStorage();
+    if (typeof updateUI === 'function') updateUI();
+    if (typeof drawLuckyWheel === 'function') drawLuckyWheel();
+    renderWheelHistoryPanel();
+
+    if (typeof showToast === 'function') {
+      showToast(`✅ Đã làm mới danh sách gọi! Toàn bộ ${studentTotal} học sinh đã sẵn sàng quay lại.`, 'success');
+    }
+  }
+}
+
+function toggleWheelHistoryCollapse() {
+  const panel = document.getElementById('wheelRightWidgetsCol');
+  const arrow = document.getElementById('wheelHistoryToggleArrow');
+  if (!panel) return;
+
+  const isCollapsed = panel.classList.toggle('collapsed');
+  if (arrow) arrow.textContent = isCollapsed ? '◀' : '▶';
+
+  try {
+    localStorage.setItem('wheel_history_collapsed_v1', isCollapsed ? '1' : '0');
+  } catch (_err) {}
+}
+
+function initWheelHistoryCollapseState() {
+  try {
+    if (localStorage.getItem('wheel_history_collapsed_v1') === '1') {
+      const histPanel = document.getElementById('wheelRightWidgetsCol');
+      const histArrow = document.getElementById('wheelHistoryToggleArrow');
+      if (histPanel) histPanel.classList.add('collapsed');
+      if (histArrow) histArrow.textContent = '◀';
+    }
+  } catch (_err) {}
+}
+
 window.enableWheelSpotlight = enableWheelSpotlight;
 window.disableWheelSpotlight = disableWheelSpotlight;
+window.renderWheelHistoryPanel = renderWheelHistoryPanel;
+window.removeSingleHistoryItem = removeSingleHistoryItem;
+window.resetWheelHistoryAction = resetWheelHistoryAction;
+window.toggleWheelHistoryCollapse = toggleWheelHistoryCollapse;
+window.initWheelHistoryCollapseState = initWheelHistoryCollapseState;
 window.WHEEL_COLORS = WHEEL_COLORS;
 window.BONUS_REWARDS = BONUS_REWARDS;
 window.drawLuckyWheel = drawLuckyWheel;

@@ -17,7 +17,6 @@
 
   let broadcastChannel = null;
   let eventSource = null;
-  let isConnectedSSE = false;
 
   // Lắng nghe các callback đăng ký khi có kết quả người thắng & trạng thái đồng bộ
   const winnerListeners = [];
@@ -126,7 +125,6 @@
       eventSource = new EventSource('/api/sync/events');
 
       eventSource.onopen = () => {
-        isConnectedSSE = true;
         updateConnectionStatusUI(true);
         // Tự động yêu cầu lấy trạng thái mới nhất khi kết nối thành công
         sendAction('request_state_sync');
@@ -138,13 +136,12 @@
           if (data && data.action && data.senderId !== CLIENT_ID) {
             handleAction(data.action, data.payload);
           }
-        } catch (err) {
+        } catch (_err) {
           // Tin nhắn kết nối thông thường
         }
       };
 
       eventSource.onerror = () => {
-        isConnectedSSE = false;
         updateConnectionStatusUI(false);
         // Tự động kết nối lại sau 4 giây
         setTimeout(connectSSE, 4000);
@@ -169,7 +166,7 @@
     if (broadcastChannel) {
       try {
         broadcastChannel.postMessage(message);
-      } catch (e) {}
+      } catch (_e) {}
     }
 
     // Gửi qua HTTP POST tới Server để phát cho các thiết bị qua mạng Wi-Fi
@@ -177,7 +174,7 @@
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(message)
-    }).catch(err => {
+    }).catch(_err => {
       // Offline fallback (không có server Node.js)
     });
   }
@@ -428,7 +425,7 @@
       if (res.ok) {
         return await res.json();
       }
-    } catch (e) {}
+    } catch (_e) {}
     // Fallback nếu không kết nối được API
     return {
       success: true,

@@ -555,7 +555,6 @@ function seedSampleClassesAction(notify = true) {
   const state = window.state;
   if (!state || !Array.isArray(state.classes)) return;
 
-  let addedCount = 0;
   SAMPLE_CLASSES_DEFINITIONS.forEach(def => {
     let existing = state.classes.find(c => c.id === def.id || c.name === def.name || (def.id === 'cls_sample_9a4' && (c.name.includes('9A4') || c.id === 'cls_sample_9a4')));
     if (!existing) {
@@ -568,7 +567,6 @@ function seedSampleClassesAction(notify = true) {
         history: []
       };
       state.classes.push(existing);
-      addedCount++;
     } else {
       // Nếu là lớp mẫu nhưng bị kẹt ở dữ liệu cũ (ví dụ 38 học sinh thay vì 45 học sinh)
       if (!existing.students || existing.students.length <= 38 || def.id === 'cls_sample_9a4') {
@@ -674,11 +672,15 @@ function openClassManagerModal() {
   if (!modal) return;
   renderClassManagerModalList();
   modal.classList.add('open');
+  const navBtn = document.getElementById('navBtnClassManager');
+  if (navBtn) navBtn.classList.add('active');
 }
 
 function closeClassManagerModal() {
   const modal = document.getElementById('classManagerModal');
   if (modal) modal.classList.remove('open');
+  const navBtn = document.getElementById('navBtnClassManager');
+  if (navBtn) navBtn.classList.remove('active');
 }
 
 function renderClassManagerModalList() {
@@ -955,13 +957,18 @@ function recordStudentCall(name, bonusReward = null) {
 // Cập nhật phần thưởng vào lượt gọi gần nhất của học sinh
 function updateStudentLastReward(name, rewardText) {
   const cls = getCurrentClass();
-  if (!cls || !cls.history || cls.history.length === 0) return;
-  const target = cls.history.find(h => h.name === name);
+  if (!cls || !cls.history || cls.history.length === 0) return null;
+  let target = name ? cls.history.find(h => h.name === name) : null;
+  if (!target && cls.history.length > 0) {
+    target = cls.history[0];
+  }
   if (target) {
     target.bonusReward = rewardText;
     saveStateToStorage();
     if (typeof updateUI === 'function') updateUI();
+    return target;
   }
+  return null;
 }
 
 // Đặt lại toàn bộ bộ đếm số lần gọi và lịch sử của lớp hiện tại
@@ -1471,7 +1478,6 @@ function handleBackupFileInput(file) {
  */
 function openBackupRestoreModal() {
   if (!pendingBackupData) return;
-  const DOM = window.DOM;
   const modal = document.getElementById('backupRestoreModal');
   if (!modal) return;
 

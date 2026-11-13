@@ -406,7 +406,7 @@
       if (saved && ['small', 'medium', 'large'].includes(saved)) {
         return saved;
       }
-    } catch (e) {}
+    } catch (_e) {}
     return 'medium';
   }
 
@@ -414,7 +414,7 @@
     currentFontSize = size || 'medium';
     try {
       localStorage.setItem('vong_quay_seating_font_size', currentFontSize);
-    } catch (e) {}
+    } catch (_e) {}
 
     const gridEl = document.getElementById('classroomAislesGrid');
     const stageEl = document.querySelector('.seating-classroom-column');
@@ -587,7 +587,7 @@
       if (saved && ['short', 'full'].includes(saved)) {
         return saved;
       }
-    } catch (e) {}
+    } catch (_e) {}
     return 'short'; // Mặc định hiển thị Tên ngắn gọn (2 chữ cuối) để chữ siêu to rõ rệt!
   }
 
@@ -595,7 +595,7 @@
     currentNameDisplayMode = mode || 'short';
     try {
       localStorage.setItem('vong_quay_seating_name_mode', currentNameDisplayMode);
-    } catch (e) {}
+    } catch (_e) {}
 
     syncNameDisplayModeUI();
     renderClassroomStage();
@@ -638,7 +638,7 @@
       if (saved !== null) {
         return saved === '1' || saved === 'true';
       }
-    } catch (e) {}
+    } catch (_e) {}
     return true; // Mặc định bật hiệu ứng tia sét laser
   }
 
@@ -646,7 +646,7 @@
     isLaserEffectEnabled = Boolean(enabled);
     try {
       localStorage.setItem('vong_quay_seating_laser_enabled', isLaserEffectEnabled ? '1' : '0');
-    } catch (e) {}
+    } catch (_e) {}
     syncLaserButtonUI();
     if (showToastMessage && typeof showToast === 'function') {
       showToast(
@@ -904,7 +904,7 @@
         const num = parseFloat(saved);
         if (num >= 0 && num <= 3.0) return num;
       }
-    } catch (e) {}
+    } catch (_e) {}
     return 1.4; // Mặc định 1.4 giây (vừa đủ ngắm ghế và nghe AI gọi tên)
   }
 
@@ -913,7 +913,7 @@
     currentPopupDelay = val;
     try {
       localStorage.setItem('vong_quay_seating_popup_delay', val.toString());
-    } catch (e) {}
+    } catch (_e) {}
     syncPopupDelayUI(val);
     if (showToastMessage && typeof showToast === 'function') {
       const desc = val === 0 ? 'Mở Popup tức thì không chờ' : (val <= 1.0 ? 'Nhanh gọn' : (val <= 1.8 ? 'Cân bằng tiêu chuẩn' : 'Hồi hộp kịch tính'));
@@ -1056,11 +1056,98 @@
         showToast('✨ Đã làm mới danh sách! Tất cả học sinh có thể được gọi lại từ đầu.', 'success');
       }
     }
+    SeatingState.lastWinnerStudentName = null;
+    window.lastCalledWinnerName = null;
+    syncBonusRewardUI();
     clearLaserBeams();
     disableSpotlightDimming();
     renderClassroomStage();
     syncRoundStatusUI();
     return true;
+  }
+
+  // ============================================================================
+  // TÍNH NĂNG MỞ RỘNG: VÒNG QUAY NHẬN THƯỞNG CHO HỌC SINH VỪA GỌI
+  // ============================================================================
+  function syncBonusRewardUI() {
+    const btn = document.getElementById('btnSeatingBonusWheel');
+    const badge = document.getElementById('seatingBonusBadge');
+    const desc = document.getElementById('seatingBonusTargetDesc');
+    if (!btn) return;
+
+    const winnerName = SeatingState.lastWinnerStudentName || window.lastCalledWinnerName;
+    if (winnerName) {
+      btn.classList.add('has-winner');
+      if (badge) {
+        badge.textContent = 'Sẵn sàng';
+        badge.className = 'bonus-card-badge badge-gift badge-ready';
+      }
+      if (desc) {
+        desc.textContent = `Quay thưởng: ${winnerName}`;
+        desc.title = `Quay quà tặng cho ${winnerName}`;
+      }
+      btn.setAttribute('title', `🎁 Vòng Quay Nhận Thưởng cho ${winnerName}`);
+    } else {
+      btn.classList.remove('has-winner');
+      if (badge) {
+        badge.textContent = 'Quà tặng';
+        badge.className = 'bonus-card-badge badge-gift';
+      }
+      if (desc) {
+        desc.textContent = 'Quay quà cho bạn vừa gọi';
+        desc.title = 'Quay quà cho bạn vừa gọi';
+      }
+      btn.setAttribute('title', '🎁 Vòng Quay Nhận Thưởng: Quay quà / điểm thưởng cho học sinh vừa được gọi');
+    }
+  }
+
+  function openBonusRewardWheel() {
+    if (SeatingState.isSpinning) return;
+
+    // Tìm tên học sinh vừa trúng trên sơ đồ
+    let studentName = SeatingState.lastWinnerStudentName || window.lastCalledWinnerName;
+
+    // Nếu chưa có trong session hiện tại, kiểm tra lịch sử gọi gần nhất của lớp
+    if (!studentName) {
+      const cls = typeof getCurrentClass === 'function' ? getCurrentClass() : null;
+      if (cls && cls.history && cls.history.length > 0) {
+        studentName = cls.history[0].name;
+      }
+    }
+
+    if (!studentName) {
+      if (typeof showToast === 'function') {
+        showToast('💡 Thầy/Cô vui lòng nhấn "🎲 QUAY TÊN SƠ ĐỒ" trước khi quay nhận thưởng nhé!', 'info');
+      }
+      return;
+    }
+
+    // Đảm bảo window.state.lastResult đồng bộ
+    if (window.state) {
+      if (!Array.isArray(window.state.lastResult)) window.state.lastResult = [];
+      window.state.lastResult[0] = studentName;
+    }
+
+    if (typeof openBonusWheelModal === 'function') {
+      openBonusWheelModal(studentName);
+    } else {
+      console.warn('openBonusWheelModal is not available');
+    }
+  }
+
+  function onRewardGranted(studentName, reward) {
+    const btn = document.getElementById('btnSeatingBonusWheel');
+    const desc = document.getElementById('seatingBonusTargetDesc');
+    const badge = document.getElementById('seatingBonusBadge');
+    if (btn) btn.classList.remove('has-winner');
+    if (badge) {
+      badge.textContent = 'Đã nhận quà';
+      badge.className = 'bonus-card-badge badge-gift';
+    }
+    if (desc && reward) {
+      desc.textContent = `Đã tặng: ${reward.icon || ''} ${reward.text || ''}`;
+      desc.title = `Đã tặng ${reward.icon || ''} ${reward.text || ''} cho ${studentName || 'học sinh'}`;
+    }
   }
 
   // ============================================================================
@@ -1242,7 +1329,7 @@
 
     try {
       localStorage.setItem('vong_quay_modes_panel_collapsed', isModesPanelCollapsed ? '1' : '0');
-    } catch (e) {}
+    } catch (_e) {}
 
     if (notify && typeof showToast === 'function') {
       showToast(
@@ -1260,7 +1347,7 @@
       if (saved === '1') {
         toggleModesPanelCollapse(true, false);
       }
-    } catch (e) {}
+    } catch (_e) {}
   }
 
   // ============================================================================
@@ -1310,6 +1397,16 @@
         html: '<span class="tooltip-text">📏 Gọi Hàng Ngang</span><span class="tooltip-badge">Cả hàng</span>'
       },
       {
+        selector: '#btnSeatingBonusWheel',
+        html: () => {
+          const winner = SeatingState.lastWinnerStudentName || window.lastCalledWinnerName;
+          if (winner) {
+            return `<span class="tooltip-text">🎁 Quay Thưởng: <strong>${winner}</strong></span><span class="tooltip-badge">Sẵn sàng</span>`;
+          }
+          return '<span class="tooltip-text">🎁 Vòng Quay Nhận Thưởng</span><span class="tooltip-badge">Quà tặng</span>';
+        }
+      },
+      {
         selector: '#btnUnassignedExpandTab',
         html: '<span class="tooltip-text">🎒 Chưa Xếp Chỗ</span>'
       },
@@ -1337,7 +1434,7 @@
           el.removeAttribute('title');
         }
 
-        tooltipEl.innerHTML = item.html;
+        tooltipEl.innerHTML = typeof item.html === 'function' ? item.html() : item.html;
         tooltipEl.classList.toggle('dice-tooltip', !!item.isDice);
 
         const rect = el.getBoundingClientRect();
@@ -1391,6 +1488,7 @@
     currentPopupDelay = getSavedPopupDelay();
     syncLaserButtonUI();
     syncPopupDelayUI();
+    syncBonusRewardUI();
 
     // Nếu lớp đã xếp đủ 100% học sinh thì mặc định thu gọn; nếu còn học sinh chưa xếp thì mở ra để Thầy xếp
     const unassigned = getUnassignedStudents();
@@ -1471,6 +1569,7 @@
     syncNameDisplayModeUI();
     syncLaserButtonUI();
     syncPopupDelayUI();
+    syncBonusRewardUI();
     if (typeof updateVoiceButtonUI === 'function') {
       updateVoiceButtonUI(window.voiceAnnouncer ? window.voiceAnnouncer.enabled : true);
     }
@@ -2113,7 +2212,7 @@
   // Xáo trộn ngẫu nhiên chỗ ngồi của các học sinh hiện có trên sơ đồ
   function shuffleAssignedSeats() {
     if (SeatingState.isSpinning) return;
-    const assignedEntries = Object.entries(SeatingState.seats).filter(([k, v]) => Boolean(v));
+    const assignedEntries = Object.entries(SeatingState.seats).filter(([_k, v]) => Boolean(v));
     if (assignedEntries.length < 2) {
       if (typeof showToast === 'function') showToast('Cần ít nhất 2 học sinh trên sơ đồ để xáo trộn!', 'warning');
       return;
@@ -2198,7 +2297,7 @@
     clearLaserBeams();
     disableSpotlightDimming();
 
-    const assignedEntries = Object.entries(SeatingState.seats).filter(([k, name]) => Boolean(name));
+    const assignedEntries = Object.entries(SeatingState.seats).filter(([_k, name]) => Boolean(name));
     if (assignedEntries.length === 0) {
       if (typeof showToast === 'function') {
         showToast('Chưa có học sinh nào trên sơ đồ! Hãy xếp chỗ hoặc bấm "Tự động xếp chỗ" trước.', 'warning');
@@ -2212,7 +2311,7 @@
     // Lọc các ghế đủ điều kiện tham gia (chưa bị gọi nếu bật noRepeat)
     let eligibleSeats = assignedEntries;
     if (isNoRepeat) {
-      eligibleSeats = assignedEntries.filter(([k, name]) => !calledSet.has(name));
+      eligibleSeats = assignedEntries.filter(([_k, name]) => !calledSet.has(name));
     }
 
     if (eligibleSeats.length === 0) {
@@ -2241,7 +2340,7 @@
       let availableDesks = Object.keys(deskMap);
       if (isNoRepeat) {
         const uncalledDesks = availableDesks.filter(dk => {
-          return deskMap[dk].some(([k, name]) => !calledSet.has(name));
+          return deskMap[dk].some(([_k, name]) => !calledSet.has(name));
         });
         if (uncalledDesks.length > 0) availableDesks = uncalledDesks;
       }
@@ -2306,7 +2405,7 @@
       let availableRows = Object.keys(rowMap);
       if (isNoRepeat) {
         const uncalledRows = availableRows.filter(r => {
-          return rowMap[r].some(([k, name]) => !calledSet.has(name));
+          return rowMap[r].some(([_k, name]) => !calledSet.has(name));
         });
         if (uncalledRows.length > 0) availableRows = uncalledRows;
       }
@@ -2360,7 +2459,7 @@
 
     // Lập bản đồ bàn -> các ghế trên bàn đó để hỗ trợ hiệu ứng nhảy cả bàn ở chế độ Đôi bạn
     const deskToSeatsMap = {};
-    assignedEntries.forEach(([key, name]) => {
+    assignedEntries.forEach(([key]) => {
       const parts = key.split('_');
       const deskKey = `${parts[0]}_${parts[1]}`;
       if (!deskToSeatsMap[deskKey]) deskToSeatsMap[deskKey] = [];
@@ -2607,6 +2706,10 @@
     SeatingState.lastCalledSeatKey = winners[0]?.seatKey || null;
     SeatingState.lastWinnerStudentName = winners[0]?.studentName || null;
     window.lastCalledWinnerName = winners[0]?.studentName || null;
+    if (window.state) {
+      window.state.lastResult = winners.map(w => w.studentName);
+    }
+    syncBonusRewardUI();
 
     if (typeof saveStateToStorage === 'function') {
       saveStateToStorage();
@@ -3044,6 +3147,10 @@
     handleDelaySliderChange: handleDelaySliderChange,
     saveDelaySliderChange: saveDelaySliderChange,
     isBusy: () => Boolean(SeatingState.isSpinning || SeatingState.isCelebrating),
+    openBonusRewardWheel: openBonusRewardWheel,
+    getLastWinner: () => SeatingState.lastWinnerStudentName || window.lastCalledWinnerName,
+    syncBonusRewardUI: syncBonusRewardUI,
+    onRewardGranted: onRewardGranted,
     getState: () => ({
       aisles: SeatingState.aisles,
       rows: SeatingState.rows,
