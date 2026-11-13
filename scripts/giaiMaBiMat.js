@@ -1344,12 +1344,13 @@
   }
 
   const STORAGE_KEY_EXPORT_LOGO = 'gmm_export_school_logo';
-  const DEFAULT_SCHOOL_LOGO = 'logo-truong-thcs-Tan-Hai.jpg';
+  const DEFAULT_SCHOOL_LOGO = 'assets/images/logo-truong-thcs-Tan-Hai.jpg';
 
   function getExportSchoolLogo() {
     try {
       const saved = localStorage.getItem(STORAGE_KEY_EXPORT_LOGO);
       if (saved === 'none') return '';
+      if (saved === 'logo-truong-thcs-Tan-Hai.jpg') return DEFAULT_SCHOOL_LOGO;
       if (saved) return saved;
       return DEFAULT_SCHOOL_LOGO;
     } catch (_e) {
@@ -4378,6 +4379,7 @@
     });
     window.addEventListener('focus', handleWakeOrFocus);
     window.addEventListener('pageshow', handleWakeOrFocus);
+    window.addEventListener('online', handleWakeOrFocus);
   }
 
   async function syncMobileNow() {
@@ -4571,6 +4573,50 @@
   let mobileDecryptRemainingSeconds = 180;
   let mobileDecryptTotalSeconds = 180;
   let mobileIsDecryptTimerRunning = false;
+  let mobileDecryptTimerInterval = null;
+
+  function stopMobileDecryptTicker() {
+    if (mobileDecryptTimerInterval) {
+      clearInterval(mobileDecryptTimerInterval);
+      mobileDecryptTimerInterval = null;
+    }
+  }
+
+  function syncMobileDecryptTimer(remainingSec, totalSec, isRunning) {
+    if (typeof remainingSec === 'number' && !Number.isNaN(remainingSec)) {
+      mobileDecryptRemainingSeconds = Math.max(0, remainingSec);
+    }
+    if (typeof totalSec === 'number' && totalSec > 0) {
+      mobileDecryptTotalSeconds = totalSec;
+    }
+    if (typeof isRunning === 'boolean') {
+      mobileIsDecryptTimerRunning = isRunning;
+    }
+
+    updateMobileDecryptTimerUI();
+
+    if (mobileIsDecryptTimerRunning && mobileDecryptRemainingSeconds > 0) {
+      if (!mobileDecryptTimerInterval) {
+        mobileDecryptTimerInterval = setInterval(() => {
+          if (!mobileIsDecryptTimerRunning) {
+            stopMobileDecryptTicker();
+            return;
+          }
+          if (mobileDecryptRemainingSeconds > 0) {
+            mobileDecryptRemainingSeconds--;
+            updateMobileDecryptTimerUI();
+          }
+          if (mobileDecryptRemainingSeconds <= 0) {
+            mobileIsDecryptTimerRunning = false;
+            stopMobileDecryptTicker();
+            updateMobileDecryptTimerUI();
+          }
+        }, 1000);
+      }
+    } else {
+      stopMobileDecryptTicker();
+    }
+  }
 
   function updateMobileDecryptTimerUI() {
     const totalSec = Math.max(0, mobileDecryptRemainingSeconds || 0);
@@ -4824,6 +4870,8 @@
   function resetMobileClientState(newSessionId) {
     clearInterval(mobileTimerInterval);
     mobileTimerInterval = null;
+    stopMobileDecryptTicker();
+    mobileIsDecryptTimerRunning = false;
     if (mobileAutoAdvanceTimer) {
       clearTimeout(mobileAutoAdvanceTimer);
       mobileAutoAdvanceTimer = null;
@@ -5712,12 +5760,22 @@
         if (statusPill) statusPill.className = 'gmm-mob-status-pill';
         if (statusText) statusText.textContent = 'Đã kết nối máy chiếu';
         announceMobileJoinToServer(studentTeamKey, false);
+        // Đồng bộ lại ngay state & remainingSeconds từ máy chủ mỗi lần SSE kết nối hoặc tự nối lại sau rớt Wi-Fi
+        fetchCurrentServerState(false);
       };
 
       es.onmessage = function (event) {
         try {
           const data = JSON.parse(event.data);
-          if ((data.type === 'gmm_team_joined' || data.type === 'gmm_team_left') && data.connectedTeams) {
+          if (data.type === 'connected') {
+            const rem = typeof data.remainingSeconds === 'number' ? data.remainingSeconds : data.decryptTimeLeft;
+            if (typeof rem === 'number') {
+              syncMobileDecryptTimer(rem, data.decryptTimeTotal, Boolean(data.isDecryptTimerRunning));
+            }
+            if (data.state) {
+              applyServerStateToMobile(data.state, false);
+            }
+          } else if ((data.type === 'gmm_team_joined' || data.type === 'gmm_team_left') && data.connectedTeams) {
             updateMobileLobbyTeamsStatus(data.connectedTeams);
           } else if (data.type === 'gmm_timer_start') {
             if (data.sessionId && mobileSessionId && String(data.sessionId) !== String(mobileSessionId)) {
@@ -5743,33 +5801,18 @@
               autoLockMobileTeam();
             }
           } else if (data.type === 'gmm_decrypt_timer_start' || data.type === 'gmm_decrypt_timer_tick') {
-            if (typeof data.decryptTimeLeft === 'number') {
-              mobileDecryptRemainingSeconds = data.decryptTimeLeft;
-            }
-            if (typeof data.decryptTimeTotal === 'number') {
-              mobileDecryptTotalSeconds = data.decryptTimeTotal;
-            }
-            if (typeof data.isDecryptTimerRunning === 'boolean') {
-              mobileIsDecryptTimerRunning = data.isDecryptTimerRunning;
-            } else if (data.type === 'gmm_decrypt_timer_start') {
-              mobileIsDecryptTimerRunning = true;
-            }
-            updateMobileDecryptTimerUI();
+            const rem = typeof data.remainingSeconds === 'number' ? data.remainingSeconds : data.decryptTimeLeft;
+            const running = typeof data.isDecryptTimerRunning === 'boolean'
+              ? data.isDecryptTimerRunning
+              : (data.type === 'gmm_decrypt_timer_start');
+            syncMobileDecryptTimer(rem, data.decryptTimeTotal, running);
             updateMobileFinishArtworkUI(gameState[studentTeamKey]);
           } else if (data.type === 'gmm_decrypt_timer_pause') {
-            mobileIsDecryptTimerRunning = Boolean(data.isDecryptTimerRunning);
-            if (typeof data.decryptTimeLeft === 'number') {
-              mobileDecryptRemainingSeconds = data.decryptTimeLeft;
-            }
-            if (typeof data.decryptTimeTotal === 'number') {
-              mobileDecryptTotalSeconds = data.decryptTimeTotal;
-            }
-            updateMobileDecryptTimerUI();
+            const rem = typeof data.remainingSeconds === 'number' ? data.remainingSeconds : data.decryptTimeLeft;
+            syncMobileDecryptTimer(rem, data.decryptTimeTotal, Boolean(data.isDecryptTimerRunning));
             updateMobileFinishArtworkUI(gameState[studentTeamKey]);
           } else if (data.type === 'gmm_decrypt_time_up') {
-            mobileDecryptRemainingSeconds = 0;
-            mobileIsDecryptTimerRunning = false;
-            updateMobileDecryptTimerUI();
+            syncMobileDecryptTimer(0, data.decryptTimeTotal, false);
             updateMobileFinishArtworkUI(gameState[studentTeamKey]);
             if (navigator.vibrate) {
               try { navigator.vibrate([150, 80, 150, 80, 250]); } catch (_) {}
@@ -5942,6 +5985,7 @@
       (serverState.status === 'answer_key' && !serverState.isMatchStarted && !serverState.isDecryptPhase)
     );
     if (isLobby) {
+      stopMobileDecryptTicker();
       if (!serverIsLocked && serverAnswerCount === 0 && (mobileIsLocked || Object.keys(mobileTeamAnswers).length > 0)) {
         resetMobileClientState(serverState.sessionId || mobileSessionId);
       }
@@ -5973,17 +6017,15 @@
       if (quizView) quizView.style.display = 'none';
       if (paintView) paintView.style.display = 'flex';
 
-      // Đồng bộ thời gian đếm ngược tô màu tranh từ máy chủ
-      if (typeof serverState.decryptTimeLeft === 'number') {
-        mobileDecryptRemainingSeconds = serverState.decryptTimeLeft;
-      }
-      if (typeof serverState.decryptTimeTotal === 'number') {
-        mobileDecryptTotalSeconds = serverState.decryptTimeTotal;
-      }
-      if (typeof serverState.isDecryptTimerRunning === 'boolean') {
-        mobileIsDecryptTimerRunning = serverState.isDecryptTimerRunning;
-      }
-      updateMobileDecryptTimerUI();
+      // Đồng bộ thời gian đếm ngược tô màu tranh từ máy chủ (kể cả khi vừa kết nối lại sau rớt mạng)
+      const remDecrypt = typeof serverState.remainingSeconds === 'number'
+        ? serverState.remainingSeconds
+        : serverState.decryptTimeLeft;
+      syncMobileDecryptTimer(
+        remDecrypt,
+        serverState.decryptTimeTotal,
+        typeof serverState.isDecryptTimerRunning === 'boolean' ? serverState.isDecryptTimerRunning : undefined
+      );
 
       if (teamData && gameState[studentTeamKey]) {
         gameState[studentTeamKey].isArtworkFinished = Boolean(teamData.isArtworkFinished);
@@ -6001,6 +6043,7 @@
     }
 
     // 3. Nếu đang ở giai đoạn làm bài thi đấu (Tab 3 / Quiz)
+    stopMobileDecryptTicker();
     if (lobbyView) lobbyView.style.display = 'none';
     if (quizView) quizView.style.display = 'flex';
     if (paintView) paintView.style.display = 'none';
@@ -8033,7 +8076,7 @@
       ctx.restore();
 
       // 4. Header: Logo Trường THCS Tân Hải + Tiêu đề
-      const logoUrl = getExportSchoolLogo() || 'logo-truong-thcs-Tan-Hai.jpg';
+      const logoUrl = getExportSchoolLogo() || DEFAULT_SCHOOL_LOGO;
       try {
         const logoImg = await new Promise((res) => {
           const img = new Image();

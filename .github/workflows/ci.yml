@@ -31,9 +31,12 @@ jobs:
       - name: 🛡️ Kiem tra chuan code voi ESLint
         run: npx eslint server.js scripts/
 
+      - name: 🧪 Chay kiem thu tich hop API & SSE (node:test)
+        run: npm test
+
       - name: 📦 Kiem tra tinh toan ven cua cac file goc quan trong
         run: |
-          for file in index.html remote.html server.js scripts/app.js; do
+          for file in index.html remote.html server.js scripts/app.js assets/images/logo-truong-thcs-Tan-Hai.jpg assets/audio/thuong-lam-thay-co-oi.mp3; do
             if [ ! -s "$file" ]; then
               echo "❌ File thieu hoac bi rong: $file"
               exit 1

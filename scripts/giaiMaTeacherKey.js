@@ -1070,7 +1070,7 @@
   // ============================================================================
   // TÍCH HỢP BÀI HÁT "THƯƠNG LẮM THẦY CÔ ƠI" KHI PHÓNG TO TRANH GIÁO VIÊN
   // ============================================================================
-  const THEME_SONG_FILE = 'thuong-lam-thay-co-oi.mp3';
+  const THEME_SONG_FILE = 'assets/audio/thuong-lam-thay-co-oi.mp3';
   let themeSongAudio = null;
   let isSongEnabled = true; // Mặc định BẬT để khi mở toàn màn hình là tự động phát
   let isSongPlaying = false;
@@ -1096,11 +1096,7 @@
         updateThemeSongUI();
       });
       themeSongAudio.addEventListener('error', (err) => {
-        console.warn('Lỗi tải bài hát thuong-lam-thay-co-oi.mp3:', err);
-        // Thử đường dẫn dự phòng nếu người dùng đặt trong assets
-        if (themeSongAudio && themeSongAudio.src && !themeSongAudio.src.includes('assets/')) {
-          themeSongAudio.src = 'assets/' + THEME_SONG_FILE;
-        }
+        console.warn(`Lỗi tải bài hát ${THEME_SONG_FILE}:`, err);
       });
     }
     return themeSongAudio;

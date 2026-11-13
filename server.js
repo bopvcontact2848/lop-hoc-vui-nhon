@@ -3,7 +3,8 @@ const fs = require('fs');
 const path = require('path');
 const os = require('os');
 
-const DEFAULT_PORT = parseInt(process.env.PORT || '3000', 10);
+const parsedPortEnv = process.env.PORT !== undefined ? parseInt(process.env.PORT, 10) : 3000;
+const DEFAULT_PORT = Number.isFinite(parsedPortEnv) && parsedPortEnv >= 0 ? parsedPortEnv : 3000;
 const MAX_PORT_ATTEMPTS = 50; // Giới hạn thử tối đa 50 cổng liên tiếp nếu bị trùng
 let currentPort = DEFAULT_PORT;
 const ROOT_DIR = __dirname;
@@ -29,7 +30,9 @@ const MIME_TYPES = {
 let sseClients = [];
 
 // Bộ nhớ lưu trữ kết quả thi đấu Trò Chơi Lớn - Giải Mã Mật Thư 20/11
-const MAT_THU_FILE = path.join(ROOT_DIR, 'matthu_scores.json');
+const MAT_THU_FILE = process.env.MAT_THU_FILE
+  ? path.resolve(process.env.MAT_THU_FILE)
+  : path.join(ROOT_DIR, 'matthu_scores.json');
 let matThuScores = [];
 try {
   if (fs.existsSync(MAT_THU_FILE)) {
@@ -58,6 +61,7 @@ let gmmLiveState = {
   decryptTimeLeft: 300,
   decryptTimeTotal: 300,
   isDecryptTimerRunning: false,
+  decryptEndsAt: null,
   connectedTeams: { teamA: false, teamB: false },
   teamNames: { teamA: 'ĐOÀN KẾT', teamB: 'LA BÀN TUỔI TRẺ' },
   teamA: { score: 0, bonusScore: 0, answers: {}, isLocked: false, finishTime: null, finishSeconds: null, unlockedRegions: [], coloredRegions: {}, hasArtworkPhoto: false, photoTimestamp: 0 },
@@ -259,86 +263,124 @@ function addGmmTime(seconds = 60) {
 // Quản lý đồng hồ đếm ngược Giai đoạn 2: Tô Màu & Giải Mã Bức Tranh (Tab 4)
 let gmmDecryptTimerInterval = null;
 
+function getSyncedDecryptSeconds() {
+  if (gmmLiveState.isDecryptTimerRunning && typeof gmmLiveState.decryptEndsAt === 'number') {
+    const remainingMs = gmmLiveState.decryptEndsAt - Date.now();
+    return Math.max(0, Math.ceil(remainingMs / 1000));
+  }
+  return Math.max(0, Number(gmmLiveState.decryptTimeLeft) || 0);
+}
+
 function startGmmDecryptTimer(seconds, totalSec) {
   clearInterval(gmmDecryptTimerInterval);
   if (typeof seconds === 'number') {
-    gmmLiveState.decryptTimeLeft = seconds;
+    gmmLiveState.decryptTimeLeft = Math.max(0, seconds);
   }
   if (typeof totalSec === 'number') {
-    gmmLiveState.decryptTimeTotal = totalSec;
+    gmmLiveState.decryptTimeTotal = Math.max(1, totalSec);
   } else if (!gmmLiveState.decryptTimeTotal) {
     gmmLiveState.decryptTimeTotal = gmmLiveState.decryptTimeLeft || 300;
   }
   gmmLiveState.isDecryptPhase = true;
   gmmLiveState.isDecryptTimerRunning = true;
+  gmmLiveState.decryptEndsAt = Date.now() + (Math.max(0, gmmLiveState.decryptTimeLeft) * 1000);
   gmmLiveState.updatedAt = Date.now();
 
   broadcastSSE({
     type: 'gmm_decrypt_timer_start',
     sessionId: gmmLiveState.sessionId,
+    serverTime: Date.now(),
     decryptTimeLeft: gmmLiveState.decryptTimeLeft,
+    remainingSeconds: gmmLiveState.decryptTimeLeft,
     decryptTimeTotal: gmmLiveState.decryptTimeTotal,
     isDecryptTimerRunning: true
   });
 
   gmmDecryptTimerInterval = setInterval(() => {
     if (!gmmLiveState.isDecryptTimerRunning) return;
-    if (gmmLiveState.decryptTimeLeft > 0) {
-      gmmLiveState.decryptTimeLeft--;
+    const synced = getSyncedDecryptSeconds();
+    gmmLiveState.decryptTimeLeft = synced;
+
+    if (synced > 0) {
       broadcastSSE({
         type: 'gmm_decrypt_timer_tick',
         sessionId: gmmLiveState.sessionId,
-        decryptTimeLeft: gmmLiveState.decryptTimeLeft,
+        serverTime: Date.now(),
+        decryptTimeLeft: synced,
+        remainingSeconds: synced,
         decryptTimeTotal: gmmLiveState.decryptTimeTotal || 300,
         isDecryptTimerRunning: true
       });
-
-      if (gmmLiveState.decryptTimeLeft === 0) {
-        clearInterval(gmmDecryptTimerInterval);
-        gmmLiveState.isDecryptTimerRunning = false;
-        broadcastSSE({
-          type: 'gmm_decrypt_time_up',
-          sessionId: gmmLiveState.sessionId,
-          decryptTimeLeft: 0,
-          decryptTimeTotal: gmmLiveState.decryptTimeTotal || 300
-        });
-      }
+    } else {
+      clearInterval(gmmDecryptTimerInterval);
+      gmmLiveState.isDecryptTimerRunning = false;
+      gmmLiveState.decryptEndsAt = null;
+      broadcastSSE({
+        type: 'gmm_decrypt_time_up',
+        sessionId: gmmLiveState.sessionId,
+        serverTime: Date.now(),
+        decryptTimeLeft: 0,
+        remainingSeconds: 0,
+        decryptTimeTotal: gmmLiveState.decryptTimeTotal || 300
+      });
     }
   }, 1000);
 }
 
 function pauseGmmDecryptTimer() {
-  gmmLiveState.isDecryptTimerRunning = !gmmLiveState.isDecryptTimerRunning;
+  if (gmmLiveState.isDecryptTimerRunning) {
+    gmmLiveState.decryptTimeLeft = getSyncedDecryptSeconds();
+    gmmLiveState.isDecryptTimerRunning = false;
+    gmmLiveState.decryptEndsAt = null;
+  } else {
+    gmmLiveState.isDecryptTimerRunning = true;
+    gmmLiveState.decryptEndsAt = Date.now() + (Math.max(0, gmmLiveState.decryptTimeLeft || 0) * 1000);
+  }
   gmmLiveState.updatedAt = Date.now();
   broadcastSSE({
     type: 'gmm_decrypt_timer_pause',
+    sessionId: gmmLiveState.sessionId,
+    serverTime: Date.now(),
     isDecryptTimerRunning: gmmLiveState.isDecryptTimerRunning,
     decryptTimeLeft: gmmLiveState.decryptTimeLeft,
+    remainingSeconds: gmmLiveState.decryptTimeLeft,
     decryptTimeTotal: gmmLiveState.decryptTimeTotal || 300
   });
 }
 
 function setGmmDecryptDuration(seconds = 300) {
-  gmmLiveState.decryptTimeLeft = seconds;
-  gmmLiveState.decryptTimeTotal = seconds;
+  const safeSeconds = Math.max(0, seconds);
+  gmmLiveState.decryptTimeLeft = safeSeconds;
+  gmmLiveState.decryptTimeTotal = Math.max(1, safeSeconds);
+  if (gmmLiveState.isDecryptTimerRunning) {
+    gmmLiveState.decryptEndsAt = Date.now() + (safeSeconds * 1000);
+  }
   gmmLiveState.updatedAt = Date.now();
   broadcastSSE({
     type: 'gmm_decrypt_timer_tick',
     sessionId: gmmLiveState.sessionId,
+    serverTime: Date.now(),
     decryptTimeLeft: gmmLiveState.decryptTimeLeft,
+    remainingSeconds: gmmLiveState.decryptTimeLeft,
     decryptTimeTotal: gmmLiveState.decryptTimeTotal,
     isDecryptTimerRunning: gmmLiveState.isDecryptTimerRunning
   });
 }
 
 function addGmmDecryptTime(seconds = 30) {
-  gmmLiveState.decryptTimeLeft = (gmmLiveState.decryptTimeLeft || 0) + seconds;
-  gmmLiveState.decryptTimeTotal = (gmmLiveState.decryptTimeTotal || 300) + seconds;
+  const baseLeft = getSyncedDecryptSeconds();
+  gmmLiveState.decryptTimeLeft = Math.max(0, baseLeft + seconds);
+  gmmLiveState.decryptTimeTotal = Math.max(1, (gmmLiveState.decryptTimeTotal || 300) + seconds);
+  if (gmmLiveState.isDecryptTimerRunning) {
+    gmmLiveState.decryptEndsAt = Date.now() + (gmmLiveState.decryptTimeLeft * 1000);
+  }
   gmmLiveState.updatedAt = Date.now();
   broadcastSSE({
     type: 'gmm_decrypt_timer_tick',
     sessionId: gmmLiveState.sessionId,
+    serverTime: Date.now(),
     decryptTimeLeft: gmmLiveState.decryptTimeLeft,
+    remainingSeconds: gmmLiveState.decryptTimeLeft,
     decryptTimeTotal: gmmLiveState.decryptTimeTotal,
     isDecryptTimerRunning: gmmLiveState.isDecryptTimerRunning
   });
@@ -346,12 +388,17 @@ function addGmmDecryptTime(seconds = 30) {
 
 function stopGmmDecryptTimer() {
   clearInterval(gmmDecryptTimerInterval);
+  gmmLiveState.decryptTimeLeft = getSyncedDecryptSeconds();
   gmmLiveState.isDecryptTimerRunning = false;
+  gmmLiveState.decryptEndsAt = null;
   gmmLiveState.updatedAt = Date.now();
   broadcastSSE({
     type: 'gmm_decrypt_timer_pause',
+    sessionId: gmmLiveState.sessionId,
+    serverTime: Date.now(),
     isDecryptTimerRunning: false,
     decryptTimeLeft: gmmLiveState.decryptTimeLeft,
+    remainingSeconds: gmmLiveState.decryptTimeLeft,
     decryptTimeTotal: gmmLiveState.decryptTimeTotal || 300
   });
 }
@@ -469,7 +516,23 @@ const server = http.createServer((req, res) => {
       'Access-Control-Allow-Origin': '*'
     });
 
-    res.write(`data: ${JSON.stringify({ type: 'connected', clients: sseClients.length + 1 })}\n\n`);
+    const syncedDecryptLeft = getSyncedDecryptSeconds();
+    gmmLiveState.decryptTimeLeft = syncedDecryptLeft;
+
+    res.write(`data: ${JSON.stringify({
+      type: 'connected',
+      clients: sseClients.length + 1,
+      serverTime: Date.now(),
+      sessionId: gmmLiveState.sessionId,
+      isDecryptPhase: Boolean(gmmLiveState.isDecryptPhase),
+      isDecryptTimerRunning: Boolean(gmmLiveState.isDecryptTimerRunning),
+      decryptTimeLeft: syncedDecryptLeft,
+      remainingSeconds: syncedDecryptLeft,
+      decryptTimeTotal: gmmLiveState.decryptTimeTotal || 300,
+      timerSeconds: gmmLiveState.timerSeconds,
+      isTimerRunning: Boolean(gmmLiveState.isTimerRunning),
+      state: gmmLiveState
+    })}\n\n`);
     sseClients.push(res);
 
     const isTrackedStudent = (sseRole === 'student' && (sseTeam === 'teamA' || sseTeam === 'teamB'));
@@ -624,10 +687,13 @@ const server = http.createServer((req, res) => {
 
   // --- API 7: GIẢI MÃ BÍ MẬT 20/11 - LẤY TRẠNG THÁI HIỆN TẠI (GET STATE) ---
   if (req.url === '/api/gmm/state' && req.method === 'GET') {
+    const syncedDecryptLeft = getSyncedDecryptSeconds();
+    gmmLiveState.decryptTimeLeft = syncedDecryptLeft;
     res.writeHead(200, { 'Content-Type': 'application/json; charset=utf-8' });
     res.end(JSON.stringify({
       success: true,
       serverTime: Date.now(),
+      remainingSeconds: syncedDecryptLeft,
       telemetry: gmmTeamTelemetry,
       state: gmmLiveState
     }));
@@ -694,6 +760,13 @@ const server = http.createServer((req, res) => {
         const incomingTeamB = payload.teamB;
         delete payload.teamA;
         delete payload.teamB;
+
+        if (!isResetForNewMatch && gmmLiveState.isDecryptTimerRunning) {
+          delete payload.decryptTimeLeft;
+          delete payload.decryptTimeTotal;
+          delete payload.isDecryptTimerRunning;
+          delete payload.decryptEndsAt;
+        }
 
         Object.assign(gmmLiveState, payload);
 
@@ -1089,10 +1162,15 @@ const server = http.createServer((req, res) => {
           stopGmmDecryptTimer();
         }
 
+        const syncedDecryptLeft = getSyncedDecryptSeconds();
+        gmmLiveState.decryptTimeLeft = syncedDecryptLeft;
+
         res.writeHead(200, { 'Content-Type': 'application/json; charset=utf-8' });
         res.end(JSON.stringify({
           success: true,
-          decryptTimeLeft: gmmLiveState.decryptTimeLeft,
+          serverTime: Date.now(),
+          decryptTimeLeft: syncedDecryptLeft,
+          remainingSeconds: syncedDecryptLeft,
           decryptTimeTotal: gmmLiveState.decryptTimeTotal || 300,
           isDecryptTimerRunning: gmmLiveState.isDecryptTimerRunning
         }));
@@ -1426,6 +1504,7 @@ const server = http.createServer((req, res) => {
         decryptTimeLeft: 300,
         decryptTimeTotal: 300,
         isDecryptTimerRunning: false,
+        decryptEndsAt: null,
         connectedTeams: parsed.keepConnectedTeams !== false ? prevConnected : { teamA: false, teamB: false },
         teamNames: parsed.teamNames || prevTeamNames,
         teamA: createEmptyGmmTeamState(),
@@ -1529,6 +1608,10 @@ server.on('error', (err) => {
 });
 
 server.listen(currentPort, () => {
+  const addr = server.address();
+  if (addr && typeof addr === 'object' && typeof addr.port === 'number') {
+    currentPort = addr.port;
+  }
   const localIp = getLocalIp();
   console.log(`================================================================`);
   console.log(`🚀 Server localhost đang chạy tại: http://localhost:${currentPort}`);
@@ -1541,6 +1624,8 @@ server.listen(currentPort, () => {
 // Cơ chế đóng server an toàn (Graceful Shutdown) khi tắt tiến trình (Ctrl+C hoặc SIGTERM)
 function handleShutdown(signal) {
   console.log(`\n🛑 Nhận tín hiệu ${signal}. Đang đóng máy chủ và giải phóng cổng kết nối...`);
+  clearInterval(gmmTimerInterval);
+  clearInterval(gmmDecryptTimerInterval);
   sseClients.forEach(client => {
     try {
       client.end();

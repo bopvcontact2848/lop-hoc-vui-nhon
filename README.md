@@ -63,7 +63,9 @@
 ## 📂 Cấu Trúc Thư Mục Dự Án
 
 ```
-├── assets/                       # Hình ảnh minh họa, tài nguyên tĩnh
+├── assets/
+│   ├── images/                   # Logo trường THCS Tân Hải & ảnh minh họa giao diện
+│   └── audio/                    # Nhạc nền trình chiếu (thuong-lam-thay-co-oi.mp3)
 ├── scripts/
 │   ├── app.js                    # Khởi tạo và điều hướng logic chính của ứng dụng
 │   ├── audio.js                  # Hiệu ứng âm thanh trò chơi & giọng đọc AI
@@ -88,15 +90,15 @@
 │   ├── students.js               # Quản lý danh sách học sinh, nhập/xuất Excel & sao lưu
 │   └── wheel.js                  # Thuật toán quay và vẽ vòng quay Canvas
 ├── styles/                       # Toàn bộ mã định dạng CSS giao diện từng phân hệ
+├── tests/                        # Bộ kiểm thử tự động API & SSE bằng node:test
 ├── tools/                        # Công cụ kiểm tra cú pháp & pre-commit hook
 ├── index.html                    # Trang giao diện chính (Hiển thị lớp học / Máy chiếu)
 ├── remote.html                   # Trang giao diện dành riêng cho điện thoại điều khiển
 ├── server.js                     # Máy chủ Node.js phục vụ file tĩnh & kênh đồng bộ SSE
 ├── start.bat                     # File chạy nhanh cho giáo viên trên Windows
 ├── mo-tuong-lua-firewall.bat     # Script mở cổng tường lửa Windows cho mạng Wi-Fi LAN
-├── logo-truong-thcs-Tan-Hai.jpg  # Logo trường hiển thị mặc định trên giao diện & phiếu in
 ├── eslint.config.mjs             # Cấu hình chuẩn kiểm tra mã nguồn ESLint
-├── package.json                  # Cấu hình dự án Node.js & kịch bản validate
+├── package.json                  # Cấu hình dự án Node.js & kịch bản test/validate
 ├── LICENSE                       # Giấy phép mã nguồn mở MIT
 └── README.md                     # Tài liệu hướng dẫn sử dụng
 ```

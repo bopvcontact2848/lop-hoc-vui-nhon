@@ -17,7 +17,7 @@
 
   const LETTERS = ['A', 'B', 'C', 'D'];
   const STORAGE_KEY_LOGO = 'gmm_export_school_logo';
-  const DEFAULT_LOGO_REL = 'logo-truong-thcs-Tan-Hai.jpg';
+  const DEFAULT_LOGO_REL = 'assets/images/logo-truong-thcs-Tan-Hai.jpg';
 
   function esc(str) {
     return String(str == null ? '' : str)
@@ -33,7 +33,8 @@
       const saved = localStorage.getItem(STORAGE_KEY_LOGO);
       if (saved === 'none') return '';
       if (saved && saved.startsWith('data:')) return saved;
-      const rel = saved || DEFAULT_LOGO_REL;
+      const normalized = saved === 'logo-truong-thcs-Tan-Hai.jpg' ? DEFAULT_LOGO_REL : saved;
+      const rel = normalized || DEFAULT_LOGO_REL;
       return new URL(rel, window.location.href).href;
     } catch {
       return '';
