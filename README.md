@@ -66,19 +66,29 @@
 ├── assets/
 │   ├── images/                   # Logo trường THCS Tân Hải & ảnh minh họa giao diện
 │   └── audio/                    # Nhạc nền trình chiếu (thuong-lam-thay-co-oi.mp3)
+├── partials/
+│   ├── mat-thu-modal.html        # Mẫu HTML modal trò chơi lớn Giải Mã Mật Thư 20/11
+│   └── giai-ma-bi-mat-modal.html # Mẫu HTML modal trò chơi Giải Mã Bí Mật & Đấu trường Mobile
+├── server/
+│   ├── routes/                   # Các bộ định tuyến API riêng biệt (matThu, gmm, remote)
+│   ├── state/                    # Quản lý trạng thái phòng thi (gmmState.js) & hub SSE (sseHub.js)
+│   └── utils/                    # Tiện ích HTTP, dò IP LAN & ghép template HTML phía server
 ├── scripts/
 │   ├── app.js                    # Khởi tạo và điều hướng logic chính của ứng dụng
 │   ├── audio.js                  # Hiệu ứng âm thanh trò chơi & giọng đọc AI
 │   ├── classManager.js           # Quản lý lớp học, nhập/chỉnh sửa danh sách học sinh thật
 │   ├── confetti.browser.min.js   # Thư viện hiệu ứng pháo hoa (chạy offline)
 │   ├── giaiMaArtworkScanner.js   # Chụp/quét và tối ưu ảnh tranh giấy A1 từ điện thoại
-│   ├── giaiMaBiMat.js            # Điều phối trò chơi đấu trí 2 đội Giải Mã Bí Mật
+│   ├── giaiMaBiMat.js            # Điều phối lõi & liên kết mô-đun Giải Mã Bí Mật
 │   ├── giaiMaLiveMonitor.js      # Giám sát kết nối nhịp tim & mở khóa từng đội (SSE)
 │   ├── giaiMaPrintBundle.js      # Xuất & in bộ đề, phiếu tô màu và đáp án
 │   ├── giaiMaPuzzleData.js       # Dữ liệu ma trận tọa độ tranh Giải Mã Bí Mật
 │   ├── giaiMaPuzzleDecorators.js # Trang trí và hiển thị chi tiết ma trận tranh
 │   ├── giaiMaPuzzleGenerator.js  # Sinh ma trận SVG tranh tô màu theo tọa độ
 │   ├── giaiMaTeacherKey.js       # Màn hình đáp án chuẩn & nhạc nền cho giáo viên
+│   ├── gmmExport.js              # Xuất phiếu PDF/Word/PNG/SVG & ảnh kỷ niệm lớp 2K
+│   ├── gmmHostArena.js           # Đấu trường 2 đội trên máy chiếu, nhạc nền & SSE Host
+│   ├── gmmMobileSync.js          # Đấu trường điện thoại học sinh, hàng đợi offline & SSE Reconnect
 │   ├── landing.js                # Giao diện trang chủ và danh mục trò chơi
 │   ├── matThuCoordinator.js      # Điều phối trò chơi lớn Giải Mã Mật Thư 20/11 & BXH SSE
 │   ├── matThuData.js             # Dữ liệu các trạm, chi đội và bộ đề Giải Mã Mật Thư
@@ -92,9 +102,9 @@
 ├── styles/                       # Toàn bộ mã định dạng CSS giao diện từng phân hệ
 ├── tests/                        # Bộ kiểm thử tự động API & SSE bằng node:test
 ├── tools/                        # Công cụ kiểm tra cú pháp & pre-commit hook
-├── index.html                    # Trang giao diện chính (Hiển thị lớp học / Máy chiếu)
+├── index.html                    # Trang giao diện chính (tự ghép partials/ khi phục vụ qua server.js)
 ├── remote.html                   # Trang giao diện dành riêng cho điện thoại điều khiển
-├── server.js                     # Máy chủ Node.js phục vụ file tĩnh & kênh đồng bộ SSE
+├── server.js                     # Điểm khởi chạy máy chủ Node.js gọn nhẹ điều phối server/routes/
 ├── start.bat                     # File chạy nhanh cho giáo viên trên Windows
 ├── mo-tuong-lua-firewall.bat     # Script mở cổng tường lửa Windows cho mạng Wi-Fi LAN
 ├── eslint.config.mjs             # Cấu hình chuẩn kiểm tra mã nguồn ESLint

@@ -8,7 +8,7 @@ export default [
     ]
   },
   {
-    files: ["server.js"],
+    files: ["server.js", "server/**/*.js", "tests/**/*.js", "tools/**/*.js"],
     languageOptions: {
       ecmaVersion: "latest",
       sourceType: "commonjs",
@@ -25,7 +25,8 @@ export default [
         setInterval: "readonly",
         clearInterval: "readonly",
         Buffer: "readonly",
-        URL: "readonly"
+        URL: "readonly",
+        fetch: "readonly"
       }
     },
     rules: {

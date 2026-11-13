@@ -5,14 +5,23 @@ const { execSync } = require('child_process');
 console.log('🔍 Đang kiểm tra cú pháp toàn bộ file JavaScript...');
 
 const filesToCheck = ['server.js'];
-const scriptsDir = path.join(__dirname, '..', 'scripts');
+const rootDir = path.join(__dirname, '..');
+const dirsToScan = ['server', 'scripts', 'tests', 'tools'];
 
-if (fs.existsSync(scriptsDir)) {
-  const scriptFiles = fs.readdirSync(scriptsDir)
-    .filter(file => file.endsWith('.js') && file !== path.basename(__filename))
-    .map(file => path.join('scripts', file));
-  filesToCheck.push(...scriptFiles);
+function collectJsFiles(dirRel) {
+  const fullDir = path.join(rootDir, dirRel);
+  if (!fs.existsSync(fullDir)) return;
+  for (const entry of fs.readdirSync(fullDir, { withFileTypes: true })) {
+    const entryRel = path.join(dirRel, entry.name);
+    if (entry.isDirectory()) {
+      collectJsFiles(entryRel);
+    } else if (entry.isFile() && entry.name.endsWith('.js')) {
+      filesToCheck.push(entryRel);
+    }
+  }
 }
+
+dirsToScan.forEach(collectJsFiles);
 
 let hasError = false;
 

@@ -29,14 +29,14 @@ jobs:
         run: node tools/checkSyntax.js
 
       - name: 🛡️ Kiem tra chuan code voi ESLint
-        run: npx eslint server.js scripts/
+        run: npx eslint server.js server/ scripts/ tests/ tools/
 
       - name: 🧪 Chay kiem thu tich hop API & SSE (node:test)
         run: npm test
 
       - name: 📦 Kiem tra tinh toan ven cua cac file goc quan trong
         run: |
-          for file in index.html remote.html server.js scripts/app.js assets/images/logo-truong-thcs-Tan-Hai.jpg assets/audio/thuong-lam-thay-co-oi.mp3; do
+          for file in index.html remote.html server.js scripts/app.js partials/mat-thu-modal.html partials/giai-ma-bi-mat-modal.html assets/images/logo-truong-thcs-Tan-Hai.jpg assets/audio/thuong-lam-thay-co-oi.mp3; do
             if [ ! -s "$file" ]; then
               echo "❌ File thieu hoac bi rong: $file"
               exit 1

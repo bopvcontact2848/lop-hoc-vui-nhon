@@ -1,0 +1,848 @@
+  <!-- ==================== MODAL TRUNG TÂM ĐIỀU PHỐI GIẢI MÃ MẬT THƯ 20/11 ==================== -->
+  <div id="matThuCoordinatorModal" class="modal-overlay">
+    <div class="modal-card matthu-modal-card">
+      <div class="matthu-header">
+        <div class="matthu-header-title">
+          <span class="matthu-title-icon">🔐</span>
+          <div>
+            <h3>TRÒ CHƠI LỚN 20/11: GIẢI MÃ MẬT THƯ</h3>
+            <p>Vượt 5 cửa ải tri thức • Quản lý 40 Chi đội & Bảng Xếp Hạng thời gian thực</p>
+          </div>
+        </div>
+        <div class="matthu-header-actions" style="display: flex; align-items: center; gap: 8px;">
+          <button type="button" class="modal-close btn-matthu-close-custom" onclick="MatThuCoordinator.closeCoordinatorModal()" title="Đóng màn hình trò chơi (Esc)">&times;</button>
+        </div>
+      </div>
+
+      <!-- Thanh chọn Tab -->
+      <div class="matthu-tabs-bar">
+        <button class="matthu-tab-btn active" data-tab="play" onclick="MatThuCoordinator.switchTab('play')">
+          <span>🎮</span>
+          <span>Màn Hình Thi Đấu (5 Cửa Ải)</span>
+        </button>
+        <button class="matthu-tab-btn" data-tab="qr" onclick="MatThuCoordinator.switchTab('qr')">
+          <span>📱</span>
+          <span>Mã QR 40 Chi Đội</span>
+        </button>
+        <button class="matthu-tab-btn" data-tab="stations" onclick="MatThuCoordinator.switchTab('stations')">
+          <span>🚩</span>
+          <span>Áp Phích 5 Trạm Sân Trường</span>
+        </button>
+        <button class="matthu-tab-btn" data-tab="leaderboard" onclick="MatThuCoordinator.switchTab('leaderboard')">
+          <span>🏆</span>
+          <span>Bảng Xếp Hạng Trực Tiếp (Live)</span>
+        </button>
+        <button class="matthu-tab-btn" data-tab="questions" onclick="MatThuCoordinator.switchTab('questions')">
+          <span>📝</span>
+          <span>Quản Lý Câu Hỏi (4 Khối x 5 Trạm)</span>
+        </button>
+      </div>
+
+      <div class="matthu-body">
+        <!-- TAB 1: MÀN HÌNH THI ĐẤU TRỰC TIẾP (5 CỬA ẢI) -->
+        <div id="matThuTabPlay" class="matthu-tab-panel">
+          <div class="matthu-play-toolbar">
+            <div class="matthu-play-toolbar-left">
+              <span class="matthu-play-tag">🏆 ĐẤU TRƯỜNG TRI THỨC</span>
+              <span id="matThuFrameCurrentTeam" class="matthu-play-team-info">Chế độ tự do (hoặc chọn lớp từ tab Mã QR)</span>
+            </div>
+            <div class="matthu-play-toolbar-right">
+              <button type="button" class="btn-matthu-toolbar btn-matthu-map-btn" onclick="MatThuCoordinator.openMapModal()" title="Xem sơ đồ 2D toàn cảnh 5 trạm sân trường & vị trí đội thi">
+                🗺️ Sơ Đồ 5 Trạm
+              </button>
+              <button type="button" id="btnToggleSplitScreen" class="btn-matthu-toolbar btn-matthu-split-toggle" onclick="MatThuCoordinator.toggleSplitScreen()" title="Bật/Tắt chế độ xem song song: Thi đấu bên trái & Bảng xếp hạng Live bên phải">
+                📺 Chế độ Song Song (Split)
+              </button>
+              <button type="button" class="btn-matthu-toolbar" onclick="MatThuCoordinator.reloadGameFrame()" title="Khởi động lại bài thi từ đầu">
+                🔄 Chơi Lại / Làm Mới
+              </button>
+              <button type="button" class="btn-matthu-toolbar" onclick="MatThuCoordinator.resetClassInFrame()" title="Trở về màn hình chọn lớp tự do">
+                👥 Đổi Lớp Thi
+              </button>
+            </div>
+          </div>
+
+          <div id="matThuPlaySplitContainer" class="matthu-split-container">
+            <!-- NỬA BÊN TRÁI: MÀN HÌNH THI ĐẤU CỦA ĐỘI (TÍCH HỢP TRỰC TIẾP, KHÔNG DÙNG IFRAME) -->
+            <div class="matthu-split-pane matthu-split-left">
+              <div class="matthu-arena-container" id="matThuArenaContainer">
+                
+                <!-- 1. MÀN HÌNH ĐĂNG KÝ / XÁC NHẬN ĐỘI CHƠI -->
+                <section id="matThuStartPanel" class="matthu-card matthu-hero">
+                  <div class="matthu-hero-symbol">🎓📜</div>
+                  <h2 class="matthu-hero-title">Chào mừng Chi đội tham gia thử thách!</h2>
+                  <p class="matthu-hero-subtitle">5 Cửa Ải Thử Thách • Bộ Đề Riêng Theo Khối • 20 Phút Đua Tài</p>
+
+                  <div style="display: flex; justify-content: flex-end; margin-bottom: 6px;">
+                    <button type="button" class="btn-matthu-mini-settings" onclick="MatThuCoordinator.openClassSettingsModal()" title="Cài đặt tùy chỉnh linh hoạt danh sách lớp các khối">
+                      ⚙️ Tùy chỉnh danh sách lớp
+                    </button>
+                  </div>
+
+                  <div class="matthu-fields">
+                    <label>
+                      Khối lớp dự thi:
+                      <select id="matThuGradeSelect" onchange="MatThuCoordinator.onGradeChange()">
+                        <option value="6">Khối 6 (6A1 - 6A6, 6B1 - 6B4)</option>
+                        <option value="7">Khối 7 (7A1 - 7A6, 7B1 - 7B4)</option>
+                        <option value="8">Khối 8 (8A1 - 8A6, 8B1 - 8B4)</option>
+                        <option value="9">Khối 9 (9A1 - 9A6, 9B1 - 9B4)</option>
+                      </select>
+                    </label>
+
+                    <label>
+                      Lớp / Chi đội:
+                      <select id="matThuClassName" onchange="MatThuCoordinator.onClassChange()">
+                        <option value="">-- Chọn lớp --</option>
+                      </select>
+                    </label>
+
+                    <label>
+                      Tên Chi đội:
+                      <input id="matThuTeam" maxlength="80" placeholder="Ví dụ: Chi đội 6A1" autocomplete="organization">
+                    </label>
+
+                    <label>
+                      Họ tên Đội trưởng / Đại diện:
+                      <input id="matThuLeader" maxlength="80" placeholder="Ví dụ: Nguyễn Văn An">
+                    </label>
+
+                    <label style="grid-column: 1 / -1;">
+                      Điểm trường:
+                      <select id="matThuCampus">
+                        <option value="Trường chính">Trường THCS Tân Hải (Trường chính)</option>
+                        <option value="Phân hiệu Tân Tiến">Phân hiệu Tân Tiến</option>
+                      </select>
+                    </label>
+
+                    <label style="grid-column: 1 / -1; display: flex; align-items: center; gap: 10px; cursor: pointer; background: #fff5eb; padding: 10px 14px; border-radius: 12px; border: 1.5px solid #fed7aa; margin-top: 2px;">
+                      <input type="checkbox" id="matThuStationModeCheckbox" checked style="width: 20px; height: 20px; accent-color: #8d2341; cursor: pointer; flex-shrink: 0;">
+                      <span style="font-size: 13px; font-weight: 750; color: #7c2d3d;">
+                        🚩 Chế độ Trò chơi lớn 5 Trạm sân trường (Nhập mã PIN hoặc quét QR tại từng trạm ngoài sân để mở khóa ải tiếp theo)
+                      </span>
+                    </label>
+                  </div>
+
+                  <p class="matthu-notice">
+                    ⚡ <strong>Quy chế thi:</strong> Mỗi câu đúng ghi điểm. Trả lời sai không bị trừ điểm nhưng không được làm lại. Đồng hồ 20 phút chạy liên tục; hết giờ sẽ tự động nộp bài. Khi hoàn thành, kết quả sẽ tự động đồng bộ về Bảng Xếp Hạng trực tiếp.
+                  </p>
+
+                  <div class="matthu-buttons">
+                    <button type="button" class="btn-matthu-start-primary" id="btnMatThuStart" onclick="MatThuCoordinator.startExam()">🚀 Bắt đầu vượt 5 cửa ải</button>
+                    <button type="button" class="btn-matthu-start-secondary" onclick="MatThuCoordinator.showScores('startPanel')">🏆 Xem bảng điểm trên máy</button>
+                  </div>
+                  <p id="matThuStartError" class="matthu-error-hint" role="alert"></p>
+                </section>
+
+                <!-- 2. MÀN HÌNH THI ĐẤU VƯỢT 5 CỬA ẢI -->
+                <section id="matThuGamePanel" class="matthu-card hidden">
+                  <div class="matthu-stats">
+                    <div class="matthu-stat">
+                      <b id="matThuTime">20:00</b>
+                      <small>Thời gian còn lại</small>
+                    </div>
+                    <div class="matthu-stat">
+                      <b id="matThuScore">0</b>
+                      <small>Điểm hiện tại</small>
+                    </div>
+                    <div class="matthu-stat">
+                      <b id="matThuQnum">1/20</b>
+                      <small>Câu hỏi hiện tại</small>
+                    </div>
+                  </div>
+
+                  <div class="matthu-progress">
+                    <div id="matThuBar" style="width:0%"></div>
+                  </div>
+
+                  <div class="matthu-doors" id="matThuDoors"></div>
+
+                  <div class="matthu-stage-banner">
+                    <div class="matthu-stage-banner-left">
+                      <span id="matThuStageIcon">🚩</span>
+                      <span id="matThuStageLabel">Cửa Ải 1: Trạm Khởi Động</span>
+                    </div>
+                    <span id="matThuStageBadge" class="matthu-stage-banner-badge">0/4 CÂU ĐÚNG</span>
+                  </div>
+
+                  <h3 class="matthu-question-title" id="matThuQuestion"></h3>
+                  <div id="matThuAnswers" class="matthu-answers"></div>
+                  <div id="matThuFeedback" class="matthu-feedback hidden"></div>
+
+                  <div class="matthu-buttons" style="margin-top: 14px;">
+                    <button type="button" class="btn-matthu-start-primary hidden" id="btnMatThuNext" onclick="MatThuCoordinator.nextQuestion()">Câu tiếp theo ➜</button>
+                    <button type="button" class="btn-matthu-start-secondary" id="btnMatThuFinishEarly" onclick="MatThuCoordinator.finishEarly()">Nộp bài sớm</button>
+                  </div>
+
+                  <!-- Các mảnh mật mã thu thập được -->
+                  <div class="matthu-codes-bar">
+                    <span style="font-size: 13px; font-weight: 800; color: #8d2341; margin-right: 4px;">🧩 Mảnh mật thư:</span>
+                    <div id="matThuCodesList" style="display: inline-flex; gap: 6px; flex-wrap: wrap;"></div>
+                  </div>
+                </section>
+
+                <!-- 3. MÀN HÌNH HOÀN THÀNH -->
+                <section id="matThuResultPanel" class="matthu-card hidden" style="text-align: center;">
+                  <div style="font-size: 48px; margin-bottom: 4px;">🏆</div>
+                  <h2 style="color: #8d2341; font-size: 22px; margin: 4px 0;">CHÚC MỪNG ĐÃ HOÀN THÀNH HÀNH TRÌNH!</h2>
+                  <p id="matThuResultInfo" style="font-size: 14.5px; color: #6b4754; font-weight: 700; margin: 4px 0 12px;"></p>
+
+                  <div style="background: #fff8ef; border: 1.5px dashed #fed7aa; border-radius: 14px; padding: 12px; margin: 10px 0;">
+                    <h4 style="color: #8d2341; margin: 0 0 6px; font-size: 14px;">MẬT MÃ TOÀN VẸN 5 CỬA ẢI</h4>
+                    <div id="matThuFinalCodes" style="display: flex; gap: 8px; justify-content: center; flex-wrap: wrap;"></div>
+                    <p style="margin: 8px 0 0; font-size: 15px; font-weight: 900; color: #b45309;">💌 TRI ÂN THẦY CÔ – 20/11</p>
+                  </div>
+
+                  <div class="matthu-buttons">
+                    <button type="button" class="btn-matthu-start-primary" onclick="MatThuCoordinator.openCertificate()">🎖️ Xem giấy chứng nhận</button>
+                    <button type="button" class="btn-matthu-start-secondary" onclick="MatThuCoordinator.showScores('resultPanel')">📊 Bảng điểm trên máy</button>
+                    <button type="button" class="btn-matthu-start-secondary" onclick="MatThuCoordinator.resetExam()">🔄 Chơi lại</button>
+                  </div>
+                </section>
+
+                <!-- 4. GIẤY CHỨNG NHẬN ĐIỆN TỬ -->
+                <section id="matThuCertificatePanel" class="matthu-card hidden">
+                  <div class="matthu-cert">
+                    <div class="matthu-cert-small">LIÊN ĐỘI TRƯỜNG THCS TÂN HẢI</div>
+                    <div style="font-size: 38px;">🏅</div>
+                    <h2>GIẤY CHỨNG NHẬN HOÀN THÀNH</h2>
+                    <p style="font-size: 13.5px; color: #78350f; font-weight: 750;">Trò chơi trực tuyến “GIẢI MÃ MẬT THƯ 20/11”</p>
+                    <div class="matthu-cert-name" id="matThuCertTeam">CHI ĐỘI 6A1</div>
+                    <p id="matThuCertDetail" style="font-size: 13px; color: #5c3843; font-weight: 700;"></p>
+                    <p style="font-size: 13.5px; color: #78350f; margin: 6px 0;">Đã xuất sắc vượt qua 5 cửa ải thử thách tri thức</p>
+                    <div class="matthu-cert-message">TRI ÂN THẦY CÔ – 20/11</div>
+                    <h3 id="matThuCertScore" style="color: #8d2341; font-size: 18px; margin: 6px 0;"></h3>
+                    <p id="matThuCertDate" style="font-size: 11.5px; color: #64748b; font-weight: 600;"></p>
+                    <div id="matThuCertSecurityHash" class="matthu-cert-stamp">MÃ XÁC THỰC BTC: THCS-TANHAI-2011</div>
+                  </div>
+                  <div class="matthu-buttons" style="margin-top: 14px;">
+                    <button type="button" class="btn-matthu-start-primary" onclick="window.print()">🖨️ In / Lưu PDF chứng nhận</button>
+                    <button type="button" class="btn-matthu-start-secondary" onclick="MatThuCoordinator.backToResult()">Quay lại kết quả</button>
+                  </div>
+                </section>
+
+                <!-- 5. BẢNG ĐIỂM THIẾT BỊ -->
+                <section id="matThuScoresPanel" class="matthu-card hidden">
+                  <h3 style="color: #8d2341; margin-top: 0; font-size: 16px;">🏆 BẢNG ĐIỂM THI ĐẤU TRÊN THIẾT BỊ</h3>
+                  <div class="tablewrap" style="max-height: 340px; overflow-y: auto;">
+                    <table>
+                      <thead>
+                        <tr>
+                          <th>STT</th>
+                          <th>Chi đội</th>
+                          <th>Khối</th>
+                          <th>Lớp</th>
+                          <th>Điểm</th>
+                          <th>Thời gian</th>
+                          <th>Ngày thi</th>
+                        </tr>
+                      </thead>
+                      <tbody id="matThuScoreRows"></tbody>
+                    </table>
+                  </div>
+                  <div class="matthu-buttons" style="margin-top: 12px;">
+                    <button type="button" class="btn-matthu-start-primary" onclick="MatThuCoordinator.exportDeviceScoresCsv()">⬇️ Xuất CSV</button>
+                    <button type="button" class="btn-matthu-start-secondary" onclick="MatThuCoordinator.backFromScores()">Quay lại</button>
+                    <button type="button" class="btn-matthu-start-secondary" style="border-color: #fca5a5; color: #dc2626;" onclick="MatThuCoordinator.clearDeviceScores()">Xóa bảng điểm thiết bị</button>
+                  </div>
+                </section>
+
+                <!-- 6. MODAL TRẠM KIỂM SOÁT SÂN TRƯỜNG -->
+                <div id="matThuStationGateModal" class="matthu-modal-gate hidden">
+                  <div class="matthu-gate-card">
+                    <div class="matthu-gate-icon">🚩</div>
+                    <div class="matthu-gate-congrats">XUẤT SẮC VƯỢT CỬA ẢI!</div>
+                    <h3 class="matthu-gate-title" id="matThuGateTitle">TRẠM TIẾP THEO: TRẠM 2</h3>
+                    <div class="matthu-gate-location" id="matThuGateLocation">📍 Vị trí: Cột cờ sân trường chính</div>
+                    <div class="matthu-gate-code-info" id="matThuGateRewardNotice" style="margin: 10px 0; font-size: 0.9rem; color: #15803d; font-weight: 700;">
+                      <!-- Nhận mảnh mật mã -->
+                    </div>
+
+                    <!-- SƠ ĐỒ SÂN TRƯỜNG 2D CHỈ ĐƯỜNG PHÁT SÁNG -->
+                    <div class="gate-map-section">
+                      <div class="gate-map-header">
+                        <span class="gate-map-tag">🗺️ BẢN ĐỒ LỘ TRÌNH DI CHUYỂN TỚI TRẠM MỚI</span>
+                        <span id="gateMapRouteText" class="gate-map-route-text">Trạm 1 ➜ Trạm 2</span>
+                      </div>
+                      <div id="matThuGateMapContainer" class="gate-map-svg-box">
+                        <!-- SVG Bản Đồ 2D sinh động -->
+                      </div>
+                    </div>
+                    <p class="matthu-gate-instruction">
+                      Chi đội di chuyển đến trạm này ngoài sân trường, mở camera <strong>quét đúng Mã QR của Khối mình</strong> trên Áp phích để mở khóa tự động, hoặc nhập <strong>Mã PIN 4 số</strong> tại trạm:
+                    </p>
+                    <div class="matthu-gate-input-box">
+                      <input type="password" id="matThuGatePinInput" class="matthu-gate-pin-input" maxlength="6" placeholder="Mã PIN 4 số" autocomplete="off" onkeyup="if(event.key==='Enter') MatThuCoordinator.submitStationPin()">
+                      <div id="matThuGateError" class="matthu-gate-error hidden">❌ Mã PIN không chính xác hoặc bạn đang quét nhầm khối! Vui lòng thử lại.</div>
+                    </div>
+                    <div class="matthu-buttons" style="margin-top: 12px; display: flex; gap: 8px; justify-content: center;">
+                      <button type="button" class="btn-matthu-start-primary" onclick="MatThuCoordinator.submitStationPin()">🔓 Xác nhận mở khóa ải</button>
+                    </div>
+                  </div>
+                </div>
+
+              </div>
+            </div>
+
+            <!-- NỬA BÊN PHẢI: BẢNG XẾP HẠNG THỜI GIAN THỰC (SPLIT LEADERBOARD) -->
+            <div id="matThuSplitRightLeaderboard" class="matthu-split-pane matthu-split-right hidden">
+              <div class="split-leaderboard-card">
+                <div class="split-lb-header">
+                  <div class="split-lb-title">
+                    <span style="font-size: 1.3rem;">🏆</span>
+                    <div>
+                      <h5>BẢNG XẾP HẠNG TRỰC TIẾP (LIVE)</h5>
+                      <p>Tự động cập nhật thời gian thực khi các lớp nộp bài</p>
+                    </div>
+                  </div>
+                  <span class="split-lb-live-badge">🟢 Real-time SSE</span>
+                </div>
+
+                <!-- Thống kê nhanh trong Split Screen -->
+                <div class="split-lb-stats-row">
+                  <div class="split-lb-stat-box">
+                    <span class="split-stat-val" id="splitStatTotal">0</span>
+                    <span class="split-stat-lbl">Đội nộp bài</span>
+                  </div>
+                  <div class="split-lb-stat-box">
+                    <span class="split-stat-val" id="splitStatMaxScore" style="color: #ea580c;">0đ</span>
+                    <span class="split-stat-lbl">Điểm cao nhất</span>
+                  </div>
+                  <div class="split-lb-stat-box">
+                    <span class="split-stat-val" id="splitStatTopTeam" style="color: #b45309; font-size: 0.95rem;">--</span>
+                    <span class="split-stat-lbl">Đang dẫn đầu</span>
+                  </div>
+                </div>
+
+                <!-- Bục Top 3 Mini -->
+                <div id="matThuSplitPodium" class="split-podium-row"></div>
+
+                <!-- Bộ lọc khối nhanh -->
+                <div class="split-lb-filter-row">
+                  <span style="font-weight: 800; font-size: 0.78rem; color: #78350f;">Xem khối:</span>
+                  <button type="button" class="split-filter-chip active" data-grade="all" onclick="MatThuCoordinator.setGradeFilter('all')">Tất cả</button>
+                  <button type="button" class="split-filter-chip" data-grade="6" onclick="MatThuCoordinator.setGradeFilter('6')">K6</button>
+                  <button type="button" class="split-filter-chip" data-grade="7" onclick="MatThuCoordinator.setGradeFilter('7')">K7</button>
+                  <button type="button" class="split-filter-chip" data-grade="8" onclick="MatThuCoordinator.setGradeFilter('8')">K8</button>
+                  <button type="button" class="split-filter-chip" data-grade="9" onclick="MatThuCoordinator.setGradeFilter('9')">K9</button>
+                  <button type="button" class="split-btn-refresh" onclick="MatThuCoordinator.refreshScores()" title="Tải lại kết quả">🔄</button>
+                </div>
+
+                <!-- Danh sách xếp hạng cuộn -->
+                <div class="split-lb-list-wrap">
+                  <div id="matThuSplitList" class="split-lb-list">
+                    <!-- Render động -->
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- TAB 2: MÃ QR CÁC ĐỘI THI -->
+        <div id="matThuTabQr" class="matthu-tab-panel hidden">
+          <!-- Hộp Cấu Hình & Kiểm Tra Địa Chỉ Mạng Quét QR -->
+          <div class="qr-network-config-box">
+            <div class="qr-network-header">
+              <span class="qr-network-icon">🌐</span>
+              <div class="qr-network-text">
+                <span class="qr-network-title">ĐỊA CHỈ MÁY CHỦ CHO ĐIỆN THOẠI QUÉT MÃ QR</span>
+                <span class="qr-network-sub">Điện thoại và máy tính cần kết nối chung Wi-Fi (hoặc nhập link Hosting online)</span>
+              </div>
+              <span id="qrNetworkStatusBadge" class="qr-network-badge">Đang kiểm tra...</span>
+            </div>
+            <div class="qr-network-input-row">
+              <input type="text" id="matThuBaseUrlInput" class="qr-network-input" placeholder="http://192.168.1.x:3000/?game=mat_thu" spellcheck="false">
+              <button type="button" class="btn-matthu-primary" onclick="MatThuCoordinator.saveCustomBaseUrl()">
+                🔄 Cập nhật mã QR
+              </button>
+              <button type="button" class="btn-matthu-secondary" onclick="MatThuCoordinator.resetDefaultBaseUrl()" title="Tự động dò lại địa chỉ IP Wi-Fi">
+                ⚡ Tự động dò IP
+              </button>
+            </div>
+            <div id="qrFileWarningBox" class="qr-file-warning hidden">
+              ⚠️ <strong>Lưu ý:</strong> Thầy/Cô đang mở tệp từ ổ cứng máy tính (<code>file://</code>). Điện thoại của học sinh không thể truy cập vào ổ cứng máy tính nếu không có địa chỉ mạng Wi-Fi (<code>http://...</code>).
+              <br>👉 <strong>Cách xử lý:</strong> Hãy mở thư mục phần mềm và nhấp đúp vào file <strong><code>start.bat</code></strong>, sau đó mở web bằng địa chỉ <strong><code>http://localhost:3000</code></strong> để điện thoại quét mã QR mượt mà 100%!
+            </div>
+          </div>
+
+          <div class="qr-toolbar">
+            <div class="qr-grade-filter">
+              <span style="font-weight: 800; font-size: 0.88rem; color: #854d0e;">Khối:</span>
+              <button class="qr-grade-chip active" data-grade="all" onclick="MatThuCoordinator.setGradeFilter('all')">Tất cả (40 lớp)</button>
+              <button class="qr-grade-chip" data-grade="6" onclick="MatThuCoordinator.setGradeFilter('6')">Khối 6</button>
+              <button class="qr-grade-chip" data-grade="7" onclick="MatThuCoordinator.setGradeFilter('7')">Khối 7</button>
+              <button class="qr-grade-chip" data-grade="8" onclick="MatThuCoordinator.setGradeFilter('8')">Khối 8</button>
+              <button class="qr-grade-chip" data-grade="9" onclick="MatThuCoordinator.setGradeFilter('9')">Khối 9</button>
+
+              <span class="qr-filter-divider"></span>
+
+              <span style="font-weight: 800; font-size: 0.88rem; color: #9a3412;">Dãy phòng:</span>
+              <button class="qr-series-chip active" data-series="all" onclick="MatThuCoordinator.setSeriesFilter('all')">Tất cả dãy</button>
+              <button class="qr-series-chip" data-series="A" onclick="MatThuCoordinator.setSeriesFilter('A')">🏫 Dãy A (A1-A6)</button>
+              <button class="qr-series-chip" data-series="B" onclick="MatThuCoordinator.setSeriesFilter('B')">🏫 Dãy B (B1-B4)</button>
+            </div>
+            <div class="qr-actions-row">
+              <button type="button" class="btn-matthu-secondary" onclick="MatThuCoordinator.openClassSettingsModal()" title="Tùy chỉnh linh hoạt số lượng và tên các lớp trong từng khối">
+                ⚙️ Tùy chỉnh số lớp
+              </button>
+              <button type="button" class="btn-matthu-download" onclick="MatThuCoordinator.downloadAllFilteredQrPng()" title="Tải nhanh toàn bộ ảnh thẻ mã QR PNG của các lớp đang lọc để gửi Zalo">
+                📥 Tải Loạt Ảnh QR (PNG)
+              </button>
+              <button type="button" class="btn-matthu-primary" onclick="MatThuCoordinator.printAllQrSheets()" title="In thẻ mã QR khổ A4 để dán trạm thi hoặc phát cho các đội">
+                🖨️ In Hàng Loạt Thẻ QR
+              </button>
+              <button type="button" class="btn-matthu-secondary" onclick="MatThuCoordinator.switchTab('play')" title="Chuyển sang màn hình thi đấu trực tiếp ngay trên trang mẹ">
+                🎮 Sang Màn Hình Thi Đấu
+              </button>
+            </div>
+          </div>
+
+          <div id="matThuQrGrid" class="qr-cards-grid">
+            <!-- Render động bởi scripts/matThuCoordinator.js -->
+          </div>
+        </div>
+
+        <!-- TAB 2: BẢNG XẾP HẠNG TRỰC TIẾP (LIVE LEADERBOARD) -->
+        <div id="matThuTabLeaderboard" class="matthu-tab-panel hidden">
+          <div class="leaderboard-hero">
+            <div class="leaderboard-hero-info">
+              <h4><span>🏆</span> BẢNG XẾP HẠNG THI ĐẤU TOÀN TRƯỜNG</h4>
+              <p>Tự động cập nhật theo thời gian thực (Real-time SSE) khi các lớp hoàn thành vượt 5 cửa ải</p>
+            </div>
+            <div class="leaderboard-stats-pills">
+              <div class="lb-stat-pill">
+                <strong id="lbStatTotal">0 đội</strong>
+                <small>Đã hoàn thành</small>
+              </div>
+              <div class="lb-stat-pill">
+                <strong id="lbStatMaxScore">0đ</strong>
+                <small>Điểm cao nhất</small>
+              </div>
+              <div class="lb-stat-pill">
+                <strong id="lbStatTopClass">--</strong>
+                <small>Dẫn đầu bảng</small>
+              </div>
+            </div>
+          </div>
+
+          <!-- Bục Top 3 -->
+          <div id="matThuPodium" class="podium-wrapper"></div>
+
+          <!-- Bảng Chi Tiết & Toolbar -->
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; flex-wrap: wrap; gap: 8px;">
+            <div class="qr-grade-filter">
+              <span style="font-weight: 800; font-size: 0.88rem; color: #854d0e;">Xem theo:</span>
+              <button class="qr-grade-chip active" data-grade="all" onclick="MatThuCoordinator.setGradeFilter('all')">Toàn trường</button>
+              <button class="qr-grade-chip" data-grade="6" onclick="MatThuCoordinator.setGradeFilter('6')">Khối 6</button>
+              <button class="qr-grade-chip" data-grade="7" onclick="MatThuCoordinator.setGradeFilter('7')">Khối 7</button>
+              <button class="qr-grade-chip" data-grade="8" onclick="MatThuCoordinator.setGradeFilter('8')">Khối 8</button>
+              <button class="qr-grade-chip" data-grade="9" onclick="MatThuCoordinator.setGradeFilter('9')">Khối 9</button>
+
+              <span class="qr-filter-divider"></span>
+
+              <span style="font-weight: 800; font-size: 0.88rem; color: #9a3412;">Dãy:</span>
+              <button class="qr-series-chip active" data-series="all" onclick="MatThuCoordinator.setSeriesFilter('all')">Tất cả dãy</button>
+              <button class="qr-series-chip" data-series="A" onclick="MatThuCoordinator.setSeriesFilter('A')">Dãy A</button>
+              <button class="qr-series-chip" data-series="B" onclick="MatThuCoordinator.setSeriesFilter('B')">Dãy B</button>
+            </div>
+            <div style="display: flex; gap: 8px;">
+              <button type="button" class="btn-matthu-secondary" onclick="MatThuCoordinator.refreshScores()">
+                🔄 Làm mới
+              </button>
+              <button type="button" class="btn-matthu-primary" onclick="MatThuCoordinator.exportLeaderboardCsv()">
+                📊 Xuất File Điểm (CSV)
+              </button>
+              <button type="button" class="btn-matthu-secondary" style="border-color: #f87171; color: #dc2626;" onclick="MatThuCoordinator.resetAllScores()">
+                🗑️ Đặt lại kết quả
+              </button>
+            </div>
+          </div>
+
+          <div class="leaderboard-table-wrap">
+            <table class="leaderboard-table">
+              <thead>
+                <tr>
+                  <th style="width: 60px;">Hạng</th>
+                  <th>Tên Chi Đội</th>
+                  <th>Khối Lớp</th>
+                  <th>Lớp</th>
+                  <th>Điểm Số</th>
+                  <th>Thời Gian Thi</th>
+                  <th>Thời Điểm Nộp</th>
+                </tr>
+              </thead>
+              <tbody id="matThuLeaderboardRows">
+                <!-- Render động -->
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- TAB 3: MÃ QR & ÁP PHÍCH 5 TRẠM SÂN TRƯỜNG -->
+        <div id="matThuTabStations" class="matthu-tab-panel hidden">
+          <div class="qr-toolbar">
+            <div>
+              <h4 style="margin: 0; color: #8d2341; font-size: 1.05rem;">🚩 5 TRẠM KIỂM SOÁT THỬ THÁCH SÂN TRƯỜNG</h4>
+              <p style="margin: 4px 0 0; font-size: 0.8rem; color: #854d0e;">In áp phích hoặc tải ảnh PNG dán tại 5 vị trí trạm thi ngoài sân trường</p>
+            </div>
+            <div class="qr-actions-row">
+              <button type="button" class="btn-matthu-primary" onclick="MatThuCoordinator.printAllStationPosters()" title="In trọn bộ 5 áp phích trạm khổ A4 sắc nét để dán ở các trạm sân trường">
+                🖨️ In 5 Áp Phích Trạm (A4)
+              </button>
+              <button type="button" class="btn-matthu-download" onclick="MatThuCoordinator.downloadAllStationPostersPng()" title="Tải trọn bộ 5 file ảnh áp phích PNG chất lượng cao để gửi Ban Phụ Trách Trạm">
+                📥 Tải Bộ 5 Áp Phích (PNG)
+              </button>
+            </div>
+          </div>
+
+          <!-- Sơ Đồ Mặt Bằng Sân Trường 2D Tổng Thể -->
+          <div class="stations-map-card">
+            <div class="stations-map-card-header">
+              <div style="display: flex; align-items: center; gap: 8px;">
+                <span style="font-size: 1.3rem;">🗺️</span>
+                <div>
+                  <h4 style="margin: 0; color: #8d2341; font-size: 1rem;">SƠ ĐỒ 2D VỊ TRÍ 5 TRẠM TRÊN MẶT BẰNG SÂN TRƯỜNG</h4>
+                  <p style="margin: 2px 0 0; font-size: 0.8rem; color: #64748b;">Trực quan hóa vị trí thực tế tại THCS Tân Hải để Ban Tổ Chức bố trí bàn đón tiếp và học sinh nắm rõ lộ trình</p>
+                </div>
+              </div>
+              <button type="button" class="btn-matthu-secondary" style="font-size: 0.8rem; padding: 5px 12px;" onclick="MatThuCoordinator.toggleStationsMapPreview()">
+                <span id="btnToggleStationsMapText">▲ Thu gọn Sơ đồ</span>
+              </button>
+            </div>
+            <div id="matThuStationsTabMapWrapper" class="stations-map-wrapper">
+              <div id="matThuStationsTabMapContainer" class="school-map-tab-box"></div>
+            </div>
+          </div>
+
+          <div id="matThuStationsGrid" class="stations-grid">
+            <!-- Render động bởi scripts/matThuCoordinator.js -->
+          </div>
+        </div>
+
+        <!-- TAB 5: QUẢN LÝ CÂU HỎI THEO 4 KHỐI & 5 TRẠM -->
+        <div id="matThuTabQuestions" class="matthu-tab-panel hidden">
+          <div class="qr-toolbar questions-mgr-toolbar">
+            <div class="questions-mgr-title-col">
+              <h4 style="margin: 0; color: #8d2341; font-size: 1.1rem; display: flex; align-items: center; gap: 8px;">
+                <span>📝</span>
+                <span>NGÂN HÀNG CÂU HỎI THEO 4 KHỐI & 5 TRẠM</span>
+              </h4>
+              <p style="margin: 4px 0 0; font-size: 0.82rem; color: #854d0e;">
+                Soạn thảo, điều chỉnh câu hỏi, đáp án đúng và lời giải thích riêng cho từng Khối lớp và từng Trạm thi đấu. Dữ liệu tự động lưu & áp dụng ngay vào game!
+              </p>
+            </div>
+            <div class="qr-actions-row">
+              <button type="button" class="btn-matthu-primary" onclick="MatThuCoordinator.addNewQuestion()" title="Thêm một câu hỏi trắc nghiệm mới vào Trạm đang chọn">
+                ➕ Thêm Câu Hỏi
+              </button>
+              <button type="button" class="btn-matthu-start-primary" style="background: linear-gradient(135deg, #16a34a, #15803d);" onclick="MatThuCoordinator.saveAllQuestions()" title="Lưu toàn bộ thay đổi câu hỏi vào bộ nhớ trình duyệt">
+                💾 Lưu Thay Đổi
+              </button>
+              <button type="button" class="btn-matthu-secondary" style="font-weight: 750; color: #8d2341; border-color: #fbcfe8; background: #fff5f7;" onclick="MatThuCoordinator.openPrintJudgeModal()" title="In 1 tờ A4 phiếu câu hỏi & đáp án dự phòng cho Ban Giám Khảo / Trưởng Trạm">
+                🖨️ In Phiếu BGK (A4)
+              </button>
+              <button type="button" class="btn-matthu-secondary" onclick="MatThuCoordinator.exportQuestionsJson()" title="Tải file JSON dự phòng ngân hàng câu hỏi">
+                📥 Xuất File JSON
+              </button>
+              <button type="button" class="btn-matthu-secondary" onclick="document.getElementById('matThuImportQuestionsInput').click()" title="Nạp ngân hàng câu hỏi từ file JSON máy tính">
+                📤 Nạp File JSON
+              </button>
+              <input type="file" id="matThuImportQuestionsInput" style="display: none;" accept=".json" onchange="MatThuCoordinator.importQuestionsFile(event)">
+              <button type="button" class="btn-matthu-secondary" style="color: #dc2626;" onclick="MatThuCoordinator.resetQuestionsToDefaultConfirm()" title="Khôi phục lại ngân hàng câu hỏi mặc định của trường">
+                ↺ Đặt Lại Gốc
+              </button>
+            </div>
+          </div>
+
+          <!-- Bộ lọc chọn Khối Lớp và Trạm Thử Thách -->
+          <div class="questions-filter-card">
+            <!-- 1. Chọn Khối -->
+            <div class="questions-filter-row">
+              <span class="questions-filter-label">🎓 CHỌN KHỐI LỚP:</span>
+              <div class="questions-grade-chips">
+                <button type="button" class="q-grade-chip active" data-grade="6" onclick="MatThuCoordinator.selectEditorGrade(6)">
+                  <span class="q-chip-dot k6"></span> Khối 6 (Lớp 6A1 - 6B4)
+                </button>
+                <button type="button" class="q-grade-chip" data-grade="7" onclick="MatThuCoordinator.selectEditorGrade(7)">
+                  <span class="q-chip-dot k7"></span> Khối 7 (Lớp 7A1 - 7B4)
+                </button>
+                <button type="button" class="q-grade-chip" data-grade="8" onclick="MatThuCoordinator.selectEditorGrade(8)">
+                  <span class="q-chip-dot k8"></span> Khối 8 (Lớp 8A1 - 8B4)
+                </button>
+                <button type="button" class="q-grade-chip" data-grade="9" onclick="MatThuCoordinator.selectEditorGrade(9)">
+                  <span class="q-chip-dot k9"></span> Khối 9 (Lớp 9A1 - 9B4)
+                </button>
+              </div>
+            </div>
+
+            <!-- 2. Chọn Trạm -->
+            <div class="questions-filter-row" style="margin-top: 10px; border-top: 1px dashed #e2e8f0; padding-top: 10px;">
+              <span class="questions-filter-label">🚩 CHỌN TRẠM THI:</span>
+              <div class="questions-station-chips">
+                <button type="button" class="q-station-chip active" data-station="1" onclick="MatThuCoordinator.selectEditorStation(1)">
+                  📚 Trạm 1: Dấu Ấn 20/11
+                </button>
+                <button type="button" class="q-station-chip" data-station="2" onclick="MatThuCoordinator.selectEditorStation(2)">
+                  🧩 Trạm 2: Ô Chữ Bí Ẩn
+                </button>
+                <button type="button" class="q-station-chip" data-station="3" onclick="MatThuCoordinator.selectEditorStation(3)">
+                  🔬 Trạm 3: Thử Thách Môn Học
+                </button>
+                <button type="button" class="q-station-chip" data-station="4" onclick="MatThuCoordinator.selectEditorStation(4)">
+                  🔐 Trạm 4: Giải Mã Mật Thư
+                </button>
+                <button type="button" class="q-station-chip" data-station="5" onclick="MatThuCoordinator.selectEditorStation(5)">
+                  🎁 Trạm 5: Kho Báu Tri Ân
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <!-- Thông tin trạm đang chọn & Danh sách câu hỏi -->
+          <div class="questions-stage-meta-bar" id="matThuQuestionsMetaBar">
+            <!-- Render động: tên trạm, vị trí, số câu hỏi -->
+          </div>
+
+          <div id="matThuQuestionsEditorList" class="questions-editor-list">
+            <!-- Render động danh sách các câu hỏi -->
+          </div>
+
+          <div class="questions-bottom-actions">
+            <button type="button" class="btn-matthu-primary" style="padding: 10px 24px; font-size: 0.95rem;" onclick="MatThuCoordinator.addNewQuestion()">
+              ➕ Thêm Một Câu Hỏi Nữa Cho Trạm Này
+            </button>
+            <button type="button" class="btn-matthu-start-primary" style="padding: 10px 28px; font-size: 0.95rem; background: linear-gradient(135deg, #16a34a, #15803d);" onclick="MatThuCoordinator.saveAllQuestions()">
+              💾 Lưu Ngân Hàng Câu Hỏi
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal Toàn Cảnh Bản Đồ Sân Trường 2D Tương Tác (Interactive 2D Map) -->
+  <div id="matThuMapModal" class="modal-overlay">
+    <div class="map-modal-card">
+      <div class="map-modal-header">
+        <div style="display: flex; align-items: center; gap: 10px;">
+          <span style="font-size: 1.8rem;">🗺️</span>
+          <div>
+            <h3 style="margin: 0; color: #8d2341; font-size: 1.2rem;">SƠ ĐỒ SÂN TRƯỜNG 2D - VỊ TRÍ 5 TRẠM THI ĐẤU</h3>
+            <p style="margin: 3px 0 0; font-size: 0.82rem; color: #64748b;">
+              Sơ đồ thực địa Trường THCS Tân Hải • Vệt phát sáng chỉ dẫn lộ trình vượt ải của Chi đội
+            </p>
+          </div>
+        </div>
+        <button type="button" class="class-settings-close-btn" onclick="MatThuCoordinator.closeMapModal()" title="Đóng bản đồ (Esc)">✕</button>
+      </div>
+
+      <div class="map-modal-body">
+        <div class="map-modal-toolbar">
+          <div class="map-status-legend">
+            <span class="legend-item"><span class="legend-dot done"></span> Đã hoàn thành</span>
+            <span class="legend-item"><span class="legend-dot target"></span> Đích đến kế tiếp</span>
+            <span class="legend-item"><span class="legend-dot locked"></span> Đang khóa</span>
+          </div>
+          <span id="mapModalCurrentTeamNote" class="map-team-note">Đội thi: Chưa vào trận</span>
+        </div>
+
+        <div id="matThuModalMapContainer" class="school-map-svg-wrapper">
+          <!-- Render động SVG Bản đồ trường -->
+        </div>
+
+        <!-- Khung chi tiết tương tác khi chạm/nhấp vào trạm -->
+        <div id="matThuStationDetailBox" class="station-detail-popbox hidden">
+          <div class="st-detail-head">
+            <span id="stDetailIcon" class="st-detail-icon">📍</span>
+            <div style="flex: 1;">
+              <h4 id="stDetailTitle" class="st-detail-title">TRẠM 1: DẤU ẤN 20/11</h4>
+              <span id="stDetailLoc" class="st-detail-loc">Vị trí: Sân cờ</span>
+            </div>
+            <span id="stDetailStatusBadge" class="st-detail-badge done">Đã mở</span>
+          </div>
+          <p id="stDetailDesc" class="st-detail-desc"></p>
+          <div class="st-detail-meta">
+            <span>Mảnh mật mã: <strong id="stDetailCode">TRI</strong></span>
+            <span>Mã PIN dự phòng: <strong id="stDetailPin">1101</strong></span>
+          </div>
+        </div>
+      </div>
+
+      <div class="map-modal-footer">
+        <span style="font-size: 0.82rem; color: #64748b;">💡 Chạm vào từng biểu tượng Trạm trên bản đồ để xem hướng dẫn thực địa chi tiết.</span>
+        <button type="button" class="btn-matthu-primary" onclick="MatThuCoordinator.closeMapModal()">Đã hiểu, quay lại</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal Khóa Mã PIN Bảo Mật Ban Giám Khảo -->
+  <div id="matThuPinModal" class="modal-overlay">
+    <div class="pin-modal-card">
+      <div class="pin-modal-icon">🔐</div>
+      <h3>XÁC MINH BAN GIÁM KHẢO</h3>
+      <p>Vui lòng nhập mã PIN bảo mật (mặc định: <strong>2011</strong>) để xác nhận đặt lại kết quả thi đấu:</p>
+      <input type="password" id="matThuPinInput" class="pin-input-field" maxlength="8" placeholder="••••" autocomplete="off" onkeyup="if(event.key==='Enter') MatThuCoordinator.confirmResetWithPin()">
+      <div id="matThuPinError" class="pin-error-hint hidden">❌ Mã PIN không chính xác. Vui lòng thử lại!</div>
+      <div class="pin-modal-actions">
+        <button type="button" class="btn-matthu-secondary" onclick="MatThuCoordinator.closePinModal()">Hủy bỏ</button>
+        <button type="button" class="btn-matthu-primary" style="background: linear-gradient(135deg, #dc2626, #991b1b);" onclick="MatThuCoordinator.confirmResetWithPin()">Xác nhận đặt lại</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal Tùy Chỉnh Danh Sách Lớp Của 4 Khối (Lưu vào localStorage) -->
+  <div id="matThuClassSettingsModal" class="modal-overlay">
+    <div class="class-settings-card">
+      <div class="class-settings-header">
+        <div style="display: flex; align-items: center; gap: 10px;">
+          <span style="font-size: 1.8rem;">⚙️</span>
+          <div>
+            <h3 style="margin: 0; color: #8d2341; font-size: 1.25rem;">TÙY CHỈNH DANH SÁCH LỚP 4 KHỐI</h3>
+            <p style="margin: 3px 0 0; font-size: 0.85rem; color: #64748b;">
+              Nhập danh sách lớp cho từng khối (cách nhau bởi dấu phẩy). Dữ liệu được lưu trực tiếp trên trình duyệt.
+            </p>
+          </div>
+        </div>
+        <button type="button" class="class-settings-close-btn" onclick="MatThuCoordinator.closeClassSettingsModal()" title="Đóng">✕</button>
+      </div>
+
+      <div class="class-settings-body">
+        <!-- Khối 6 -->
+        <div class="class-settings-group">
+          <div class="class-settings-group-header">
+            <span class="class-settings-group-title">🎓 Khối 6</span>
+            <span id="classSettingsCount_6" class="class-settings-count-pill">10 lớp</span>
+          </div>
+          <input type="text" id="classSettingsInput_6" class="class-settings-input" placeholder="Ví dụ: 6A1, 6A2, 6A3, 6A4, 6A5, 6A6, 6B1, 6B2, 6B3, 6B4" oninput="MatThuCoordinator.onClassInputPreview(6)">
+          <div class="class-settings-hint">Gợi ý: <code>6A1, 6A2, 6A3, 6A4, 6A5, 6A6, 6B1, 6B2, 6B3, 6B4</code> (hoặc gõ thêm lớp <code>6C1</code> nếu có)</div>
+        </div>
+
+        <!-- Khối 7 -->
+        <div class="class-settings-group">
+          <div class="class-settings-group-header">
+            <span class="class-settings-group-title">🎓 Khối 7</span>
+            <span id="classSettingsCount_7" class="class-settings-count-pill">10 lớp</span>
+          </div>
+          <input type="text" id="classSettingsInput_7" class="class-settings-input" placeholder="Ví dụ: 7A1, 7A2, 7A3, 7A4, 7A5, 7A6, 7B1, 7B2, 7B3, 7B4" oninput="MatThuCoordinator.onClassInputPreview(7)">
+          <div class="class-settings-hint">Gợi ý: <code>7A1, 7A2, 7A3, 7A4, 7A5, 7A6, 7B1, 7B2, 7B3, 7B4</code></div>
+        </div>
+
+        <!-- Khối 8 -->
+        <div class="class-settings-group">
+          <div class="class-settings-group-header">
+            <span class="class-settings-group-title">🎓 Khối 8</span>
+            <span id="classSettingsCount_8" class="class-settings-count-pill">10 lớp</span>
+          </div>
+          <input type="text" id="classSettingsInput_8" class="class-settings-input" placeholder="Ví dụ: 8A1, 8A2, 8A3, 8A4, 8A5, 8A6, 8B1, 8B2, 8B3, 8B4" oninput="MatThuCoordinator.onClassInputPreview(8)">
+          <div class="class-settings-hint">Gợi ý: <code>8A1, 8A2, 8A3, 8A4, 8A5, 8A6, 8B1, 8B2, 8B3, 8B4</code></div>
+        </div>
+
+        <!-- Khối 9 -->
+        <div class="class-settings-group">
+          <div class="class-settings-group-header">
+            <span class="class-settings-group-title">🎓 Khối 9</span>
+            <span id="classSettingsCount_9" class="class-settings-count-pill">10 lớp</span>
+          </div>
+          <input type="text" id="classSettingsInput_9" class="class-settings-input" placeholder="Ví dụ: 9A1, 9A2, 9A3, 9A4, 9A5, 9A6, 9B1, 9B2, 9B3, 9B4" oninput="MatThuCoordinator.onClassInputPreview(9)">
+          <div class="class-settings-hint">Gợi ý: <code>9A1, 9A2, 9A3, 9A4, 9A5, 9A6, 9B1, 9B2, 9B3, 9B4</code></div>
+        </div>
+      </div>
+
+      <div class="class-settings-footer">
+        <button type="button" class="btn-matthu-secondary" onclick="MatThuCoordinator.resetClassSettingsToDefault()" title="Đưa danh sách lớp về chuẩn ban đầu (A1-A6 & B1-B4)">
+          ↺ Khôi phục chuẩn mặc định
+        </button>
+        <div style="display: flex; gap: 8px;">
+          <button type="button" class="btn-matthu-secondary" onclick="MatThuCoordinator.closeClassSettingsModal()">
+            Đóng
+          </button>
+          <button type="button" class="btn-matthu-primary" onclick="MatThuCoordinator.saveClassSettingsFromModal()">
+            💾 Lưu cấu hình & Áp dụng
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal Tùy Chọn In Phiếu Dự Phòng Cho Ban Giám Khảo Trạm (Khổ A4) -->
+  <div id="matThuPrintJudgeModal" class="modal-overlay">
+    <div class="class-settings-card" style="max-width: 620px;">
+      <div class="class-settings-header">
+        <div style="display: flex; align-items: center; gap: 10px;">
+          <span style="font-size: 1.8rem;">🖨️</span>
+          <div>
+            <h3 style="margin: 0; color: #8d2341; font-size: 1.25rem;">IN PHIẾU CÂU HỎI & ĐÁP ÁN DỰ PHÒNG CHO BAN GIÁM KHẢO</h3>
+            <p style="margin: 3px 0 0; font-size: 0.85rem; color: #64748b;">
+              Xuất in giấy A4 kèm đáp án đúng [✓], bảng tra cứu nhanh và bảng chấm điểm thực địa.
+            </p>
+          </div>
+        </div>
+        <button type="button" class="class-settings-close-btn" onclick="MatThuCoordinator.closePrintJudgeModal()" title="Đóng">✕</button>
+      </div>
+
+      <div class="class-settings-body" style="padding: 16px 20px;">
+        <div style="font-size: 0.88rem; color: #334155; margin-bottom: 12px; font-weight: 600;">
+          Thầy/Cô vui lòng chọn định dạng in mong muốn:
+        </div>
+
+        <div class="print-options-grid">
+          <!-- Lựa chọn 1: Trạm hiện tại - Khối hiện tại -->
+          <div class="print-opt-card" onclick="MatThuCoordinator.printJudgeSheet('single')">
+            <div class="print-opt-title">
+              <span>📄 In Trạm Hiện Tại</span>
+              <span id="printOptCurrentBadge" style="font-size: 0.72rem; padding: 2px 6px; border-radius: 4px; background: #fee2e2; color: #991b1b;">1 tờ A4</span>
+            </div>
+            <div class="print-opt-desc" id="printOptCurrentDesc">
+              In phiếu câu hỏi & đáp án dự phòng cho Trạm đang chọn của Khối đang chọn.
+            </div>
+          </div>
+
+          <!-- Lựa chọn 2: Trạm hiện tại - Cả 4 Khối -->
+          <div class="print-opt-card" onclick="MatThuCoordinator.printJudgeSheet('station_all_grades')">
+            <div class="print-opt-title">
+              <span>📚 Trọn Bộ 4 Khối Của Trạm Này</span>
+              <span style="font-size: 0.72rem; padding: 2px 6px; border-radius: 4px; background: #e0f2fe; color: #0369a1;">4 tờ A4</span>
+            </div>
+            <div class="print-opt-desc">
+              In đủ 4 phiếu cho Khối 6, 7, 8, 9 của Trạm này để Trưởng trạm cầm tay chấm cho mọi khối.
+            </div>
+          </div>
+
+          <!-- Lựa chọn 3: Khối hiện tại - Cả 5 Trạm -->
+          <div class="print-opt-card" onclick="MatThuCoordinator.printJudgeSheet('grade_all_stations')">
+            <div class="print-opt-title">
+              <span>🎓 Trọn Bộ 5 Trạm Khối Hiện Tại</span>
+              <span style="font-size: 0.72rem; padding: 2px 6px; border-radius: 4px; background: #fef08a; color: #854d0e;">5 tờ A4</span>
+            </div>
+            <div class="print-opt-desc">
+              In đề & đáp án cả 5 Trạm từ Trạm 1 đến Trạm 5 cho Khối lớp đang chọn.
+            </div>
+          </div>
+
+          <!-- Lựa chọn 4: Toàn bộ ngân hàng (4 Khối x 5 Trạm) -->
+          <div class="print-opt-card" onclick="MatThuCoordinator.printJudgeSheet('all_full_pack')">
+            <div class="print-opt-title">
+              <span>📦 Trọn Bộ Toàn Trường</span>
+              <span style="font-size: 0.72rem; padding: 2px 6px; border-radius: 4px; background: #dcfce7; color: #166534;">20 tờ A4</span>
+            </div>
+            <div class="print-opt-desc">
+              In trọn vẹn toàn bộ ngân hàng câu hỏi 4 khối và 5 trạm cho Ban Tổ Chức tổng kiểm soát.
+            </div>
+          </div>
+        </div>
+
+        <div style="background: #f8fafc; border: 1px dashed #cbd5e1; border-radius: 8px; padding: 10px 12px; font-size: 0.8rem; color: #475569; display: flex; align-items: center; gap: 8px;">
+          <span style="font-size: 1.2rem;">💡</span>
+          <span><strong>Mẹo in đẹp:</strong> Tại hộp thoại in của trình duyệt (Ctrl+P), hãy chọn <strong>Destination: Save as PDF</strong> hoặc máy in, khổ giấy <strong>A4</strong>, bật tùy chọn <strong>Background graphics</strong> (Đồ họa nền) để màu sắc rõ nét nhất.</span>
+        </div>
+      </div>
+
+      <div class="class-settings-footer">
+        <button type="button" class="btn-matthu-secondary" onclick="MatThuCoordinator.closePrintJudgeModal()">Đóng</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Vùng chứa bản in Thẻ QR A4 (Chỉ hiển thị khi bấm In) -->
+  <div id="matThuPrintArea" style="display: none;"></div>

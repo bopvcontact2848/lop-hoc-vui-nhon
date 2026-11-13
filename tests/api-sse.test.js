@@ -286,4 +286,117 @@ test('API & SSE Integration Suite', async (t) => {
     const mp3Buf = await mp3Res.arrayBuffer();
     assert.ok(mp3Buf.byteLength > 100000);
   });
+
+  await t.test('HTML Partials: GET / và GET /index.html ghép đầy đủ modal & không sót @include', async () => {
+    for (const urlPath of ['/', '/index.html']) {
+      const res = await fetch(`${baseUrl}${urlPath}`);
+      assert.equal(res.status, 200);
+      assert.match(res.headers.get('content-type') || '', /text\/html/);
+      const html = await res.text();
+      assert.ok(html.includes('id="matThuCoordinatorModal"'), `Thiếu #matThuCoordinatorModal khi tải ${urlPath}`);
+      assert.ok(html.includes('id="giaiMaBiMatModal"'), `Thiếu #giaiMaBiMatModal khi tải ${urlPath}`);
+      assert.equal(html.includes('<!-- @include'), false, `Vẫn còn thẻ <!-- @include chưa ghép trong ${urlPath}`);
+    }
+  });
+
+  await t.test('Giải Mã Bí Mật Quiz Lifecycle: /api/gmm/state -> submit -> lock-team -> unlock-team', async () => {
+    const sse = openSseClient(`${baseUrl}/api/sync/events?role=host&cid=test_host_quiz`);
+    try {
+      await sse.waitForEvent((e) => e.type === 'connected');
+
+      const sessionId = `test_sess_${Date.now()}`;
+      const stateInitRes = await fetch(`${baseUrl}/api/gmm/state`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          sessionId,
+          status: 'quiz',
+          isMatchStarted: true,
+          timerSeconds: 180,
+          totalMatchSeconds: 180,
+          questions: [{ id: 'q1', text: 'Câu 1', options: ['A', 'B', 'C', 'D'], correct: 1 }]
+        })
+      });
+      assert.equal(stateInitRes.status, 200);
+      const stateInitJson = await stateInitRes.json();
+      assert.equal(stateInitJson.success, true);
+
+      // 1. Nộp 1 đáp án hợp lệ -> 200 + SSE gmm_team_answered
+      const submitRes = await fetch(`${baseUrl}/api/gmm/submit`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          sessionId,
+          team: 'teamA',
+          questionId: 'q1',
+          optionIndex: 1,
+          currentQ: 1
+        })
+      });
+      assert.equal(submitRes.status, 200);
+      const submitJson = await submitRes.json();
+      assert.equal(submitJson.success, true);
+
+      const answeredEvt = await sse.waitForEvent((e) => e.type === 'gmm_team_answered' && e.team === 'teamA');
+      assert.equal(answeredEvt.questionId, 'q1');
+      assert.equal(answeredEvt.optionIndex, 1);
+
+      // 2. Chốt bài đội A -> 200 + SSE gmm_team_locked
+      const lockRes = await fetch(`${baseUrl}/api/gmm/lock-team`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          sessionId,
+          team: 'teamA',
+          answers: { q1: 1 },
+          finishTime: '00:15',
+          finishSeconds: 15
+        })
+      });
+      assert.equal(lockRes.status, 200);
+      const lockJson = await lockRes.json();
+      assert.equal(lockJson.success, true);
+
+      const lockedEvt = await sse.waitForEvent((e) => e.type === 'gmm_team_locked' && e.team === 'teamA');
+      assert.equal(lockedEvt.finishTime, '00:15');
+      assert.equal(lockedEvt.state.teamA.isLocked, true);
+
+      // 3. Thử nộp tiếp khi đội A đã khóa -> 409 teamLocked
+      const blockedSubmitRes = await fetch(`${baseUrl}/api/gmm/submit`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          sessionId,
+          team: 'teamA',
+          questionId: 'q1',
+          optionIndex: 2,
+          currentQ: 1
+        })
+      });
+      assert.equal(blockedSubmitRes.status, 409);
+      const blockedJson = await blockedSubmitRes.json();
+      assert.equal(blockedJson.teamLocked, true);
+
+      // 4. Mở khóa cho đội A -> 200 + giữ nguyên answers + SSE gmm_team_unlocked
+      const unlockRes = await fetch(`${baseUrl}/api/gmm/unlock-team`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ team: 'teamA' })
+      });
+      assert.equal(unlockRes.status, 200);
+      const unlockJson = await unlockRes.json();
+      assert.equal(unlockJson.success, true);
+      assert.equal(unlockJson.state.teamA.isLocked, false);
+      assert.equal(unlockJson.answers.q1, 1);
+
+      const unlockedEvt = await sse.waitForEvent((e) => e.type === 'gmm_team_unlocked' && e.team === 'teamA');
+      assert.equal(unlockedEvt.state.teamA.isLocked, false);
+      assert.equal(unlockedEvt.answers.q1, 1);
+
+      const resetRes = await fetch(`${baseUrl}/api/gmm/reset`, { method: 'POST' });
+      assert.equal(resetRes.status, 200);
+    } finally {
+      sse.close();
+    }
+  });
 });
