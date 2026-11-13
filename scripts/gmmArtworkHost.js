@@ -735,6 +735,7 @@
         pollServerArtworksOnce,
         startHostArtworkPolling,
         stopHostArtworkPolling,
+        getActiveZoomTeam: () => activeZoomTeam,
         openZoomModal,
         closeZoomModal,
         switchZoomTeam,

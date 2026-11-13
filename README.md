@@ -87,11 +87,19 @@
 │   ├── giaiMaPuzzleGenerator.js  # Sinh ma trận SVG tranh tô màu theo tọa độ
 │   ├── giaiMaTeacherKey.js       # Màn hình đáp án chuẩn & nhạc nền cho giáo viên
 │   ├── gmmArtworkHost.js         # Bộ lọc Canvas AI, thu phóng tranh & nhận ảnh giấy trên Máy chiếu
+│   ├── gmmCoordinator.js         # Điều phối mở/đóng modal chính, chọn vai trò & đặt lại ván mới
+│   ├── gmmDecryptJudge.js        # Giai đoạn giải mã tô tranh trên máy chiếu & BGK chấm điểm
 │   ├── gmmExport.js              # Xuất phiếu PDF/Word/PNG/SVG & ảnh kỷ niệm lớp 2K
-│   ├── gmmHostArena.js           # Đấu trường 2 đội trên máy chiếu, nhạc nền & SSE Host
+│   ├── gmmExportTemplates.js     # Tạo mẫu HTML/CSS khổ A4 nằm ngang phục vụ xuất PDF & Microsoft Word
+│   ├── gmmHostArena.js           # Giao diện đấu trường 2 đội, đồng hồ đếm ngược & bảng kết quả trên máy chiếu
+│   ├── gmmHostSse.js             # Kênh phát SSE phía Máy chiếu, đồng hồ 3-2-1 & quản lý khóa màn hình WakeLock
 │   ├── gmmLobbyQr.js             # Phòng chờ mã QR 2 đội & tự động dò địa chỉ IP Wi-Fi LAN
-│   ├── gmmMobileSync.js          # Đấu trường điện thoại học sinh, hàng đợi offline & SSE Reconnect
+│   ├── gmmMobileArtwork.js       # Giao diện tô màu SVG, xem lại câu sai & chụp ảnh giấy trên điện thoại
+│   ├── gmmMobileOffline.js       # Lưu LocalStorage & hàng đợi đồng bộ bù đáp án khi mạng Wi-Fi chập chờn
+│   ├── gmmMobileQuizUi.js        # Giao diện trả lời 10 câu hỏi, vuốt chạm & nộp bài trên điện thoại
+│   ├── gmmMobileSync.js          # Kết nối SSE phía điện thoại học sinh, tự bù độ trễ & khôi phục phiên mới
 │   ├── gmmQuestionBank.js        # Bộ 10 câu hỏi chuẩn, trình soạn thảo & nhập/xuất Excel (XLSX)
+│   ├── gmmStageTeamUi.js         # Chế độ Sân khấu máy chiếu, đổi tên đội, ẩn/hiện đáp án & nhạc nền
 │   ├── landing.js                # Giao diện trang chủ và danh mục trò chơi
 │   ├── matThuCoordinator.js      # Điều phối trò chơi lớn Giải Mã Mật Thư 20/11 & BXH SSE
 │   ├── matThuData.js             # Dữ liệu các trạm, chi đội và bộ đề Giải Mã Mật Thư
