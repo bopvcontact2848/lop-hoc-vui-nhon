@@ -35,3 +35,9 @@ desktop.ini
 # Dữ liệu phát sinh khi chạy máy chủ cục bộ
 matthu_scores.json
 server/data/
+
+# Kết quả & báo cáo kiểm thử E2E (Playwright)
+test-results/
+playwright-report/
+blob-report/
+playwright/.cache/

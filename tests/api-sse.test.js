@@ -689,5 +689,9 @@ test('API & SSE Integration Suite', async (t) => {
     const katexFontRes = await fetch(`${baseUrl}/assets/vendor/katex/fonts/KaTeX_Main-Regular.woff2`);
     assert.equal(katexFontRes.status, 200);
     assert.match(katexFontRes.headers.get('content-type') || '', /font\/woff2/);
+
+    const xlsxRes = await fetch(`${baseUrl}/assets/vendor/sheetjs/xlsx.full.min.js`);
+    assert.equal(xlsxRes.status, 200);
+    assert.match(xlsxRes.headers.get('content-type') || '', /javascript/);
   });
 });

@@ -8,7 +8,7 @@ export default [
     ]
   },
   {
-    files: ["server.js", "server/**/*.js", "tests/**/*.js", "tools/**/*.js"],
+    files: ["server.js", "server/**/*.js", "tests/**/*.js", "tools/**/*.js", "playwright.config.js"],
     languageOptions: {
       ecmaVersion: "latest",
       sourceType: "commonjs",

@@ -66,7 +66,9 @@
 ├── assets/
 │   ├── images/                   # Logo trường THCS Tân Hải & ảnh minh họa giao diện
 │   ├── audio/                    # Nhạc nền trình chiếu (thuong-lam-thay-co-oi.mp3)
-│   └── vendor/katex/             # Thư viện KaTeX & font chữ toán học chạy offline 100%
+│   └── vendor/
+│       ├── katex/                # Thư viện KaTeX & font chữ toán học chạy offline 100%
+│       └── sheetjs/              # Thư viện SheetJS (xlsx.full.min.js) đọc/xuất Excel offline
 ├── partials/
 │   ├── mat-thu-modal.html        # Mẫu HTML modal trò chơi lớn Giải Mã Mật Thư 20/11
 │   └── giai-ma-bi-mat-modal.html # Mẫu HTML modal trò chơi Giải Mã Bí Mật & Đấu trường Mobile

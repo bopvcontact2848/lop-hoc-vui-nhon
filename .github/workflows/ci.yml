@@ -20,29 +20,43 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: 20
-          cache: ''
+          cache: 'npm'
 
       - name: 📦 Cai dat cong cu kiem tra (devDependencies)
-        run: npm install --no-audit --no-fund
+        run: npm ci --no-audit --no-fund
 
       - name: 🔍 Kiem tra cu phap cac file JavaScript (Syntax Check)
         run: node tools/checkSyntax.js
 
       - name: 🛡️ Kiem tra chuan code voi ESLint
-        run: npx eslint server.js server/ scripts/ tests/ tools/
+        run: npm run lint
 
       - name: 🧪 Chay kiem thu tich hop API & SSE (node:test)
         run: npm test
 
+      - name: 🌐 Cai dat trinh duyet Chromium cho Playwright E2E
+        run: npx playwright install --with-deps chromium
+
+      - name: 🎭 Chay kiem thu giao dien dau cuoi E2E (Playwright)
+        run: npm run test:e2e
+
       - name: 📦 Kiem tra tinh toan ven cua cac file goc quan trong
         run: |
-          for file in index.html remote.html server.js scripts/app.js partials/mat-thu-modal.html partials/giai-ma-bi-mat-modal.html assets/images/logo-truong-thcs-Tan-Hai.jpg assets/audio/thuong-lam-thay-co-oi.mp3 assets/vendor/katex/katex.min.js assets/vendor/katex/katex.min.css server/routes/gmmQuestionSetsRoutes.js server/routes/gmmCustomPuzzlesRoutes.js server/utils/jsonSyncStore.js; do
+          for file in index.html remote.html server.js scripts/app.js partials/mat-thu-modal.html partials/giai-ma-bi-mat-modal.html assets/images/logo-truong-thcs-Tan-Hai.jpg assets/audio/thuong-lam-thay-co-oi.mp3 assets/vendor/katex/katex.min.js assets/vendor/katex/katex.min.css assets/vendor/sheetjs/xlsx.full.min.js server/routes/gmmQuestionSetsRoutes.js server/routes/gmmCustomPuzzlesRoutes.js server/utils/jsonSyncStore.js; do
             if [ ! -s "$file" ]; then
               echo "❌ File thieu hoac bi rong: $file"
               exit 1
             fi
             echo "✅ File ton tai va hop le: $file"
           done
+
+      - name: 📤 Tai len bao cao Playwright neu E2E that bai
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-report
+          path: playwright-report/
+          retention-days: 7
 
       - name: 📋 Tong ket ket qua kiem tra len GitHub
         if: always()
