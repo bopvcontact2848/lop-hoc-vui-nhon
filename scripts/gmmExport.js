@@ -121,6 +121,70 @@
     updateExportPreview();
   }
 
+  function resetDefaultExportSchoolName() {
+    const schoolInput = document.getElementById('gmmExportSchoolName');
+    if (schoolInput) {
+      schoolInput.value = 'TRƯỜNG THCS TÂN HẢI\nHOẠT ĐỘNG DẠY HỌC TÍCH CỰC';
+    }
+    updateExportPreview();
+    if (typeof window.showToast === 'function') {
+      window.showToast('🏫 Đã khôi phục Tên Trường / Đơn vị mặc định!', 'info');
+    }
+  }
+
+  function setQuickExportTeamLabel(teamIndex) {
+    const teamInput = document.getElementById('gmmExportTeamLabel');
+    if (!teamInput) return;
+
+    if (teamIndex === 1 || teamIndex === 2) {
+      const t1Name = (gameState && gameState.teamA && gameState.teamA.name) ? gameState.teamA.name : 'ĐOÀN KẾT';
+      const t2Name = (gameState && gameState.teamB && gameState.teamB.name) ? gameState.teamB.name : 'LA BÀN TUỔI TRẺ';
+      const label = teamIndex === 2
+        ? `ĐỘI 2: ${t2Name.toUpperCase()}`
+        : `ĐỘI 1: ${t1Name.toUpperCase()}`;
+      teamInput.value = `${label}\nLỚP: .......... • THỜI GIAN: .....................`;
+      updateExportPreview();
+      if (typeof window.showToast === 'function') {
+        window.showToast(`📌 Đã điền "${label}" lên góc phải phiếu — Sẵn sàng in tờ cho Đội ${teamIndex}!`, 'success');
+      }
+    } else {
+      teamInput.value = 'ĐỘI THI: .........................\nLỚP: .......... • THỜI GIAN: .....................';
+      updateExportPreview();
+      if (typeof window.showToast === 'function') {
+        window.showToast('✍️ Đã đặt về dòng kẻ chấm để học sinh tự điền tên đội bằng bút!', 'info');
+      }
+    }
+  }
+
+  function syncActivePuzzlePrintPropsFromForm() {
+    const schoolInput = document.getElementById('gmmExportSchoolName');
+    const teamInput = document.getElementById('gmmExportTeamLabel');
+    const footerChk = document.getElementById('gmmExportIncludeFooterLegend');
+
+    const schoolOneLine = schoolInput
+      ? schoolInput.value.split('\n').map(s => s.trim()).filter(Boolean).join(' - ')
+      : 'TRƯỜNG THCS TÂN HẢI - HOẠT ĐỘNG DẠY HỌC TÍCH CỰC';
+    const rightNoteFirstLine = teamInput
+      ? (teamInput.value.split('\n').map(s => s.trim()).filter(Boolean)[0] || 'ĐỘI THI: .........................')
+      : 'ĐỘI THI: .........................';
+    const includeFooterLegend = footerChk ? Boolean(footerChk.checked) : true;
+
+    try {
+      localStorage.setItem('gmm_custom_print_header_v1', schoolOneLine);
+      localStorage.setItem('gmm_custom_print_right_note_v1', rightNoteFirstLine);
+    } catch (_e) {}
+
+    const activePuzzle = (window.GiaiMaPuzzle && typeof window.GiaiMaPuzzle.getActivePuzzle === 'function')
+      ? window.GiaiMaPuzzle.getActivePuzzle()
+      : null;
+    if (activePuzzle) {
+      activePuzzle.printHeader = schoolOneLine;
+      activePuzzle.printRightNote = rightNoteFirstLine;
+      activePuzzle.showFooterLegend = includeFooterLegend;
+    }
+    return activePuzzle;
+  }
+
       const tpl = window.GmmExportTemplates.create({
         getQuestionsList: ctx.getQuestionsList,
         DEFAULT_QUESTIONS: ctx.DEFAULT_QUESTIONS,
@@ -139,6 +203,7 @@
     const mockup = document.getElementById('gmmA4SheetMockup');
     if (!mockup) return;
 
+    syncActivePuzzlePrintPropsFromForm();
     const data = getExportFormData();
     const isPage2 = (exportPreviewActivePage === 2);
 
@@ -218,12 +283,14 @@
           </div>
         </div>
 
+        ${data.includeFooterLegend ? '' : `
         <div class="mockup-legend">
           <span style="font-weight: 900;">👉 BẢNG QUY ƯỚC MÃ MÀU TÔ TRANH:</span>
           ${buildDynamicLegendGroups().map(g => `<span><strong style="color: ${g.color};">■</strong> ${g.name} (C${g.qNums.join(', ')})</span>`).join('')}
         </div>
+        `}
 
-        <div class="mockup-canvas">
+        <div class="mockup-canvas" style="${data.includeFooterLegend ? 'aspect-ratio: 800 / 584;' : ''}">
           ${printSvg}
         </div>
 
@@ -244,6 +311,20 @@
       const tab2 = document.getElementById('gmmTabPreviewPage2');
       if (tab1) tab1.classList.add('active');
       if (tab2) tab2.classList.remove('active');
+
+      // Đồng bộ tự động tiêu đề bức tranh đang chọn vào phiếu in
+      const activePuzzle = (window.GiaiMaPuzzle && typeof window.GiaiMaPuzzle.getActivePuzzle === 'function')
+        ? window.GiaiMaPuzzle.getActivePuzzle()
+        : null;
+      const titleInput = document.getElementById('gmmExportTitle');
+      if (titleInput && activePuzzle && activePuzzle.title) {
+        titleInput.value = `PHIẾU THI ĐẤU: GIẢI MÃ BỨC TRANH BÍ ẨN\nCHỦ ĐỀ: ${activePuzzle.title.toUpperCase()}`;
+      }
+      const footerChk = document.getElementById('gmmExportIncludeFooterLegend');
+      if (footerChk && activePuzzle && typeof activePuzzle.showFooterLegend === 'boolean') {
+        footerChk.checked = activePuzzle.showFooterLegend;
+      }
+
       renderLogoUI();
       updateExportPreview();
     }
@@ -409,8 +490,14 @@
     }
   }
 
-  // 5. Tải file Vector SVG gốc
+  // 5. Tải file Vector SVG gốc (Bạt sân khấu lớn A1/A0 đồng bộ tiêu đề & chú giải màu)
   function downloadVectorSvg() {
+    const activePuzzle = syncActivePuzzlePrintPropsFromForm();
+    if (window.GiaiMaPuzzleGenerator && typeof window.GiaiMaPuzzleGenerator.exportSvgVector === 'function' && activePuzzle) {
+      window.GiaiMaPuzzleGenerator.exportSvgVector(activePuzzle, 'stage');
+      return;
+    }
+
     const data = getExportFormData();
     const printSvg = getCleanPrintSvg();
     if (!printSvg) return;
@@ -427,6 +514,24 @@
 
     if (typeof window.showToast === 'function') {
       window.showToast('📐 Đã tải file Vector SVG gốc thành công!', 'success');
+    }
+  }
+
+  // 6. Xuất bản in PDF Vector chuẩn khổ bạt lớn A1 (841mm × 594mm)
+  function exportLargeStagePdfA1() {
+    const activePuzzle = syncActivePuzzlePrintPropsFromForm();
+    if (window.GiaiMaPuzzleGenerator && typeof window.GiaiMaPuzzleGenerator.exportPdfVector === 'function' && activePuzzle) {
+      window.GiaiMaPuzzleGenerator.exportPdfVector(activePuzzle, 'stage');
+    } else {
+      exportWorksheetPdf();
+    }
+  }
+
+  // 7. Mở Gói Học Liệu 1 Chạm đồng bộ 100% thông tin từ Trung tâm Xuất & In
+  function openSynchronizedPrintBundle() {
+    const activePuzzle = syncActivePuzzlePrintPropsFromForm();
+    if (window.GiaiMaPrintBundle && typeof window.GiaiMaPrintBundle.openOneClickPrintBundle === 'function') {
+      window.GiaiMaPrintBundle.openOneClickPrintBundle(activePuzzle || undefined);
     }
   }
 
@@ -720,6 +825,9 @@
         removeLogo,
         renderLogoUI,
         appendExtraInfoTemplate,
+        resetDefaultExportSchoolName,
+        setQuickExportTeamLabel,
+        syncActivePuzzlePrintPropsFromForm,
         formatTextLines,
         getExportFormData,
         buildDynamicLegendGroups,
@@ -731,6 +839,8 @@
         printWorksheetDirect,
         downloadHighResPng,
         downloadVectorSvg,
+        exportLargeStagePdfA1,
+        openSynchronizedPrintBundle,
         printWorksheet,
         getSnapshotClassName,
         exportClassMemorySnapshot

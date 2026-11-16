@@ -65,41 +65,59 @@
 ```
 ├── assets/
 │   ├── images/                   # Logo trường THCS Tân Hải & ảnh minh họa giao diện
-│   └── audio/                    # Nhạc nền trình chiếu (thuong-lam-thay-co-oi.mp3)
+│   ├── audio/                    # Nhạc nền trình chiếu (thuong-lam-thay-co-oi.mp3)
+│   └── vendor/katex/             # Thư viện KaTeX & font chữ toán học chạy offline 100%
 ├── partials/
 │   ├── mat-thu-modal.html        # Mẫu HTML modal trò chơi lớn Giải Mã Mật Thư 20/11
 │   └── giai-ma-bi-mat-modal.html # Mẫu HTML modal trò chơi Giải Mã Bí Mật & Đấu trường Mobile
 ├── server/
-│   ├── routes/                   # Các bộ định tuyến API riêng biệt (matThu, gmm, remote)
+│   ├── routes/                   # Các bộ định tuyến API riêng biệt (matThu, gmm, gmmQuestionSets, gmmCustomPuzzles, remote)
 │   ├── state/                    # Quản lý trạng thái phòng thi (gmmState.js) & hub SSE (sseHub.js)
-│   └── utils/                    # Tiện ích HTTP, dò IP LAN & ghép template HTML phía server
+│   └── utils/                    # Tiện ích HTTP, dò IP LAN, ghép template HTML & lưu trữ JSON đồng bộ 2 chiều (jsonSyncStore.js)
 ├── scripts/
 │   ├── app.js                    # Khởi tạo và điều hướng logic chính của ứng dụng
-│   ├── audio.js                  # Hiệu ứng âm thanh trò chơi & giọng đọc AI
+│   ├── audio.js                  # Hiệu ứng âm thanh trò chơi, nhạc nền & giọng đọc AI
 │   ├── classManager.js           # Quản lý lớp học, nhập/chỉnh sửa danh sách học sinh thật
 │   ├── confetti.browser.min.js   # Thư viện hiệu ứng pháo hoa (chạy offline)
 │   ├── giaiMaArtworkScanner.js   # Chụp/quét và tối ưu ảnh tranh giấy A1 từ điện thoại
 │   ├── giaiMaBiMat.js            # Điều phối lõi & liên kết mô-đun Giải Mã Bí Mật
 │   ├── giaiMaLiveMonitor.js      # Giám sát kết nối nhịp tim & mở khóa từng đội (SSE)
 │   ├── giaiMaPrintBundle.js      # Xuất & in bộ đề, phiếu tô màu và đáp án
+│   ├── giaiMaPuzzleColorEditor.js # Chỉnh sửa, khóa màu bút dạ & thanh chọn màu nhanh trên tranh
 │   ├── giaiMaPuzzleData.js       # Dữ liệu ma trận tọa độ tranh Giải Mã Bí Mật
 │   ├── giaiMaPuzzleDecorators.js # Trang trí và hiển thị chi tiết ma trận tranh
-│   ├── giaiMaPuzzleGenerator.js  # Sinh ma trận SVG tranh tô màu theo tọa độ
+│   ├── giaiMaPuzzleGenerator.js  # Điều phối bộ công cụ sinh ma trận tranh & bộ sưu tập
+│   ├── giaiMaPuzzleGeneratorModalDom.js # Giao diện modal thiết kế ma trận tranh tự động
+│   ├── giaiMaPuzzleMeshEngine.js # Thuật toán sinh mảnh ghép Đa giác / Pixel / Lục giác tổ ong
+│   ├── giaiMaPuzzlePresetStore.js # Lưu trữ bộ sưu tập tranh, khóa màu & cấu hình in ấn
+│   ├── giaiMaPuzzleRasterizer.js # Bộ font Pixel-Block Tiếng Việt & chia dòng thông minh
+│   ├── giaiMaPuzzleVectorExport.js # Xuất file SVG vector gốc & bản in PDF khổ A1/A0/A4
 │   ├── giaiMaTeacherKey.js       # Màn hình đáp án chuẩn & nhạc nền cho giáo viên
 │   ├── gmmArtworkHost.js         # Bộ lọc Canvas AI, thu phóng tranh & nhận ảnh giấy trên Máy chiếu
+│   ├── gmmBuiltinSetsData.js     # Kho bộ đề mẫu tích hợp sẵn theo chủ đề
 │   ├── gmmCoordinator.js         # Điều phối mở/đóng modal chính, chọn vai trò & đặt lại ván mới
 │   ├── gmmDecryptJudge.js        # Giai đoạn giải mã tô tranh trên máy chiếu & BGK chấm điểm
+│   ├── gmmDocxVariantsExport.js  # Xuất bộ đề thi trắc nghiệm nhiều mã đề ra file Word (.docx)
+│   ├── gmmExamVariantsPrint.js   # In đề thi giấy nhiều mã đề (101–104) kèm đáp án
 │   ├── gmmExport.js              # Xuất phiếu PDF/Word/PNG/SVG & ảnh kỷ niệm lớp 2K
 │   ├── gmmExportTemplates.js     # Tạo mẫu HTML/CSS khổ A4 nằm ngang phục vụ xuất PDF & Microsoft Word
 │   ├── gmmHostArena.js           # Giao diện đấu trường 2 đội, đồng hồ đếm ngược & bảng kết quả trên máy chiếu
 │   ├── gmmHostSse.js             # Kênh phát SSE phía Máy chiếu, đồng hồ 3-2-1 & quản lý khóa màn hình WakeLock
 │   ├── gmmLobbyQr.js             # Phòng chờ mã QR 2 đội & tự động dò địa chỉ IP Wi-Fi LAN
+│   ├── gmmMathFormat.js          # Chuẩn hóa ký hiệu & hiển thị công thức Toán/Lý/Hóa bằng KaTeX
 │   ├── gmmMobileArtwork.js       # Giao diện tô màu SVG, xem lại câu sai & chụp ảnh giấy trên điện thoại
 │   ├── gmmMobileOffline.js       # Lưu LocalStorage & hàng đợi đồng bộ bù đáp án khi mạng Wi-Fi chập chờn
 │   ├── gmmMobileQuizUi.js        # Giao diện trả lời 10 câu hỏi, vuốt chạm & nộp bài trên điện thoại
 │   ├── gmmMobileSync.js          # Kết nối SSE phía điện thoại học sinh, tự bù độ trễ & khôi phục phiên mới
+│   ├── gmmPoolInspector.js       # Xem trước, tìm kiếm & chỉnh sửa nhanh câu hỏi trong kho đề lớn
 │   ├── gmmQuestionBank.js        # Bộ 10 câu hỏi chuẩn, trình soạn thảo & nhập/xuất Excel (XLSX)
+│   ├── gmmQuestionDocParser.js   # Phân tích văn bản đề thi dán nhanh (Word/PDF/Text)
+│   ├── gmmQuestionSetHelpers.js  # Thuật toán bốc câu không trùng, phát hiện câu tương đồng & trộn mã đề
+│   ├── gmmQuestionSets.js        # Quản lý ngân hàng bộ đề theo chủ đề & kho câu hỏi lớn
+│   ├── gmmServerPuzzlesSync.js   # Đồng bộ 2 chiều bộ sưu tập tranh tự tạo với Server JSON
+│   ├── gmmServerSetsSync.js      # Đồng bộ 2 chiều kho bộ đề giáo viên với Server JSON
 │   ├── gmmStageTeamUi.js         # Chế độ Sân khấu máy chiếu, đổi tên đội, ẩn/hiện đáp án & nhạc nền
+│   ├── gmmTeacherPresets.js      # Lưu/nạp/khôi phục cấu hình mặc định của giáo viên cho tiết sau
 │   ├── landing.js                # Giao diện trang chủ và danh mục trò chơi
 │   ├── matThuCoordinator.js      # Điều phối trò chơi lớn Giải Mã Mật Thư 20/11 & BXH SSE
 │   ├── matThuData.js             # Dữ liệu các trạm, chi đội và bộ đề Giải Mã Mật Thư

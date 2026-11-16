@@ -26,8 +26,8 @@
         <button type="button" class="gmm-stage-float-btn danger" onclick="GiaiMaBiMat.forceLockBothTeams()" title="Khóa bài và chốt điểm cho cả 2 đội">
           <span>🔒 Chốt Kết Quả</span>
         </button>
-        <button type="button" class="gmm-stage-float-btn" id="gmmStageFloatNextBtn" onclick="GiaiMaBiMat.switchTab('decrypt')" title="Chuyển sang Tab 4 để 2 đội bắt đầu Tô màu giải mã bức tranh" style="display: none; background: #059669; border-color: #34d399; color: #ffffff; font-weight: 800;">
-          <span>🎨 Mở Tab 4 Tô Màu ➔</span>
+        <button type="button" class="gmm-stage-float-btn" id="gmmStageFloatNextBtn" onclick="GiaiMaBiMat.switchTab('decrypt')" title="Chuyển sang Tab 3 để 2 đội bắt đầu Tô màu giải mã bức tranh" style="display: none; background: #059669; border-color: #34d399; color: #ffffff; font-weight: 800;">
+          <span>🎨 Mở Tab 3 Tô Màu ➔</span>
         </button>
         <button type="button" class="gmm-stage-float-btn exit" onclick="GiaiMaBiMat.toggleProjectorStageMode()" title="Thoát chế độ Sân Khấu (Phím ESC hoặc P)">
           <span>🖥️ Thoát Sân Khấu</span>
@@ -75,31 +75,31 @@
           <span>🎪</span>
           <span>1. Trang Chủ Game Show</span>
         </button>
-        <button class="gmm-tab-btn" data-tab="lobby" onclick="GiaiMaBiMat.switchTab('lobby')">
-          <span>📱</span>
-          <span>2. Phòng Chờ & QR 2 Đội</span>
-        </button>
         <button class="gmm-tab-btn" data-tab="quiz" onclick="GiaiMaBiMat.switchTab('quiz')">
           <span>❓</span>
-          <span>3. Đấu Trường 10 Câu Hỏi</span>
+          <span>2. Đấu Trường 10 Câu Hỏi</span>
         </button>
         <button class="gmm-tab-btn" data-tab="decrypt" onclick="GiaiMaBiMat.switchTab('decrypt')">
           <span>🎨</span>
-          <span>4. Tô Màu Giải Mã Tranh</span>
+          <span>3. Tô Màu Giải Mã Tranh</span>
         </button>
         <button class="gmm-tab-btn" data-tab="answer_key" onclick="GiaiMaBiMat.switchTab('answer_key')">
           <span>🖼️</span>
-          <span>5. Kết Quả Tranh Giáo Viên</span>
+          <span>4. Kết Quả Tranh Giáo Viên</span>
         </button>
         <button class="gmm-tab-btn" data-tab="result" onclick="GiaiMaBiMat.switchTab('result')">
           <span>🏆</span>
-          <span>6. Bảng Điểm & Tổng Kết</span>
+          <span>5. Bảng Điểm & Tổng Kết</span>
+        </button>
+        <button class="gmm-tab-btn" data-tab="settings" onclick="GiaiMaBiMat.switchTab('settings')">
+          <span>⚙️</span>
+          <span>6. Cài Đặt</span>
         </button>
       </div>
 
       <!-- Thân Modal -->
       <div class="gmm-body">
-        <!-- KHU VỰC 1: TRANG CHỦ -->
+        <!-- KHU VỰC 1: TRANG CHỦ & MÃ QR 2 ĐỘI -->
         <div id="gmmPanel_home" class="gmm-tab-panel active">
           <div class="gmm-home-container">
             <div class="gmm-banner-badge">✨ HOẠT ĐỘNG TRẢI NGHIỆM: XÂY DỰNG TRƯỜNG HỌC HẠNH PHÚC - NÓI KHÔNG VỚI BẠO LỰC ✨</div>
@@ -118,47 +118,41 @@
                 </button>
               </div>
 
-              <!-- Cổng Đội 1 -->
-              <div class="gmm-entry-card team-a" onclick="GiaiMaBiMat.openAsRole('teamA')">
-                <div class="gmm-entry-icon">🔴</div>
-                <div class="gmm-entry-title" id="gmmEntryTitleA">ĐỘI 1 (ĐOÀN KẾT) THAM GIA</div>
-                <div class="gmm-entry-desc">Trả lời 10 câu hỏi trắc nghiệm, mở khóa tọa độ ô màu tô bảng giấy A1 và giải mã biểu tượng: "Ngôi trường hạnh phúc không bạo lực".</div>
-                <button type="button" class="gmm-entry-btn">
-                  <span id="gmmEntryBtnA">Vào Phòng Đội 1</span>
-                  <span>➔</span>
-                </button>
+              <!-- QR Đội 1 -->
+              <div class="gmm-qr-box team-a">
+                <h4 id="gmmQrTitleA" style="margin: 0; color: #fca5a5; font-size: 1.15rem;">🔴 MÃ QR ĐỘI 1: ĐOÀN KẾT</h4>
+                <p id="gmmQrSubA" style="margin: 4px 0 0; font-size: 0.8rem; color: #cbd5e1;">Quét để nhận danh tính Đội 1 (Biểu tượng: "Ngôi trường hạnh phúc không bạo lực")</p>
+                <div id="gmmQrCanvasA" class="gmm-qr-canvas-wrap"></div>
+                <div class="gmm-team-link-row">
+                  <input type="text" id="gmmTeamLinkA" class="gmm-team-link-input" readonly value="Đang tạo link..." title="Link trực tiếp Đội 1">
+                  <button type="button" id="gmmBtnCopyTeamA" class="gmm-btn-copy-team team-a" onclick="GiaiMaBiMat.copyTeamUrl('A')" title="Sao chép link Đội 1">📋 Sao chép link ĐOÀN KẾT</button>
+                  <a id="gmmTestLinkA" href="#" target="_blank" class="gmm-btn-test-team" title="Mở thử nghiệm Đội 1 trên tab mới">🔗 Mở tab thử</a>
+                </div>
+                <div id="gmmTeamStatusA" class="gmm-team-status-indicator waiting">
+                  <span>⏳</span>
+                  <span id="gmmTeamStatusTextA">Đang chờ Đội 1 (ĐOÀN KẾT) quét mã...</span>
+                </div>
               </div>
 
-              <!-- Cổng Đội 2 -->
-              <div class="gmm-entry-card team-b" onclick="GiaiMaBiMat.openAsRole('teamB')">
-                <div class="gmm-entry-icon">🔵</div>
-                <div class="gmm-entry-title" id="gmmEntryTitleB">ĐỘI 2 (LA BÀN TUỔI TRẺ) THAM GIA</div>
-                <div class="gmm-entry-desc">Đối kháng cùng Đội 1, mở khóa tọa độ ô màu tô bảng giấy A1 và giải mã biểu tượng: "Trái tim thấu cảm – Tự tin tỏa sáng".</div>
-                <button type="button" class="gmm-entry-btn">
-                  <span id="gmmEntryBtnB">Vào Phòng Đội 2</span>
-                  <span>➔</span>
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <!-- KHU VỰC 2: PHÒNG CHỜ & QR -->
-        <div id="gmmPanel_lobby" class="gmm-tab-panel">
-          <div class="gmm-lobby-container">
-            <div class="gmm-lobby-header-bar">
-              <div>
-                <h3 style="margin: 0; font-size: 1.2rem; color: #f8fafc;">PHÒNG CHỜ ĐẤU TRÍ 2 ĐỘI</h3>
-                <p style="margin: 4px 0 0; font-size: 0.85rem; color: #94a3b8;">Học sinh dùng điện thoại hoặc máy tính bảng quét mã QR tương ứng với đội của mình</p>
-              </div>
-              <div class="gmm-room-code-tag">
-                <span style="font-size: 0.85rem; color: #94a3b8;">MÃ PHÒNG:</span>
-                <span class="gmm-room-code-pill">2011-THCS</span>
+              <!-- QR Đội 2 -->
+              <div class="gmm-qr-box team-b">
+                <h4 id="gmmQrTitleB" style="margin: 0; color: #93c5fd; font-size: 1.15rem;">🔵 MÃ QR ĐỘI 2: LA BÀN TUỔI TRẺ</h4>
+                <p id="gmmQrSubB" style="margin: 4px 0 0; font-size: 0.8rem; color: #cbd5e1;">Quét để nhận danh tính Đội 2 (Biểu tượng: "Trái tim thấu cảm – Tự tin tỏa sáng")</p>
+                <div id="gmmQrCanvasB" class="gmm-qr-canvas-wrap"></div>
+                <div class="gmm-team-link-row">
+                  <input type="text" id="gmmTeamLinkB" class="gmm-team-link-input" readonly value="Đang tạo link..." title="Link trực tiếp Đội 2">
+                  <button type="button" id="gmmBtnCopyTeamB" class="gmm-btn-copy-team team-b" onclick="GiaiMaBiMat.copyTeamUrl('B')" title="Sao chép link Đội 2">📋 Sao chép link LA BÀN TUỔI TRẺ</button>
+                  <a id="gmmTestLinkB" href="#" target="_blank" class="gmm-btn-test-team" title="Mở thử nghiệm Đội 2 trên tab mới">🔗 Mở tab thử</a>
+                </div>
+                <div id="gmmTeamStatusB" class="gmm-team-status-indicator waiting">
+                  <span>⏳</span>
+                  <span id="gmmTeamStatusTextB">Đang chờ Đội 2 (LA BÀN TUỔI TRẺ) quét mã...</span>
+                </div>
               </div>
             </div>
 
             <!-- THANH THÔNG TIN MẠNG WI-FI & ĐỊA CHỈ MÁY CHỦ CHO ĐIỆN THOẠI QUÉT QR -->
-            <div class="gmm-network-status-bar">
+            <div class="gmm-network-status-bar" style="width: 100%; margin-top: 18px; margin-bottom: 0; text-align: left;">
               <div class="gmm-net-info-left">
                 <span id="gmmNetBadge" class="gmm-net-badge online">🟢 Đang dò mạng...</span>
                 <span class="gmm-net-url-label">Địa chỉ IP kết nối:</span>
@@ -170,44 +164,6 @@
               <div class="gmm-net-notice">
                 <span>💡 <strong>Lưu ý:</strong> Điện thoại học sinh và máy tính giáo viên cần kết nối <strong>chung một mạng Wi-Fi</strong> (hoặc máy tính bắt Wi-Fi phát từ 4G điện thoại).</span>
               </div>
-            </div>
-
-            <div class="gmm-qr-cards-grid">
-              <!-- QR Đội 1 -->
-              <div class="gmm-qr-box team-a">
-                <h4 id="gmmQrTitleA" style="margin: 0; color: #fca5a5; font-size: 1.2rem;">🔴 MÃ QR ĐỘI 1: ĐOÀN KẾT</h4>
-                <p id="gmmQrSubA" style="margin: 4px 0 0; font-size: 0.82rem; color: #cbd5e1;">Quét để nhận danh tính Đội 1 (Biểu tượng: "Ngôi trường hạnh phúc không bạo lực")</p>
-                <div id="gmmQrCanvasA" class="gmm-qr-canvas-wrap"></div>
-                <div class="gmm-team-link-row">
-                  <input type="text" id="gmmTeamLinkA" class="gmm-team-link-input" readonly value="Đang tạo link..." title="Link trực tiếp Đội 1">
-                  <button type="button" id="gmmBtnCopyTeamA" class="gmm-btn-copy-team team-a" onclick="GiaiMaBiMat.copyTeamUrl('A')" title="Sao chép link Đội 1">📋 Sao chép link Đội 1</button>
-                  <a id="gmmTestLinkA" href="#" target="_blank" class="gmm-btn-test-team" title="Mở thử nghiệm Đội 1 trên tab mới">🔗 Mở tab thử</a>
-                </div>
-                <div id="gmmTeamStatusA" class="gmm-team-status-indicator waiting">
-                  <span>⏳</span>
-                  <span id="gmmTeamStatusTextA">Đang chờ Đội 1 (ĐOÀN KẾT) quét mã...</span>
-                </div>
-              </div>
-
-              <!-- QR Đội 2 -->
-              <div class="gmm-qr-box team-b">
-                <h4 id="gmmQrTitleB" style="margin: 0; color: #93c5fd; font-size: 1.2rem;">🔵 MÃ QR ĐỘI 2: LA BÀN TUỔI TRẺ</h4>
-                <p id="gmmQrSubB" style="margin: 4px 0 0; font-size: 0.82rem; color: #cbd5e1;">Quét để nhận danh tính Đội 2 (Biểu tượng: "Trái tim thấu cảm – Tự tin tỏa sáng")</p>
-                <div id="gmmQrCanvasB" class="gmm-qr-canvas-wrap"></div>
-                <div class="gmm-team-link-row">
-                  <input type="text" id="gmmTeamLinkB" class="gmm-team-link-input" readonly value="Đang tạo link..." title="Link trực tiếp Đội 2">
-                  <button type="button" id="gmmBtnCopyTeamB" class="gmm-btn-copy-team team-b" onclick="GiaiMaBiMat.copyTeamUrl('B')" title="Sao chép link Đội 2">📋 Sao chép link Đội 2</button>
-                  <a id="gmmTestLinkB" href="#" target="_blank" class="gmm-btn-test-team" title="Mở thử nghiệm Đội 2 trên tab mới">🔗 Mở tab thử</a>
-                </div>
-                <div id="gmmTeamStatusB" class="gmm-team-status-indicator waiting">
-                  <span>⏳</span>
-                  <span id="gmmTeamStatusTextB">Đang chờ Đội 2 (LA BÀN TUỔI TRẺ) quét mã...</span>
-                </div>
-              </div>
-            </div>
-
-            <div class="gmm-lobby-hint-bar">
-              <span>📱 Học sinh dùng điện thoại quét mã QR để vào Đội 1 hoặc Đội 2. Sau khi 2 đội kết nối xong, Thầy/Cô bấm tab <strong>[3. Đấu Trường 10 Câu Hỏi]</strong> để bắt đầu trò chơi.</span>
             </div>
           </div>
         </div>
@@ -239,8 +195,8 @@
                 <span>🔒 Chốt Kết Quả</span>
               </button>
 
-              <button type="button" id="gmmBtnNextToDecrypt" class="gmm-btn-match-ctrl" style="display: none; background: linear-gradient(135deg, #059669, #0d9488); border-color: #34d399; color: #ffffff; font-weight: 800;" onclick="GiaiMaBiMat.switchTab('decrypt')" title="Chuyển sang Tab 4 để 2 đội bắt đầu Tô màu giải mã bức tranh">
-                <span>🎨 Mở Tab 4 Tô Màu ➔</span>
+              <button type="button" id="gmmBtnNextToDecrypt" class="gmm-btn-match-ctrl" style="display: none; background: linear-gradient(135deg, #059669, #0d9488); border-color: #34d399; color: #ffffff; font-weight: 800;" onclick="GiaiMaBiMat.switchTab('decrypt')" title="Chuyển sang Tab 3 để 2 đội bắt đầu Tô màu giải mã bức tranh">
+                <span>🎨 Mở Tab 3 Tô Màu ➔</span>
               </button>
 
               <button type="button" id="gmmBtnRestartArena" class="gmm-btn-match-ctrl" style="display: none; border-color: rgba(56, 189, 248, 0.45); color: #7dd3fc;" onclick="GiaiMaBiMat.resetGame('quiz')" title="Đặt lại điểm số, xóa kết quả cũ trên điện thoại 2 đội và chơi lại từ đầu">
@@ -250,67 +206,6 @@
               <button type="button" id="gmmBtnStageMode" class="gmm-btn-match-ctrl stage-view" onclick="GiaiMaBiMat.toggleProjectorStageMode()" title="Chế độ 1 chạm Sân Khấu Máy Chiếu: Ẩn các nút kỹ thuật, phóng to đấu trường cho cả lớp theo dõi (Phím P)">
                 <span>📽️ Sân Khấu Máy Chiếu</span>
               </button>
-
-              <!-- NÚT CÀI ĐẶT & Ô CÀI ĐẶT GỘP TẤT CẢ TÙY CHỌN -->
-              <div class="gmm-settings-wrapper" id="gmmSettingsWrapper">
-                <button type="button" id="gmmBtnSettings" class="gmm-btn-match-ctrl settings-toggle" onclick="GiaiMaBiMat.toggleSettingsMenu(event)" title="Cài đặt tùy chỉnh trận đấu">
-                  <span>⚙️ Cài Đặt</span>
-                  <span class="gmm-settings-caret">▼</span>
-                </button>
-
-                <!-- Ô Cài Đặt Thả Xuống (Settings Popover Box) -->
-                <div id="gmmSettingsBox" class="gmm-settings-box" style="display: none;">
-                  <div class="gmm-settings-header">
-                    <span class="gmm-settings-title">⚙️ CÀI ĐẶT TRẬN ĐẤU</span>
-                    <button type="button" class="gmm-settings-close-btn" onclick="GiaiMaBiMat.closeSettingsMenu()" title="Đóng">&times;</button>
-                  </div>
-
-                  <div class="gmm-settings-body">
-                    <!-- NHÓM 1: QUẢN LÝ BỘ CÂU HỎI & MÃ Ô BÍ MẬT -->
-                    <div class="gmm-settings-section">
-                      <div class="gmm-settings-sec-title">🎯 Tùy Chỉnh Trận Đấu:</div>
-                      <div class="gmm-settings-grid">
-                        <button type="button" class="gmm-settings-item-btn" onclick="GiaiMaBiMat.openQuestionEditor(); GiaiMaBiMat.closeSettingsMenu();" title="Xem hoặc sửa bộ câu hỏi">
-                          <span>📝 Soạn Câu Hỏi</span>
-                        </button>
-                        <button type="button" class="gmm-settings-item-btn" onclick="GiaiMaBiMat.openTeamNameModal(); GiaiMaBiMat.closeSettingsMenu();" title="Đổi tên đại diện cho 2 đội">
-                          <span>🏷️ Đặt Tên 2 Đội</span>
-                        </button>
-                        <button type="button" id="gmmBtnStealthMode" class="gmm-settings-item-btn stealth" style="grid-column: span 2;" onclick="GiaiMaBiMat.toggleStealthMode()" title="Chế độ Ẩn Mã Ô Chưa Mở (Stealth Mode) trên máy chiếu: Chỉ hiện mã khi học sinh giải đúng ô đó">
-                          <span>🕵️ Mã Ô: Hiện Hết</span>
-                        </button>
-                      </div>
-                      <button type="button" class="gmm-settings-item-btn" style="width: 100%; margin-top: 8px; justify-content: center; border-color: rgba(56, 189, 248, 0.45); color: #7dd3fc; font-weight: 800;" onclick="GiaiMaBiMat.resetGame('quiz')" title="Xóa sạch kết quả ván cũ trên máy chủ & điện thoại 2 đội để chơi lại từ đầu">
-                        <span>🔄 Đặt Lại & Chơi Lại Từ Đầu</span>
-                      </button>
-                    </div>
-
-                    <!-- NHÓM 2: NHẠC NỀN & GIAI ĐIỆU TRẬN ĐẤU -->
-                    <div class="gmm-settings-section">
-                      <div class="gmm-settings-sec-title">🎵 Âm Thanh & Giai Điệu:</div>
-                      <div class="gmm-settings-grid">
-                        <button type="button" id="gmmBtnBattleMusic" class="gmm-settings-item-btn music" onclick="GiaiMaBiMat.toggleBattleMusic()" title="Bật/Tắt nhạc nền gameshow đối kháng">
-                          <span>🎵 Nhạc Thi Đấu: Tắt</span>
-                        </button>
-                        <button type="button" id="gmmBtnBattleMusicMode" class="gmm-settings-item-btn music-mode epic" onclick="GiaiMaBiMat.toggleBattleMusicGenre()" title="Đổi thể loại: Kịch tính (124 BPM) hoặc Nhẹ nhàng tập trung (84 BPM Lofi)">
-                          <span>🔥 Giai Điệu: Kịch Tính</span>
-                        </button>
-                      </div>
-                    </div>
-
-                    <!-- NHÓM 3: THỜI LƯỢNG TRẬN ĐẤU -->
-                    <div class="gmm-settings-section">
-                      <div class="gmm-settings-sec-title">⏱️ Thời Lượng Trận Đấu:</div>
-                      <div id="gmmDurationPresetGroup" class="gmm-settings-time-preset">
-                        <button type="button" class="gmm-time-preset-btn" id="gmmTimeBtn_60" onclick="GiaiMaBiMat.setMatchDuration(60)">1 Phút</button>
-                        <button type="button" class="gmm-time-preset-btn" id="gmmTimeBtn_90" onclick="GiaiMaBiMat.setMatchDuration(90)">1p 30s</button>
-                        <button type="button" class="gmm-time-preset-btn primary" id="gmmTimeBtn_120" onclick="GiaiMaBiMat.setMatchDuration(120)">2 Phút</button>
-                        <button type="button" class="gmm-time-preset-btn" id="gmmTimeBtn_180" onclick="GiaiMaBiMat.setMatchDuration(180)">3 Phút</button>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </div>
             </div>
           </div>
 
@@ -434,87 +329,6 @@
               <button type="button" class="gmm-btn-ctrl" id="gmmBtnCanvasThemeTab4" style="padding: 7px 13px; font-size: 0.83rem; font-weight: 800; background: linear-gradient(135deg, #f59e0b, #d97706); border: 1.5px solid #fde68a; color: #ffffff;" onclick="GiaiMaBiMat.toggleCanvasTheme()" title="Chuyển đổi giao diện Bảng Tranh: Nền Giấy Trắng A1 (Rõ nét trên Tivi/Máy chiếu) hoặc Nền Tối Sân Khấu">
                 <span id="gmmBtnCanvasThemeText">📄 Nền Giấy A1 (Chiếu TV)</span>
               </button>
-
-              <!-- NÚT CÀI ĐẶT & Ô CÀI ĐẶT CHO TAB 4 -->
-              <div class="gmm-settings-wrapper" id="gmmSettingsWrapperTab4">
-                <button type="button" id="gmmBtnSettingsTab4" class="gmm-btn-match-ctrl settings-toggle" onclick="GiaiMaBiMat.toggleSettingsMenuTab4(event)" title="Cài đặt & Tùy chọn chặng tô màu">
-                  <span>⚙️ Cài Đặt</span>
-                  <span class="gmm-settings-caret">▼</span>
-                </button>
-
-                <!-- Ô Cài Đặt Thả Xuống (Settings Popover Box của Tab 4) -->
-                <div id="gmmSettingsBoxTab4" class="gmm-settings-box" style="display: none; width: 350px;">
-                  <div class="gmm-settings-header">
-                    <span class="gmm-settings-title">⚙️ CÀI ĐẶT TÔ MÀU & GIẢI MÃ</span>
-                    <button type="button" class="gmm-settings-close-btn" onclick="GiaiMaBiMat.closeSettingsMenuTab4()" title="Đóng">&times;</button>
-                  </div>
-
-                  <div class="gmm-settings-body">
-                    <!-- NHÓM 1: CÔNG CỤ XUẤT IN & KỶ NIỆM (TỪ 2 KHUNG ĐỎ) -->
-                    <div class="gmm-settings-section">
-                      <div class="gmm-settings-sec-title">🖨️ Xuất In & Bộ Sưu Tập Tranh:</div>
-                      <div class="gmm-settings-grid">
-                        <button type="button" class="gmm-settings-item-btn primary" onclick="GiaiMaBiMat.openExportWorksheetModal(); GiaiMaBiMat.closeSettingsMenuTab4();" title="Xuất file tranh tô màu ra khổ giấy A4 ngang full trang">
-                          <span>🖨️ Xuất File In A4</span>
-                        </button>
-                        <button type="button" class="gmm-settings-item-btn" style="background: linear-gradient(135deg, rgba(5, 150, 105, 0.3), rgba(13, 148, 136, 0.4)); border-color: #34d399; color: #a7f3d0;" onclick="GiaiMaPuzzleGenerator.openGeneratorModal(); GiaiMaBiMat.closeSettingsMenuTab4();" title="Tạo ma trận từ thông điệp bất kỳ, chèn biểu tượng & sửa tên màu bút dạ">
-                          <span>✨ Tạo Tranh & BST</span>
-                        </button>
-                      </div>
-                      <button type="button" class="gmm-settings-item-btn" style="width: 100%; margin-top: 5px; background: linear-gradient(135deg, #c2410c, #9a3412); border-color: #fdba74; color: #fff7ed; font-weight: 800;" onclick="if(window.GiaiMaPrintBundle)GiaiMaPrintBundle.openOneClickPrintBundle(); GiaiMaBiMat.closeSettingsMenuTab4();" title="Xuất đồng bộ 1 chạm: Phiếu Học Sinh + Đáp Án Màu Giám Khảo + Bảng 10 Câu Hỏi">
-                        <span>📦 Xuất Gói Học Liệu In 1 Chạm (Đủ Bộ)</span>
-                      </button>
-                      <button type="button" class="gmm-settings-item-btn" style="width: 100%; margin-top: 4px; background: linear-gradient(135deg, rgba(124, 58, 237, 0.3), rgba(79, 70, 229, 0.4)); border-color: #a78bfa; color: #e0e7ff;" onclick="GiaiMaBiMat.exportClassMemorySnapshot(); GiaiMaBiMat.closeSettingsMenuTab4();" title="Chụp và tải ảnh kỷ niệm bức tranh lớp học chất lượng cao">
-                        <span>📸 Tải Ảnh Kỷ Niệm Lớp Học</span>
-                      </button>
-                    </div>
-
-                    <!-- NHÓM 2: CÔNG CỤ TÔ MÀU & MÃ Ô (TỪ KHUNG ĐỎ) -->
-                    <div class="gmm-settings-section">
-                      <div class="gmm-settings-sec-title">🎨 Xem Trước & Tọa Độ Ô:</div>
-                      <div class="gmm-settings-grid">
-                        <button type="button" class="gmm-settings-item-btn" onclick="GiaiMaBiMat.autoColorDemo(); GiaiMaBiMat.closeSettingsMenuTab4();" title="Tô màu mẫu thử hoàn thiện bức tranh">
-                          <span>⚡ Tô Mẫu Thử</span>
-                        </button>
-                        <button type="button" class="gmm-settings-item-btn" onclick="GiaiMaBiMat.openTeamNameModal(); GiaiMaBiMat.closeSettingsMenuTab4();" title="Đổi tên đại diện cho 2 đội">
-                          <span>🏷️ Đặt Tên 2 Đội</span>
-                        </button>
-                        <button type="button" id="gmmBtnStealthModeTab4" class="gmm-settings-item-btn stealth" style="grid-column: span 2;" onclick="GiaiMaBiMat.toggleStealthMode()" title="Chế độ Ẩn Mã Ô Chưa Mở (Stealth Mode) trên máy chiếu">
-                          <span>🕵️ Mã Ô: Hiện Hết</span>
-                        </button>
-                        <button type="button" id="gmmBtnDateSepTab4" class="gmm-settings-item-btn" style="grid-column: span 2; border-color: rgba(56, 189, 248, 0.45); color: #e0f2fe;" onclick="if(window.GiaiMaPuzzle&amp;&amp;GiaiMaPuzzle.toggleDateSeparatorStyle)GiaiMaPuzzle.toggleDateSeparatorStyle()" title="Chuyển nhanh kiểu dấu phân cách ngày lễ 20/11 (hiện đại) hoặc 20-11 (giấy in truyền thống)">
-                          <span>📅 Ngày lễ: 20/11 (Đổi sang 20-11)</span>
-                        </button>
-                        <button type="button" id="gmmBtnCanvasThemeSettings" class="gmm-settings-item-btn" style="grid-column: span 2; border-color: #fde68a; color: #fde047;" onclick="GiaiMaBiMat.toggleCanvasTheme(); GiaiMaBiMat.closeSettingsMenuTab4();" title="Đổi màu nền hiển thị bảng tranh">
-                          <span>📄 Nền Tranh: Giấy Trắng A1 (Đổi sang Nền Tối)</span>
-                        </button>
-                      </div>
-                    </div>
-
-                    <!-- NHÓM 3: THỜI LƯỢNG TÔ TRANH HỌC SINH -->
-                    <div class="gmm-settings-section">
-                      <div class="gmm-settings-sec-title">⏱️ Thời Lượng Tô Tranh Giấy A1:</div>
-                      <div id="gmmDecryptPresetGroup" class="gmm-settings-time-preset">
-                        <button type="button" class="gmm-time-preset-btn" id="gmmDecTimeBtn_180" onclick="GiaiMaBiMat.setDecryptDuration(180)">3 Phút</button>
-                        <button type="button" class="gmm-time-preset-btn primary" id="gmmDecTimeBtn_300" onclick="GiaiMaBiMat.setDecryptDuration(300)">5 Phút</button>
-                        <button type="button" class="gmm-time-preset-btn" id="gmmDecTimeBtn_420" onclick="GiaiMaBiMat.setDecryptDuration(420)">7 Phút</button>
-                      </div>
-                    </div>
-
-                    <!-- NHÓM 4: CHẾ ĐỘ PHÓNG TO TOÀN MÀN HÌNH -->
-                    <div class="gmm-settings-section">
-                      <div class="gmm-settings-sec-title">🖥️ Chế Độ Phóng To Đếm Ngược:</div>
-                      <button type="button" class="gmm-settings-item-btn" style="width: 100%; background: linear-gradient(135deg, rgba(2, 132, 199, 0.35), rgba(14, 165, 233, 0.45)); border-color: #38bdf8; color: #f0f9ff; font-weight: 800;" onclick="GiaiMaBiMat.openDecryptTimerFullscreen(); GiaiMaBiMat.closeSettingsMenuTab4();" title="Mở bảng đồng hồ đếm ngược to toàn màn hình máy chiếu">
-                        <span>⛶ Phóng To Đồng Hồ Full Màn Hình</span>
-                      </button>
-                      <label style="display: flex; align-items: center; gap: 8px; font-size: 0.8rem; color: #cbd5e1; cursor: pointer; margin-top: 8px; user-select: none;">
-                        <input type="checkbox" id="gmmCheckAutoFsOnTimerStart" onchange="GiaiMaBiMat.toggleAutoFsOnTimerStart(this.checked)" style="accent-color: #38bdf8; width: 15px; height: 15px; cursor: pointer;">
-                        <span>Tự động bung Full màn hình khi bấm Bắt Đầu</span>
-                      </label>
-                    </div>
-                  </div>
-                </div>
-              </div>
             </div>
           </div>
 
@@ -807,10 +621,6 @@
                 <span>🖨️ In Đáp Án Màu A4</span>
               </button>
 
-              <button type="button" id="gmmTkBtnPrintBundle" class="gmm-tk-ctrl-btn bundle-print" onclick="if(window.GiaiMaPrintBundle)GiaiMaPrintBundle.openOneClickPrintBundle()" title="Xuất trọn bộ 1 chạm: Phiếu Học Sinh (A4/A3/A1) + Đáp Án Màu Giám Khảo + Bảng 10 Câu Hỏi &amp; Kịch Bản MC">
-                <span>📦 Gói Học Liệu 1 Chạm</span>
-              </button>
-
               <button type="button" id="gmmTkBtnMusic" class="gmm-tk-ctrl-btn music-btn" onclick="GiaiMaTeacherKey.toggleThemeSongToolbar()" title="Bật / Tạm dừng bài hát Thương Lắm Thầy Cô Ơi (Tự động cất tiếng khi phóng to tranh)">
                 <span>🎵 Thương Lắm Thầy Cô Ơi</span>
               </button>
@@ -872,17 +682,195 @@
             </div>
           </div>
         </div>
+
+        <!-- KHU VỰC 6: TRUNG TÂM CÀI ĐẶT & HỌC LIỆU -->
+        <div id="gmmPanel_settings" class="gmm-tab-panel">
+          <div class="gmm-settings-tab-container" style="max-width: 1180px; margin: 0 auto;">
+            <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; background: rgba(30, 41, 59, 0.75); padding: 14px 22px; border-radius: 14px; border: 1px solid rgba(255, 255, 255, 0.1); flex-wrap: wrap; gap: 12px;">
+              <div>
+                <h3 style="margin: 0; font-size: 1.25rem; color: #fde047;">⚙️ TRUNG TÂM CÀI ĐẶT TRẬN ĐẤU, TÔ MÀU & XUẤT HỌC LIỆU IN</h3>
+                <p style="margin: 4px 0 0; font-size: 0.85rem; color: #cbd5e1;">Tùy chỉnh bộ 10 câu hỏi, thời lượng thi đấu, âm thanh, chế độ hiển thị tranh giấy A1 và xuất bộ phiếu in cho học sinh</p>
+              </div>
+              <div style="display: flex; gap: 10px; flex-wrap: wrap; align-items: center;">
+                <button type="button" class="gmm-btn-ctrl" style="background: linear-gradient(135deg, #059669, #0d9488); border: 1.5px solid #34d399; color: #ffffff; font-weight: 800; box-shadow: 0 4px 14px rgba(16, 185, 129, 0.35);" onclick="GiaiMaBiMat.saveDefaultSettingsForNextClass()" title="Lưu toàn bộ thiết lập hiện tại (thời lượng, nền tranh, nhạc nền, âm lượng) làm mặc định cho các lớp sau">
+                  <span>💾 Lưu Cấu Hình Mặc Định Cho Lớp Sau</span>
+                </button>
+                <button type="button" class="gmm-btn-ctrl secondary" onclick="GiaiMaBiMat.switchTab('quiz')" title="Quay về Đấu trường 10 câu hỏi">❓ Về Tab 2 (Đấu Trường)</button>
+                <button type="button" class="gmm-btn-ctrl primary" onclick="GiaiMaBiMat.switchTab('decrypt')" title="Chuyển sang Tab 3 Tô màu giải mã tranh">🎨 Về Tab 3 (Tô Màu Tranh)</button>
+              </div>
+            </div>
+
+            <!-- THANH TÓM TẮT TRẠNG THÁI CÀI ĐẶT HIỆN HÀNH (NHÌN LƯỚT 1 GIÂY NẮM TOÀN BỘ CẤU HÌNH) -->
+            <div id="gmmSettingsSummaryBar" class="gmm-settings-summary-bar" style="background: linear-gradient(135deg, rgba(15, 23, 42, 0.92), rgba(30, 41, 59, 0.88)); border: 1px solid rgba(56, 189, 248, 0.35); border-left: 4px solid #38bdf8; border-radius: 12px; padding: 10px 18px; margin-bottom: 18px; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 10px;">
+              <div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap; font-size: 0.88rem; color: #f1f5f9;">
+                <span style="color: #38bdf8; font-weight: 800;">📌 Đang chọn:</span>
+                <span id="gmmSettingsSummaryText" style="font-weight: 600; color: #e2e8f0;">Bộ 10 câu hỏi Kỹ năng sống • Tranh: "TRI ÂN THẦY CÔ 20/11" • Trắc nghiệm: 2 phút • Tô tranh: 5 phút • Nền: Giấy trắng A1 • Nhạc nền: Kịch tính (70%)</span>
+              </div>
+              <div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
+                <button type="button" id="gmmBtnQuickViewAppliedPuzzle" onclick="GiaiMaBiMat.switchTab('decrypt')" style="display: none; align-items: center; gap: 6px; padding: 4px 12px; border-radius: 999px; background: linear-gradient(135deg, #0284c7, #2563eb); border: 1px solid #38bdf8; color: #ffffff; font-size: 0.78rem; font-weight: 800; cursor: pointer; box-shadow: 0 0 12px rgba(56, 189, 248, 0.45);" title="Chuyển ngay sang Tab 3 để xem bức tranh vừa tạo trên 2 bảng Đội 1 & Đội 2">
+                  <span>🎨 Chuyển Sang Tab 3 Xem Tranh Vừa Tạo ➔</span>
+                </button>
+                <span id="gmmSettingsSavedBadge" style="font-size: 0.78rem; padding: 3px 10px; border-radius: 999px; background: rgba(16, 185, 129, 0.15); border: 1px solid rgba(16, 185, 129, 0.35); color: #6ee7b7; font-weight: 700;">✅ Áp dụng tức thì</span>
+              </div>
+            </div>
+
+            <div class="gmm-settings-tab-grid" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(460px, 1fr)); gap: 20px; align-items: start;">
+              <!-- CỘT 1: CÀI ĐẶT TÔ MÀU, GIẢI MÃ & XUẤT HỌC LIỆU IN -->
+              <div class="gmm-settings-card" style="background: rgba(15, 23, 42, 0.82); border: 1px solid rgba(56, 189, 248, 0.25); border-radius: 16px; padding: 20px; display: flex; flex-direction: column; gap: 16px;">
+                <div style="font-size: 1.05rem; font-weight: 800; color: #38bdf8; border-bottom: 1px solid rgba(255, 255, 255, 0.08); padding-bottom: 10px;">
+                  🎨 CÀI ĐẶT TÔ MÀU & GIẢI MÃ TRANH
+                </div>
+
+                <!-- NHÓM 1: CÔNG CỤ XUẤT IN & KỶ NIỆM (ĐỒNG BỘ 1 NÚT IN DUY NHẤT + 1 NÚT TẠO TRANH) -->
+                <div class="gmm-settings-section">
+                  <div class="gmm-settings-sec-title">🖨️ Xuất In & Bộ Sưu Tập Tranh:</div>
+                  <div class="gmm-settings-grid">
+                    <button type="button" class="gmm-settings-item-btn primary" onclick="GiaiMaBiMat.openExportWorksheetModal();" title="Trung tâm Xuất & In Học Liệu đồng bộ: Phiếu Học Sinh (A4 / Bạt A1) + Đáp Án Màu Giám Khảo + Gói Học Liệu 1 Chạm">
+                      <span>🖨️ Xuất File In A4</span>
+                    </button>
+                    <button type="button" class="gmm-settings-item-btn" style="background: linear-gradient(135deg, rgba(5, 150, 105, 0.3), rgba(13, 148, 136, 0.4)); border-color: #34d399; color: #a7f3d0;" onclick="GiaiMaPuzzleGenerator.openGeneratorModal();" title="Tạo ma trận từ thông điệp bất kỳ, chèn biểu tượng, khóa màu bút dạ & quản lý Bộ sưu tập">
+                      <span>✨ Tạo Tranh & BST</span>
+                    </button>
+                  </div>
+                  <button type="button" class="gmm-settings-item-btn" style="width: 100%; margin-top: 8px; background: linear-gradient(135deg, rgba(124, 58, 237, 0.3), rgba(79, 70, 229, 0.4)); border-color: #a78bfa; color: #e0e7ff; justify-content: center;" onclick="GiaiMaBiMat.exportClassMemorySnapshot();" title="Chụp và tải ảnh kỷ niệm bức tranh lớp học chất lượng cao">
+                    <span>📸 Tải Ảnh Kỷ Niệm Lớp Học</span>
+                  </button>
+                </div>
+
+                <!-- NHÓM 2: CÔNG CỤ TÔ MÀU & MÃ Ô -->
+                <div class="gmm-settings-section">
+                  <div class="gmm-settings-sec-title">🎨 Xem Trước & Tọa Độ Ô:</div>
+                  <div class="gmm-settings-grid">
+                    <button type="button" class="gmm-settings-item-btn" onclick="GiaiMaBiMat.autoColorDemo(); GiaiMaBiMat.switchTab('decrypt');" title="Tô màu mẫu thử hoàn thiện bức tranh và chuyển sang Tab 3">
+                      <span>⚡ Tô Mẫu Thử</span>
+                    </button>
+                    <button type="button" class="gmm-settings-item-btn" onclick="GiaiMaBiMat.openTeamNameModal();" title="Đổi tên đại diện cho 2 đội">
+                      <span>🏷️ Đặt Tên 2 Đội</span>
+                    </button>
+                    <button type="button" id="gmmBtnStealthModeTab4" class="gmm-settings-item-btn stealth" style="grid-column: span 2;" onclick="GiaiMaBiMat.toggleStealthMode()" title="Chế độ Ẩn Mã Ô Chưa Mở (Stealth Mode) trên máy chiếu">
+                      <span>🕵️ Mã Ô: Hiện Hết</span>
+                    </button>
+                    <button type="button" id="gmmBtnDateSepTab4" class="gmm-settings-item-btn" style="grid-column: span 2; border-color: rgba(56, 189, 248, 0.45); color: #e0f2fe;" onclick="if(window.GiaiMaPuzzle&amp;&amp;GiaiMaPuzzle.toggleDateSeparatorStyle)GiaiMaPuzzle.toggleDateSeparatorStyle()" title="Chuyển nhanh kiểu dấu phân cách ngày lễ 20/11 (hiện đại) hoặc 20-11 (giấy in truyền thống)">
+                      <span>📅 Ngày lễ: 20/11 (Đổi sang 20-11)</span>
+                    </button>
+                    <button type="button" id="gmmBtnCanvasThemeSettings" class="gmm-settings-item-btn" style="grid-column: span 2; border-color: #fde68a; color: #fde047;" onclick="GiaiMaBiMat.toggleCanvasTheme();" title="Đổi màu nền hiển thị bảng tranh">
+                      <span>📄 Nền Tranh: Giấy Trắng A1 (Đổi sang Nền Tối)</span>
+                    </button>
+                  </div>
+                </div>
+
+                <!-- NHÓM 3: THỜI LƯỢNG TÔ TRANH HỌC SINH -->
+                <div class="gmm-settings-section">
+                  <div class="gmm-settings-sec-title">⏱️ Thời Lượng Tô Tranh Giấy A1:</div>
+                  <div id="gmmDecryptPresetGroup" class="gmm-settings-time-preset">
+                    <button type="button" class="gmm-time-preset-btn" id="gmmDecTimeBtn_180" onclick="GiaiMaBiMat.setDecryptDuration(180)">3 Phút</button>
+                    <button type="button" class="gmm-time-preset-btn primary" id="gmmDecTimeBtn_300" onclick="GiaiMaBiMat.setDecryptDuration(300)">5 Phút</button>
+                    <button type="button" class="gmm-time-preset-btn" id="gmmDecTimeBtn_420" onclick="GiaiMaBiMat.setDecryptDuration(420)">7 Phút</button>
+                  </div>
+                </div>
+
+                <!-- NHÓM 4: CHẾ ĐỘ PHÓNG TO TOÀN MÀN HÌNH -->
+                <div class="gmm-settings-section">
+                  <div class="gmm-settings-sec-title">🖥️ Chế Độ Phóng To Đếm Ngược:</div>
+                  <button type="button" class="gmm-settings-item-btn" style="width: 100%; background: linear-gradient(135deg, rgba(2, 132, 199, 0.35), rgba(14, 165, 233, 0.45)); border-color: #38bdf8; color: #f0f9ff; font-weight: 800; justify-content: center;" onclick="GiaiMaBiMat.openDecryptTimerFullscreen();" title="Mở bảng đồng hồ đếm ngược to toàn màn hình máy chiếu">
+                    <span>⛶ Phóng To Đồng Hồ Full Màn Hình</span>
+                  </button>
+                  <label style="display: flex; align-items: center; gap: 8px; font-size: 0.84rem; color: #cbd5e1; cursor: pointer; margin-top: 8px; user-select: none;">
+                    <input type="checkbox" id="gmmCheckAutoFsOnTimerStart" onchange="GiaiMaBiMat.toggleAutoFsOnTimerStart(this.checked)" style="accent-color: #38bdf8; width: 16px; height: 16px; cursor: pointer;">
+                    <span>Tự động bung Full màn hình khi bấm Bắt Đầu</span>
+                  </label>
+                </div>
+              </div>
+
+              <!-- CỘT 2: CÀI ĐẶT ĐẤU TRƯỜNG 10 CÂU HỎI & ÂM THANH -->
+              <div class="gmm-settings-card" style="background: rgba(15, 23, 42, 0.82); border: 1px solid rgba(250, 204, 21, 0.25); border-radius: 16px; padding: 20px; display: flex; flex-direction: column; gap: 16px;">
+                <div style="font-size: 1.05rem; font-weight: 800; color: #fde047; border-bottom: 1px solid rgba(255, 255, 255, 0.08); padding-bottom: 10px;">
+                  ⚔️ CÀI ĐẶT ĐẤU TRƯỜNG 10 CÂU HỎI & ÂM THANH
+                </div>
+
+                <!-- NHÓM 1: QUẢN LÝ BỘ CÂU HỎI & MÃ Ô BÍ MẬT -->
+                <div class="gmm-settings-section">
+                  <div class="gmm-settings-sec-title">🎯 Tùy Chỉnh Trận Đấu & Câu Hỏi:</div>
+                  <div class="gmm-settings-grid">
+                    <button type="button" class="gmm-settings-item-btn primary" onclick="GiaiMaBiMat.openQuestionEditor();" title="Xem, sửa hoặc nhập/xuất Excel bộ 10 câu hỏi">
+                      <span>📝 Soạn Câu Hỏi</span>
+                    </button>
+                    <button type="button" class="gmm-settings-item-btn" onclick="GiaiMaBiMat.openTeamNameModal();" title="Đổi tên đại diện cho 2 đội">
+                      <span>🏷️ Đặt Tên 2 Đội</span>
+                    </button>
+                    <button type="button" id="gmmBtnStealthMode" class="gmm-settings-item-btn stealth" style="grid-column: span 2;" onclick="GiaiMaBiMat.toggleStealthMode()" title="Chế độ Ẩn Mã Ô Chưa Mở (Stealth Mode) trên máy chiếu: Chỉ hiện mã khi học sinh giải đúng ô đó">
+                      <span>🕵️ Mã Ô: Hiện Hết</span>
+                    </button>
+                  </div>
+                  <button type="button" class="gmm-settings-item-btn" style="width: 100%; margin-top: 8px; justify-content: center; border-color: rgba(56, 189, 248, 0.45); color: #7dd3fc; font-weight: 800;" onclick="GiaiMaBiMat.resetGame('quiz')" title="Xóa sạch kết quả ván cũ trên máy chủ & điện thoại 2 đội để chơi lại từ đầu">
+                    <span>🔄 Đặt Lại & Chơi Lại Từ Đầu</span>
+                  </button>
+                </div>
+
+                <!-- NHÓM 2: NHẠC NỀN & GIAI ĐIỆU TRẬN ĐẤU -->
+                <div class="gmm-settings-section">
+                  <div class="gmm-settings-sec-title">🎵 Âm Thanh & Giai Điệu Thi Đấu:</div>
+                  <div class="gmm-settings-grid">
+                    <button type="button" id="gmmBtnBattleMusic" class="gmm-settings-item-btn music" onclick="GiaiMaBiMat.toggleBattleMusic()" title="Bật/Tắt nhạc nền gameshow đối kháng">
+                      <span>🎵 Nhạc Thi Đấu: Tắt</span>
+                    </button>
+                    <button type="button" id="gmmBtnBattleMusicMode" class="gmm-settings-item-btn music-mode epic" onclick="GiaiMaBiMat.toggleBattleMusicGenre()" title="Đổi thể loại: Kịch tính (124 BPM) hoặc Nhẹ nhàng tập trung (84 BPM Lofi)">
+                      <span>🔥 Giai Điệu: Kịch Tính</span>
+                    </button>
+                  </div>
+
+                  <!-- THANH TRƯỢT ĐIỀU CHỈNH ÂM LƯỢNG NHẠC NỀN (VOLUME SLIDER 10% - 100%) -->
+                  <div style="margin-top: 10px; background: rgba(15, 23, 42, 0.65); border: 1px solid rgba(255, 255, 255, 0.08); border-radius: 10px; padding: 10px 12px;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px; font-size: 0.82rem; color: #cbd5e1;">
+                      <span style="font-weight: 700;">🔊 Âm lượng nhạc nền (Không át giọng giảng bài):</span>
+                      <strong id="gmmBattleMusicVolumeVal" style="color: #38bdf8; font-size: 0.88rem; background: rgba(56, 189, 248, 0.15); padding: 2px 8px; border-radius: 999px; border: 1px solid rgba(56, 189, 248, 0.3);">70%</strong>
+                    </div>
+                    <div style="display: flex; align-items: center; gap: 10px;">
+                      <span style="font-size: 0.76rem; color: #94a3b8; font-weight: 700;">10%</span>
+                      <input type="range" id="gmmBattleMusicVolumeSlider" min="10" max="100" step="5" value="70" oninput="GiaiMaBiMat.setBattleMusicVolume(this.value)" style="flex: 1; accent-color: #38bdf8; cursor: pointer; height: 6px;">
+                      <span style="font-size: 0.76rem; color: #94a3b8; font-weight: 700;">100%</span>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- NHÓM 3: THỜI LƯỢNG TRẬN ĐẤU -->
+                <div class="gmm-settings-section">
+                  <div class="gmm-settings-sec-title">⏱️ Thời Lượng Trận Đấu 10 Câu Hỏi:</div>
+                  <div id="gmmDurationPresetGroup" class="gmm-settings-time-preset">
+                    <button type="button" class="gmm-time-preset-btn" id="gmmTimeBtn_60" onclick="GiaiMaBiMat.setMatchDuration(60)">1 Phút</button>
+                    <button type="button" class="gmm-time-preset-btn" id="gmmTimeBtn_90" onclick="GiaiMaBiMat.setMatchDuration(90)">1p 30s</button>
+                    <button type="button" class="gmm-time-preset-btn primary" id="gmmTimeBtn_120" onclick="GiaiMaBiMat.setMatchDuration(120)">2 Phút</button>
+                    <button type="button" class="gmm-time-preset-btn" id="gmmTimeBtn_180" onclick="GiaiMaBiMat.setMatchDuration(180)">3 Phút</button>
+                  </div>
+                </div>
+
+                <!-- NHÓM 4: LƯU CẤU HÌNH MẶC ĐỊNH CHO LỚP SAU -->
+                <div class="gmm-settings-section">
+                  <div class="gmm-settings-sec-title">💾 Lưu Thiết Lập Mặc Định Cho Các Tiết Dạy Tiếp Theo:</div>
+                  <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+                    <button type="button" class="gmm-settings-item-btn" style="flex: 1; justify-content: center; background: linear-gradient(135deg, rgba(5, 150, 105, 0.35), rgba(16, 185, 129, 0.45)); border-color: #34d399; color: #ecfdf5; font-weight: 800;" onclick="GiaiMaBiMat.saveDefaultSettingsForNextClass()" title="Lưu toàn bộ cấu hình hiện tại vào trình duyệt để tiết dạy sau tự động áp dụng sẵn 100%">
+                      <span>💾 Lưu Cấu Hình Mặc Định Cho Lớp Sau</span>
+                    </button>
+                    <button type="button" class="gmm-settings-item-btn" style="justify-content: center; border-color: rgba(148, 163, 184, 0.35); color: #cbd5e1;" onclick="GiaiMaBiMat.resetDefaultTeacherSettings()" title="Khôi phục về cấu hình chuẩn ban đầu (Trắc nghiệm 2p, Tô tranh 5p, Giấy trắng A1, Nhạc 70%)">
+                      <span>↺ Mặc Định Gốc</span>
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
 
-      <!-- ==================== SUBMODAL: XUẤT & IN PHIẾU MA TRẬN TRANH A4 (PDF & WORD) ==================== -->
+      <!-- ==================== SUBMODAL: TRUNG TÂM XUẤT & IN PHIẾU HỌC LIỆU ĐỒNG BỘ (A4 / BẠT A1 / GÓI 1 CHẠM) ==================== -->
       <div id="gmmExportWorksheetModal" class="gmm-submodal-overlay" style="display: none;" onclick="if(event.target===this)GiaiMaBiMat.closeExportModal()">
         <div class="gmm-submodal-card gmm-export-modal-card">
           <div class="gmm-submodal-header">
             <div style="display: flex; align-items: center; gap: 10px;">
               <span style="font-size: 1.5rem;">🖨️</span>
               <div>
-                <h3 style="margin: 0; font-size: 1.18rem; color: #fde047;">XUẤT PHIẾU TRANH MA TRẬN CHO HỌC SINH TÔ MÀU</h3>
-                <p style="margin: 2px 0 0; font-size: 0.82rem; color: #94a3b8;">Khổ giấy A4 Nằm Ngang (Landscape) • Tranh to Full tràn viền • Bản in vector cực nét cho học sinh tô bút dạ</p>
+                <h3 style="margin: 0; font-size: 1.18rem; color: #fde047;">TRUNG TÂM XUẤT &amp; IN PHIẾU TRANH MA TRẬN ĐỒNG BỘ (A4 / BẠT LỚN A1)</h3>
+                <p style="margin: 2px 0 0; font-size: 0.82rem; color: #94a3b8;">Đồng bộ 100% bức tranh đang chọn • Xuất PDF/Word A4 Ngang, Vector Bạt Sân Khấu A1/A0 &amp; Gói Học Liệu 1 Chạm</p>
               </div>
             </div>
             <button type="button" class="gmm-btn-icon" onclick="GiaiMaBiMat.closeExportModal()" title="Đóng cửa sổ">&times;</button>
@@ -910,18 +898,21 @@
               </button>
             </div>
 
-            <!-- Các nút phụ trợ: In trực tiếp & Tải ảnh nét cao -->
+            <!-- Các nút phụ trợ: In trực tiếp, Bạt lớn A1/A0 & Gói Học Liệu 1 Chạm -->
             <div class="gmm-export-secondary-bar">
               <button type="button" class="gmm-btn-sub-export" onclick="GiaiMaBiMat.printWorksheetDirect()" title="Mở ngay hộp thoại in của máy tính">
                 <span>🖨️ In Nhanh Ra Máy In</span>
               </button>
               <button type="button" class="gmm-btn-sub-export" onclick="GiaiMaBiMat.downloadHighResPng()" title="Tải file ảnh PNG 300 DPI độ nét cao">
-                <span>🖼️ Tải Ảnh PNG Nét Cao (300 DPI)</span>
+                <span>🖼️ Tải Ảnh PNG (300 DPI)</span>
               </button>
-              <button type="button" class="gmm-btn-sub-export" onclick="GiaiMaBiMat.downloadVectorSvg()" title="Tải file vector SVG gốc in bạt sân khấu lớn A1/A0">
-                <span>📐 Tải File Vector SVG Gốc</span>
+              <button type="button" class="gmm-btn-sub-export" onclick="GiaiMaBiMat.downloadVectorSvg()" title="Tải file vector SVG gốc kèm tiêu đề &amp; bảng màu gửi tiệm in bạt sân khấu lớn A1/A0">
+                <span>📐 Tải SVG (Bạt A1/A0)</span>
               </button>
-              <button type="button" class="gmm-btn-sub-export" style="background: linear-gradient(135deg, #c2410c, #9a3412); border-color: #fdba74; color: #fff7ed; font-weight: 800;" onclick="if(window.GiaiMaPrintBundle)GiaiMaPrintBundle.openOneClickPrintBundle()" title="Xuất gộp 1 chạm: Phiếu Học Sinh + Đáp Án Giám Khảo + Bảng 10 Câu Hỏi">
+              <button type="button" class="gmm-btn-sub-export" onclick="GiaiMaBiMat.exportLargeStagePdfA1()" title="Mở bản in PDF Vector chuẩn khổ bạt lớn A1 (841mm × 594mm)">
+                <span>📄 In PDF (Khổ A1)</span>
+              </button>
+              <button type="button" class="gmm-btn-sub-export" style="background: linear-gradient(135deg, #c2410c, #9a3412); border-color: #fdba74; color: #fff7ed; font-weight: 800;" onclick="GiaiMaBiMat.openSynchronizedPrintBundle()" title="Xuất gộp 1 chạm: Phiếu Học Sinh + Đáp Án Giám Khảo + Bảng 10 Câu Hỏi">
                 <span>📦 Gói Học Liệu 1 Chạm (Đủ Bộ)</span>
               </button>
             </div>
@@ -929,8 +920,8 @@
             <!-- Tùy chỉnh thông tin phiếu in nhanh -->
             <div class="gmm-export-settings-box">
               <div class="settings-title" style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px;">
-                <span>⚙️ TÙY CHỈNH THÔNG TIN & LOGO HIỂN THỊ TRÊN PHIẾU TRANH:</span>
-                <span style="font-size: 0.78rem; color: #94a3b8; font-weight: normal;">💡 <em>Mẹo: Thầy/Cô có thể nhấn Enter để xuống hàng điền nhiều dòng thông tin</em></span>
+                <span>⚙️ TÙY CHỈNH THÔNG TIN, TÊN ĐỘI &amp; BẢNG CHÚ GIẢI MÀU TRÊN PHIẾU IN (A4 &amp; BẠT A1):</span>
+                <span style="font-size: 0.78rem; color: #94a3b8; font-weight: normal;">💡 <em>Mẹo: Nhấn Enter để xuống dòng hoặc bấm chọn nhanh Đội 1 / Đội 2</em></span>
               </div>
 
               <!-- Hàng chọn và quản lý Logo trường -->
@@ -956,29 +947,40 @@
               <!-- Lưới 3 ô Textarea cho phép xuống dòng thoải mái -->
               <div class="settings-grid">
                 <div class="field-col">
-                  <label for="gmmExportSchoolName">Tên Đơn vị / Trường học (Enter để xuống dòng):</label>
+                  <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px; gap: 4px;">
+                    <label for="gmmExportSchoolName" style="margin: 0;">🏫 Tên Trường / Lớp (Đầu phiếu A4 &amp; bạt A1):</label>
+                    <button type="button" style="background: none; border: none; color: #38bdf8; font-size: 0.74rem; font-weight: 700; cursor: pointer;" onclick="GiaiMaBiMat.resetDefaultExportSchoolName()" title="Khôi phục tên trường mặc định">↺ Mặc định</button>
+                  </div>
                   <textarea id="gmmExportSchoolName" rows="2" style="width: 100%; resize: vertical; min-height: 52px; background: #0f172a; border: 1px solid rgba(255,255,255,0.18); border-radius: 8px; padding: 6px 10px; color: #fff; font-size: 0.85rem; font-family: inherit;" oninput="GiaiMaBiMat.updateExportPreview()">TRƯỜNG THCS TÂN HẢI&#10;HOẠT ĐỘNG DẠY HỌC TÍCH CỰC</textarea>
                 </div>
                 <div class="field-col">
-                  <label for="gmmExportTitle">Tiêu đề Phiếu thi đấu (Enter để xuống dòng):</label>
-                  <textarea id="gmmExportTitle" rows="2" style="width: 100%; resize: vertical; min-height: 52px; background: #0f172a; border: 1px solid rgba(255,255,255,0.18); border-radius: 8px; padding: 6px 10px; color: #fde047; font-size: 0.85rem; font-family: inherit; font-weight: 700;" oninput="GiaiMaBiMat.updateExportPreview()">PHIẾU THI ĐẤU: GIẢI MÃ BỨC TRANH BÍ ẨN&#10;CHỦ ĐỀ: KỸ NĂNG SỐNG HỌC ĐƯỜNG</textarea>
+                  <label for="gmmExportTitle">📌 Tiêu đề Phiếu thi đấu (Enter để xuống dòng):</label>
+                  <textarea id="gmmExportTitle" rows="2" style="width: 100%; resize: vertical; min-height: 52px; background: #0f172a; border: 1px solid rgba(255,255,255,0.18); border-radius: 8px; padding: 6px 10px; color: #fde047; font-size: 0.85rem; font-family: inherit; font-weight: 700;" oninput="GiaiMaBiMat.updateExportPreview()">PHIẾU THI ĐẤU: GIẢI MÃ BỨC TRANH BÍ ẨN&#10;CHỦ ĐỀ: TRI ÂN THẦY CÔ 20/11</textarea>
                 </div>
                 <div class="field-col">
-                  <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px;">
-                    <label for="gmmExportTeamLabel" style="margin: 0;">Thông tin Đội thi / Lớp / GV:</label>
-                    <button type="button" style="background: none; border: none; color: #38bdf8; font-size: 0.75rem; cursor: pointer; text-decoration: underline;" onclick="GiaiMaBiMat.appendExtraInfoTemplate()">➕ Thêm dòng</button>
+                  <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px; flex-wrap: wrap; gap: 4px;">
+                    <label for="gmmExportTeamLabel" style="margin: 0;">🚩 Góc phải (Tên Đội / Lời dặn GV):</label>
+                    <div style="display: inline-flex; align-items: center; gap: 4px;">
+                      <button type="button" onclick="GiaiMaBiMat.setQuickExportTeamLabel(1)" style="padding: 1px 6px; font-size: 0.68rem; font-weight: 800; border-radius: 5px; border: 1px solid rgba(248, 113, 113, 0.5); background: rgba(220, 38, 38, 0.22); color: #fca5a5; cursor: pointer;" title="Điền nhanh tên Đội 1 để in tờ cho Đội 1">🔴 Đội 1</button>
+                      <button type="button" onclick="GiaiMaBiMat.setQuickExportTeamLabel(2)" style="padding: 1px 6px; font-size: 0.68rem; font-weight: 800; border-radius: 5px; border: 1px solid rgba(56, 189, 248, 0.5); background: rgba(2, 132, 199, 0.22); color: #7dd3fc; cursor: pointer;" title="Điền nhanh tên Đội 2 để in tờ cho Đội 2">🔵 Đội 2</button>
+                      <button type="button" onclick="GiaiMaBiMat.setQuickExportTeamLabel(0)" style="padding: 1px 6px; font-size: 0.68rem; font-weight: 700; border-radius: 5px; border: 1px solid rgba(148, 163, 184, 0.35); background: rgba(30, 41, 59, 0.7); color: #cbd5e1; cursor: pointer;" title="Đặt về dòng kẻ chấm để học sinh tự ghi tên đội bằng bút">✍️ Điền tay</button>
+                      <button type="button" style="background: none; border: none; color: #38bdf8; font-size: 0.72rem; cursor: pointer; text-decoration: underline;" onclick="GiaiMaBiMat.appendExtraInfoTemplate()">➕ Thêm dòng</button>
+                    </div>
                   </div>
                   <textarea id="gmmExportTeamLabel" rows="2" style="width: 100%; resize: vertical; min-height: 52px; background: #0f172a; border: 1px solid rgba(255,255,255,0.18); border-radius: 8px; padding: 6px 10px; color: #34d399; font-size: 0.85rem; font-family: inherit; font-weight: 700;" oninput="GiaiMaBiMat.updateExportPreview()">ĐỘI THI: .........................&#10;LỚP: .......... • THỜI GIAN: .....................</textarea>
                 </div>
               </div>
 
-              <!-- Tùy chọn in kèm Phiếu Đáp Án Màu thu nhỏ dành cho Ban Giám Khảo -->
-              <div style="margin-top: 10px; padding-top: 10px; border-top: 1px dashed rgba(255,255,255,0.15); display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 10px;">
-                <label style="display: inline-flex; align-items: center; gap: 8px; cursor: pointer; color: #fde047; font-weight: 700; font-size: 0.92rem;">
-                  <input type="checkbox" id="gmmExportIncludeAnswerKey" checked style="width: 18px; height: 18px; accent-color: #0284c7; cursor: pointer;" onchange="GiaiMaBiMat.updateExportPreview()">
-                  <span>🎯 In kèm Phiếu Đáp Án Màu thu nhỏ dành cho Ban Giám Khảo (Trang 2)</span>
+              <!-- Tùy chọn in kèm Phiếu Đáp Án Màu BGK & Dải Chú Giải 10 Màu Bút Dạ dưới chân tranh -->
+              <div style="margin-top: 10px; padding-top: 10px; border-top: 1px dashed rgba(255,255,255,0.15); display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 12px;">
+                <label style="display: inline-flex; align-items: center; gap: 8px; cursor: pointer; color: #fde047; font-weight: 700; font-size: 0.88rem;">
+                  <input type="checkbox" id="gmmExportIncludeAnswerKey" checked style="width: 17px; height: 17px; accent-color: #0284c7; cursor: pointer;" onchange="GiaiMaBiMat.updateExportPreview()">
+                  <span>🎯 In kèm Phiếu Đáp Án Màu dành cho Ban Giám Khảo (Trang 2)</span>
                 </label>
-                <span style="font-size: 0.8rem; color: #94a3b8;">(Bao gồm tranh màu hoàn thiện + bảng đáp án 10 câu + thang điểm)</span>
+                <label style="display: inline-flex; align-items: center; gap: 8px; cursor: pointer; color: #6ee7b7; font-weight: 700; font-size: 0.88rem;">
+                  <input type="checkbox" id="gmmExportIncludeFooterLegend" checked style="width: 17px; height: 17px; accent-color: #10b981; cursor: pointer;" onchange="GiaiMaBiMat.updateExportPreview()">
+                  <span>🖨️ Tích hợp Bảng Chú Giải 10 Màu Bút Dạ ngay dưới chân tranh (A4 / Bạt A1)</span>
+                </label>
               </div>
             </div>
 
@@ -1073,7 +1075,7 @@
 
       <!-- ==================== SUBMODAL: SOẠN & SỬA 10 CÂU HỎI ==================== -->
       <div id="gmmQuestionEditModal" class="gmm-submodal-overlay" style="display: none;">
-        <div class="gmm-submodal-card">
+        <div class="gmm-submodal-card gmm-qedit-fullscreen-card">
           <div class="gmm-submodal-header">
             <div style="display: flex; align-items: center; gap: 10px;">
               <span style="font-size: 1.4rem;">📝</span>
@@ -1082,20 +1084,184 @@
             <button type="button" class="gmm-btn-icon" onclick="GiaiMaBiMat.closeQuestionEditor()" title="Đóng">&times;</button>
           </div>
           <div class="gmm-submodal-body">
-            <!-- Thanh công cụ Excel (Tải mẫu, Nhập Excel, Xuất Excel) -->
+            <!-- Thanh công cụ Excel, Word (.docx) & Dán câu hỏi nhanh (Không trùng lặp) -->
             <div class="gmm-excel-toolbar">
-              <div style="font-size: 0.82rem; font-weight: 700; color: #cbd5e1;">📊 EXCEL & FILE DỮ LIỆU:</div>
+              <div style="font-size: 0.82rem; font-weight: 700; color: #cbd5e1;">📊 NHẬP / XUẤT DỮ LIỆU CÂU HỎI:</div>
               <div class="gmm-excel-actions-group">
-                <button type="button" class="gmm-excel-btn template" onclick="GiaiMaBiMat.downloadQuestionTemplate()" title="Tải file Excel mẫu gồm 10 câu hỏi chuẩn">
-                  <span>📥 Tải File Mẫu (.xlsx)</span>
-                </button>
-                <button type="button" class="gmm-excel-btn import" onclick="document.getElementById('gmmExcelFileInput').click()" title="Nhập danh sách câu hỏi từ file Excel (.xlsx) hoặc CSV">
-                  <span>📤 Nhập File Excel/CSV</span>
+                <button type="button" class="gmm-excel-btn import" onclick="document.getElementById('gmmExcelFileInput').click()" title="Nhập bộ câu hỏi từ file Excel (.xlsx/.xls) hoặc CSV">
+                  <span>📤 Nhập Excel/CSV</span>
                 </button>
                 <input type="file" id="gmmExcelFileInput" accept=".xlsx,.xls,.csv" style="display: none;" onchange="GiaiMaBiMat.handleExcelFileUpload(event)">
-                <button type="button" class="gmm-excel-btn export" onclick="GiaiMaBiMat.exportQuestionsToExcel()" title="Xuất toàn bộ 10 câu hỏi hiện tại ra file Excel">
-                  <span>💾 Xuất Ra Excel</span>
+
+                <button type="button" class="gmm-excel-btn docx" onclick="document.getElementById('gmmDocxFileInput').click()" title="Nhập trực tiếp file Word (.docx) — Tự động tách câu hỏi, A/B/C/D, nhận diện đáp án &amp; dàn trải đều 10 câu">
+                  <span>📄 Nhập Word (.docx)</span>
                 </button>
+                <input type="file" id="gmmDocxFileInput" accept=".docx" style="display: none;" onchange="GiaiMaBiMat.handleDocxFileUpload(event)">
+
+                <button type="button" id="gmmBtnToggleQuickPaste" class="gmm-excel-btn paste" onclick="GiaiMaBiMat.toggleQuickPastePanel()" title="Dán trực tiếp văn bản câu hỏi từ Word / Zalo / Web để tự động tách &amp; dàn trải thành 10 câu hỏi">
+                  <span>📋 Dán Câu Hỏi Nhanh</span>
+                </button>
+
+                <button type="button" id="gmmBtnToggleTopicSets" class="gmm-excel-btn sets" onclick="GiaiMaBiMat.toggleQuestionSetsPanel()" title="Lưu và chuyển đổi nhanh giữa nhiều bộ đề 10 câu theo chủ đề (ATGT, SKSS, Ôn thi...)">
+                  <span>📚 Ngân Hàng Bộ Đề</span>
+                </button>
+
+                <button type="button" class="gmm-excel-btn export" onclick="GiaiMaBiMat.exportQuestionsToExcel()" title="Tải xuống file Excel (.xlsx) gồm bộ 10 câu hỏi hiện tại (dùng làm file mẫu hoặc lưu trữ)">
+                  <span>💾 Xuất File Excel (.xlsx)</span>
+                </button>
+              </div>
+            </div>
+
+            <!-- Khung Ngân Hàng Bộ Đề Theo Chủ Đề (Ẩn/Hiện khi bấm nút Ngân Hàng Bộ Đề) -->
+            <div id="gmmQuestionSetsPanel" class="gmm-quick-paste-panel gmm-qsets-panel" style="display: none;">
+              <div class="gmm-quick-paste-header">
+                <div>
+                  <div style="font-weight: 800; color: #38bdf8; font-size: 0.9rem;">
+                    📚 NGÂN HÀNG BỘ ĐỀ 10 CÂU THEO CHỦ ĐỀ <span id="gmmSetsCountBadge" style="color:#94a3b8; font-weight:700;"></span>
+                  </div>
+                  <div style="font-size: 0.76rem; color: #94a3b8; margin-top: 2px;">
+                    Lưu bộ 10 câu đang soạn thành một chủ đề riêng để chuyển đổi nhanh giữa các tiết dạy hoặc chọn dùng ngay bộ đề mẫu.
+                  </div>
+                </div>
+                <button type="button" class="gmm-btn-ctrl secondary" style="padding: 4px 10px; font-size: 0.78rem;" onclick="GiaiMaBiMat.toggleQuestionSetsPanel(false)">✕ Đóng</button>
+              </div>
+
+              <div id="gmmServerSyncBar" class="gmm-server-sync-bar">
+                <div id="gmmServerSyncBadge" class="gmm-server-sync-badge is-synced">
+                  🖥️ Đồng bộ Server Node: Đang kiểm tra kết nối...
+                </div>
+                <div class="gmm-server-sync-actions">
+                  <button type="button" id="gmmBtnToggleServerSync" class="gmm-server-sync-btn is-active" onclick="GiaiMaBiMat.toggleServerSetsSync()" title="Bật/tắt chế độ lưu chung Kho Đề lên file JSON trên Máy Chủ Nội Bộ (dùng chung Chrome, Edge...)">
+                    🟢 Đang Bật Đồng Bộ Server
+                  </button>
+                  <button type="button" id="gmmBtnManualServerSync" class="gmm-server-sync-btn sync-now" onclick="GiaiMaBiMat.syncSetsWithServerNow()" title="Đẩy bộ đề trên trình duyệt này lên Server Node và tải ngay các bộ đề mới nhất từ trình duyệt khác về">
+                    🔄 Đồng Bộ Ngay
+                  </button>
+                </div>
+              </div>
+
+              <div class="gmm-qsets-save-row">
+                <input type="text" id="gmmSetTitleInput" class="gmm-qedit-input" placeholder="Tên bộ đề mới (VD: Ôn thi Tuyển sinh 10 - Đề 1)">
+                <input type="text" id="gmmSetTopicInput" class="gmm-qedit-input" placeholder="Chủ đề / Lớp (VD: Toán 9 / ATGT)" style="max-width: 230px;">
+                <button type="button" class="gmm-batch-btn save-set" onclick="GiaiMaBiMat.saveCurrentAsTopicSet(false)">💾 Lưu Bộ 10 Câu Hiện Tại</button>
+                <button type="button" id="gmmBtnSaveImportedPool" class="gmm-batch-btn pool-draw" style="display: none;" onclick="GiaiMaBiMat.saveCurrentAsTopicSet(true)" title="Lưu toàn bộ danh sách câu hỏi lớn (30–50+ câu) vừa nhập thành 1 kho đề riêng">📦 Lưu Trọn Kho Đã Nhập</button>
+                <button type="button" id="gmmBtnInspectPendingPool" class="gmm-qset-inspect-btn" style="display: none;" onclick="GiaiMaBiMat.openPoolInspector('__pending_import__')" title="Xem &amp; sửa danh sách câu vừa nhập từ file">👁️ Xem Kho Vừa Nhập</button>
+              </div>
+
+              <div class="gmm-qsets-search-row">
+                <input type="search" id="gmmSetSearchInput" class="gmm-qedit-input" placeholder="🔍 Tìm nhanh theo tên bộ đề hoặc chủ đề..." oninput="GiaiMaBiMat.renderQuestionSetsPanel()">
+                <div class="gmm-qsets-filters">
+                  <button type="button" class="gmm-qset-filter-chip active" data-filter="all" onclick="GiaiMaBiMat.setTopicFilter('all')">Tất cả</button>
+                  <button type="button" class="gmm-qset-filter-chip" data-filter="builtin" onclick="GiaiMaBiMat.setTopicFilter('builtin')">⭐ Mẫu sẵn</button>
+                  <button type="button" class="gmm-qset-filter-chip" data-filter="custom" onclick="GiaiMaBiMat.setTopicFilter('custom')">💾 Tự lưu</button>
+                </div>
+              </div>
+
+              <div id="gmmQuestionSetsList" class="gmm-qsets-list"></div>
+            </div>
+
+            <!-- Khung Xem Trước & Sửa Nhanh Toàn Bộ Danh Sách Kho Lớn (Ẩn/Hiện khi bấm Xem Kho) -->
+            <div id="gmmPoolInspectorPanel" class="gmm-pool-insp-panel" style="display: none;">
+              <div class="gmm-pool-insp-header">
+                <div>
+                  <div id="gmmPoolInspTitle" style="font-weight: 900; color: #38bdf8; font-size: 1rem;">📦 KHO CÂU HỎI</div>
+                  <div id="gmmPoolInspStats" style="font-size: 0.8rem; color: #cbd5e1; margin-top: 2px;"></div>
+                </div>
+                <div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
+                  <button type="button" class="gmm-insp-add-btn" onclick="GiaiMaBiMat.openPoolInspectorAddForm()">➕ Thêm Câu Mới Thủ Công</button>
+                  <button type="button" id="gmmPoolInspDrawBtn" class="gmm-batch-btn pool-draw" onclick="GiaiMaBiMat.drawTenFromInspector()">🎲 Bốc 10 Câu Mới</button>
+                  <button type="button" id="gmmPoolInspResetBtn" class="gmm-qset-reset-btn" onclick="GiaiMaBiMat.resetPoolFromInspector()">↺ Reset Vòng Bốc Về 0</button>
+                  <button type="button" id="gmmPoolInspCloneBtn" class="gmm-qset-append-btn" onclick="GiaiMaBiMat.clonePoolAsCustom()">📋 Tạo Bản Sao Tự Lưu</button>
+                  <button type="button" class="gmm-btn-ctrl secondary" style="padding: 6px 12px; font-size: 0.8rem;" onclick="GiaiMaBiMat.closePoolInspector()">← Quay Lại Soạn 10 Câu</button>
+                </div>
+              </div>
+
+              <div class="gmm-qsets-search-row" style="margin-top: 10px;">
+                <input type="search" id="gmmPoolInspSearch" class="gmm-qedit-input" placeholder="🔍 Tìm nhanh nội dung câu hỏi hoặc phương án trong kho..." oninput="GiaiMaBiMat.renderPoolInspector()">
+                <div class="gmm-qsets-filters">
+                  <button type="button" class="gmm-insp-filter-chip active" data-insp-filter="all" onclick="GiaiMaBiMat.setPoolInspectorFilter('all')">Tất cả</button>
+                  <button type="button" class="gmm-insp-filter-chip" data-insp-filter="unseen" onclick="GiaiMaBiMat.setPoolInspectorFilter('unseen')">⏳ Chưa bốc</button>
+                  <button type="button" class="gmm-insp-filter-chip" data-insp-filter="seen" onclick="GiaiMaBiMat.setPoolInspectorFilter('seen')">✓ Đã bốc</button>
+                </div>
+              </div>
+
+              <div id="gmmPoolInspAddBox" class="gmm-pool-insp-add-box" style="display: none;">
+                <div style="display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:8px;">
+                  <strong style="color:#6ee7b7;font-size:0.9rem;">➕ THÊM CÂU HỎI MỚI THỦ CÔNG VÀO KHO (Hỗ trợ KaTeX: $x^2$, \frac{1}{2}, H_2O...)</strong>
+                  <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;">
+                    <select id="inspAdd_corr" class="gmm-qedit-input" style="width:auto;padding:4px 8px;font-size:0.78rem;">
+                      <option value="0">Đáp án đúng: A</option>
+                      <option value="1">Đáp án đúng: B</option>
+                      <option value="2">Đáp án đúng: C</option>
+                      <option value="3">Đáp án đúng: D</option>
+                    </select>
+                    <input type="number" id="inspAdd_time" class="gmm-qedit-input" value="30" min="5" max="180" style="width:76px;padding:4px 8px;font-size:0.78rem;" title="Thời gian (giây)">
+                    <button type="button" class="gmm-qset-apply-btn" onclick="GiaiMaBiMat.submitPoolInspectorNewItem()">✅ Thêm Vào Kho</button>
+                    <button type="button" class="gmm-btn-ctrl secondary" style="padding:4px 10px;font-size:0.76rem;" onclick="GiaiMaBiMat.closePoolInspectorAddForm()">✕ Hủy</button>
+                  </div>
+                </div>
+                <textarea id="inspAdd_q" class="gmm-qedit-textarea" rows="2" placeholder="Nhập nội dung câu hỏi mới..." oninput="GiaiMaBiMat.updatePoolInspectorAddPreview()" style="font-size:0.86rem;"></textarea>
+                <div id="inspAdd_dupWarning" class="gmm-insp-dup-warn" style="display:none;"></div>
+                <div class="gmm-insp-opts-grid">
+                  <div style="display:flex;align-items:center;gap:6px;"><strong style="color:#fde047;width:18px;font-size:0.82rem;">A:</strong><input type="text" id="inspAdd_opt_0" class="gmm-qedit-input" style="padding:6px 10px;font-size:0.82rem;" placeholder="Phương án A" oninput="GiaiMaBiMat.updatePoolInspectorAddPreview()"></div>
+                  <div style="display:flex;align-items:center;gap:6px;"><strong style="color:#fde047;width:18px;font-size:0.82rem;">B:</strong><input type="text" id="inspAdd_opt_1" class="gmm-qedit-input" style="padding:6px 10px;font-size:0.82rem;" placeholder="Phương án B" oninput="GiaiMaBiMat.updatePoolInspectorAddPreview()"></div>
+                  <div style="display:flex;align-items:center;gap:6px;"><strong style="color:#fde047;width:18px;font-size:0.82rem;">C:</strong><input type="text" id="inspAdd_opt_2" class="gmm-qedit-input" style="padding:6px 10px;font-size:0.82rem;" placeholder="Phương án C" oninput="GiaiMaBiMat.updatePoolInspectorAddPreview()"></div>
+                  <div style="display:flex;align-items:center;gap:6px;"><strong style="color:#fde047;width:18px;font-size:0.82rem;">D:</strong><input type="text" id="inspAdd_opt_3" class="gmm-qedit-input" style="padding:6px 10px;font-size:0.82rem;" placeholder="Phương án D" oninput="GiaiMaBiMat.updatePoolInspectorAddPreview()"></div>
+                </div>
+                <div id="inspAdd_mathPreview" class="gmm-insp-math-preview" style="margin-top:8px;"></div>
+              </div>
+
+              <div id="gmmPoolInspList" class="gmm-pool-insp-list"></div>
+            </div>
+
+            <!-- Khung Dán Câu Hỏi Nhanh (Ẩn/Hiện khi bấm nút Dán Câu Hỏi Nhanh) -->
+            <div id="gmmQuickPastePanel" class="gmm-quick-paste-panel" style="display: none;">
+              <div class="gmm-quick-paste-header">
+                <div>
+                  <div style="font-weight: 800; color: #fde047; font-size: 0.9rem;">📋 DÁN TRỰC TIẾP CÂU HỎI TỪ WORD / VĂN BẢN (TỰ ĐỘNG TÁCH 10 CÂU &amp; NHẬN DIỆN A/B/C/D)</div>
+                  <div style="font-size: 0.76rem; color: #94a3b8; margin-top: 2px;">
+                    Hỗ trợ: <code>Câu 1: ... A. ... *B. ... C. ... D. ...</code>, dòng <code>Đáp án: B</code>, bảng đáp án cuối bài, hoặc copy trực tiếp từ Word có <u>gạch chân</u> / <span style="color:#f87171;">tô màu</span> / bôi vàng đáp án đúng.
+                  </div>
+                </div>
+                <select id="gmmQuickPasteDistMode" class="gmm-qedit-input" style="width: auto; padding: 5px 10px; font-size: 0.78rem; color: #6ee7b7; border-color: rgba(16, 185, 129, 0.45);" onchange="GiaiMaBiMat.refreshQuickPastePreview()" title="Cách phân bổ khi số câu hỏi khác 10">
+                  <option value="spread" selected>🔀 Dàn trải đều thành đủ 10 câu (Khuyên dùng)</option>
+                  <option value="random10">🎲 Lưu trọn kho &amp; Bốc ngẫu nhiên 10 câu mới</option>
+                  <option value="first10">🔢 Lấy tối đa 10 câu đầu tiên</option>
+                </select>
+              </div>
+
+              <textarea id="gmmQuickPasteTextarea" class="gmm-qedit-textarea" rows="6"
+                        placeholder="Dán toàn bộ danh sách câu hỏi vào đây (Ctrl+V)...&#10;Ví dụ:&#10;Câu 1: Hành vi nào thể hiện sự tôn trọng bạn bè?&#10;A. Cười cợt bạn&#10;*B. Lắng nghe và tôn trọng quan điểm riêng&#10;C. Bắt ép bạn thay đổi&#10;D. Tránh mặt bạn"
+                        onpaste="GiaiMaBiMat.handleQuickPasteRichEvent(event)"
+                        oninput="GiaiMaBiMat.refreshQuickPastePreview()"
+                        style="margin-top: 8px; font-size: 0.84rem; line-height: 1.45;"></textarea>
+
+              <div id="gmmQuickPasteStatus" class="gmm-quick-paste-status">
+                💡 Dán nội dung câu hỏi ở trên để hệ thống tự động nhận diện số câu và đáp án A, B, C, D...
+              </div>
+
+              <div style="display: flex; justify-content: flex-end; gap: 8px; margin-top: 10px; flex-wrap: wrap;">
+                <button type="button" class="gmm-btn-ctrl secondary" style="padding: 6px 14px; font-size: 0.82rem;" onclick="GiaiMaBiMat.toggleQuickPastePanel(false)">✕ Đóng khung dán</button>
+                <button type="button" class="gmm-btn-ctrl primary" style="padding: 6px 16px; font-size: 0.84rem;" onclick="GiaiMaBiMat.applyQuickPasteQuestions()">⚡ Dàn Trải &amp; Nạp Vào 10 Câu</button>
+              </div>
+            </div>
+
+            <!-- Thanh thao tác nhanh hàng loạt cho cả 10 câu -->
+            <div class="gmm-batch-tools-bar">
+              <div style="display: flex; flex-wrap: wrap; gap: 8px; align-items: center;">
+                <button type="button" class="gmm-batch-btn shuffle" onclick="GiaiMaBiMat.shuffleAllQuestionOptions()" title="Trộn ngẫu nhiên vị trí 4 đáp án A, B, C, D cho cả 10 câu hỏi mà vẫn giữ nguyên đúng đáp án (tự bỏ qua câu có 'Cả A và B')">
+                  🔀 Xáo Trộn Thứ Tự Đáp Án A/B/C/D (Giữ Đúng Đáp Án)
+                </button>
+                <button type="button" id="gmmBtnDrawPoolBatch" class="gmm-batch-btn pool-draw" style="display: none;" onclick="GiaiMaBiMat.drawRandomTenFromActivePool()" title="Bốc ngẫu nhiên 10 câu mới không trùng lặp từ kho câu hỏi lớn đang chọn">
+                  🎲 Bốc 10 Câu Mới Từ Kho
+                </button>
+              </div>
+              <div class="gmm-batch-time-group">
+                <span style="font-size: 0.78rem; font-weight: 700; color: #cbd5e1;">⏱️ Thời gian cả 10 câu:</span>
+                <button type="button" class="gmm-time-pill" onclick="GiaiMaBiMat.applyBulkQuestionTime(15)">15s</button>
+                <button type="button" class="gmm-time-pill" onclick="GiaiMaBiMat.applyBulkQuestionTime(30)">30s</button>
+                <button type="button" class="gmm-time-pill" onclick="GiaiMaBiMat.applyBulkQuestionTime(45)">45s</button>
+                <button type="button" class="gmm-time-pill" onclick="GiaiMaBiMat.applyBulkQuestionTime(60)">60s</button>
               </div>
             </div>
 

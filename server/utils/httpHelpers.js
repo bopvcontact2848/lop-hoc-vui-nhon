@@ -17,6 +17,9 @@ const MIME_TYPES = {
   '.ico': 'image/x-icon',
   '.wav': 'audio/wav',
   '.mp3': 'audio/mpeg',
+  '.woff2': 'font/woff2',
+  '.woff': 'font/woff',
+  '.ttf': 'font/ttf',
   '.xlsx': 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
   '.csv': 'text/csv; charset=utf-8'
 };
@@ -141,6 +144,20 @@ function sendHtmlFile(res, filePath, rootDir, statusCode = 200) {
 }
 
 /**
+ * Kiểm tra đường dẫn có trỏ vào thư mục hoặc tệp nội bộ cần chặn truy cập HTTP hay không.
+ */
+function isBlockedInternalPath(relativePath) {
+  const normalized = String(relativePath || '').replace(/\\/g, '/').replace(/^\/+/, '');
+  if (!normalized) return false;
+  const segments = normalized.split('/').filter(Boolean);
+  if (segments.some((seg) => seg.startsWith('.'))) return true;
+  const first = segments[0].toLowerCase();
+  if (first === 'server' || first === 'node_modules') return true;
+  if (normalized.toLowerCase() === 'matthu_scores.json') return true;
+  return false;
+}
+
+/**
  * Phục vụ tệp tĩnh và trang chủ index.html có ghép HTML partial.
  */
 function serveStaticFile(req, res, rootDir) {
@@ -165,7 +182,7 @@ function serveStaticFile(req, res, rootDir) {
 
   const filePath = path.join(rootDir, reqPath);
   const relative = path.relative(rootDir, filePath);
-  if (relative.startsWith('..') || path.isAbsolute(relative)) {
+  if (relative.startsWith('..') || path.isAbsolute(relative) || isBlockedInternalPath(relative)) {
     res.writeHead(403, { 'Content-Type': 'text/plain; charset=utf-8' });
     res.end('403 Forbidden (Bị từ chối truy cập)');
     return;
@@ -173,6 +190,11 @@ function serveStaticFile(req, res, rootDir) {
 
   fs.stat(filePath, (err, stats) => {
     if (err || !stats.isFile()) {
+      if (path.extname(reqPath)) {
+        res.writeHead(404, { 'Content-Type': 'text/plain; charset=utf-8' });
+        res.end('404 Not Found (Không tìm thấy tệp)');
+        return;
+      }
       sendHtmlFile(res, path.join(rootDir, 'index.html'), rootDir);
       return;
     }

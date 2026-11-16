@@ -48,6 +48,7 @@
     } catch (_e) {}
 
     updateCanvasThemeButtonUI();
+    updateSettingsSummaryBar();
     if (typeof renderDualArena === 'function') renderDualArena();
     if (typeof renderDecryptUI === 'function') renderDecryptUI();
     if (typeof renderZoomModalContent === 'function') renderZoomModalContent();
@@ -104,6 +105,7 @@
     } catch (_e) {}
 
     updateStealthButtonUI();
+    updateSettingsSummaryBar();
     if (typeof renderDualArena === 'function') renderDualArena();
     if (typeof renderDecryptUI === 'function') renderDecryptUI();
     if (typeof renderZoomModalContent === 'function') renderZoomModalContent();
@@ -611,12 +613,35 @@
 
   function updateBattleMusicUI() {
     const modeBtn = document.getElementById('gmmBtnBattleMusicMode');
-    if (!modeBtn) return;
-    const isChill = window.audioManager && typeof window.audioManager.getBattleMusicGenre === 'function' && window.audioManager.getBattleMusicGenre() === 'chill';
-    modeBtn.className = `gmm-btn-match-ctrl music-mode ${isChill ? 'chill' : 'epic'}`;
-    modeBtn.innerHTML = isChill
-      ? '<span>☕ Giai Điệu: Nhẹ Nhàng</span>'
-      : '<span>🔥 Giai Điệu: Kịch Tính</span>';
+    if (modeBtn) {
+      const isChill = window.audioManager && typeof window.audioManager.getBattleMusicGenre === 'function' && window.audioManager.getBattleMusicGenre() === 'chill';
+      modeBtn.className = `gmm-settings-item-btn music-mode ${isChill ? 'chill' : 'epic'}`;
+      modeBtn.innerHTML = isChill
+        ? '<span>☕ Giai Điệu: Nhẹ Nhàng</span>'
+        : '<span>🔥 Giai Điệu: Kịch Tính</span>';
+    }
+    const vol = (window.audioManager && typeof window.audioManager.getBattleMusicVolume === 'function')
+      ? window.audioManager.getBattleMusicVolume()
+      : 70;
+    const slider = document.getElementById('gmmBattleMusicVolumeSlider');
+    if (slider) slider.value = String(vol);
+    const valEl = document.getElementById('gmmBattleMusicVolumeVal');
+    if (valEl) valEl.textContent = `${vol}%`;
+    updateSettingsSummaryBar();
+  }
+
+  function setBattleMusicVolume(percent) {
+    const clamped = Math.min(100, Math.max(10, Number(percent) || 70));
+    if (window.audioManager && typeof window.audioManager.setBattleMusicVolume === 'function') {
+      window.audioManager.setBattleMusicVolume(clamped);
+    }
+    const valEl = document.getElementById('gmmBattleMusicVolumeVal');
+    if (valEl) valEl.textContent = `${clamped}%`;
+    const slider = document.getElementById('gmmBattleMusicVolumeSlider');
+    if (slider && String(slider.value) !== String(clamped)) {
+      slider.value = String(clamped);
+    }
+    updateSettingsSummaryBar();
   }
 
   function stopBattleMusicUI(fadeTime = 1.5) {
@@ -628,6 +653,39 @@
       btn.classList.remove('active');
       btn.innerHTML = '<span>🎵 Nhạc Thi Đấu: Tắt</span>';
     }
+  }
+
+  // ============================================================================
+  // THANH TÓM TẮT TRẠNG THÁI & LƯU CẤU HÌNH MẶC ĐỊNH CHO LỚP SAU (ỦY QUYỀN GmmTeacherPresets)
+  // ============================================================================
+  const presetsMod = window.GmmTeacherPresets
+    ? window.GmmTeacherPresets.create({
+        gameState,
+        STORAGE_KEY_CANVAS_THEME,
+        STORAGE_KEY_STEALTH_MODE,
+        getQuestionsList: ctx.getQuestionsList,
+        renderDualArena,
+        renderDecryptUI,
+        updateCanvasThemeButtonUI,
+        updateStealthButtonUI,
+        updateBattleMusicUI
+      })
+    : null;
+
+  function updateSettingsSummaryBar() {
+    if (presetsMod) presetsMod.updateSettingsSummaryBar();
+  }
+
+  function saveDefaultSettingsForNextClass() {
+    if (presetsMod) presetsMod.saveDefaultSettingsForNextClass();
+  }
+
+  function loadSavedDefaultSettings() {
+    if (presetsMod) presetsMod.loadSavedDefaultSettings();
+  }
+
+  function resetDefaultTeacherSettings() {
+    if (presetsMod) presetsMod.resetDefaultTeacherSettings();
   }
 
   // Khởi tạo sạch sẽ dữ liệu phiên thi đấu mới (dùng chung khi bắt đầu ván mới hoặc chơi lại)
@@ -661,7 +719,12 @@
         toggleBattleMusic,
         toggleBattleMusicGenre,
         updateBattleMusicUI,
-        stopBattleMusicUI
+        setBattleMusicVolume,
+        stopBattleMusicUI,
+        updateSettingsSummaryBar,
+        saveDefaultSettingsForNextClass,
+        loadSavedDefaultSettings,
+        resetDefaultTeacherSettings
       };
     }
   };

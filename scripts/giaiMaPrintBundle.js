@@ -41,12 +41,46 @@
     }
   }
 
-  function resolveSchoolHeaderLines() {
+  function resolveSchoolHeaderLines(puzzle) {
+    if (puzzle && puzzle.printHeader && String(puzzle.printHeader).trim()) {
+      return String(puzzle.printHeader).trim().split('\n').map(s => esc(s.trim())).filter(Boolean).join('<br>');
+    }
+    const genEl = document.getElementById('gmmGenPrintHeaderInput');
+    if (genEl && genEl.value && genEl.value.trim()) {
+      return genEl.value.trim().split('\n').map(s => esc(s.trim())).filter(Boolean).join('<br>');
+    }
+    try {
+      const savedHeader = localStorage.getItem('gmm_custom_print_header_v1');
+      if (savedHeader && savedHeader.trim()) {
+        return savedHeader.trim().split('\n').map(s => esc(s.trim())).filter(Boolean).join('<br>');
+      }
+    } catch {
+      // ignore storage error
+    }
     const el = document.getElementById('gmmExportSchoolName');
     const raw = (el && el.value && el.value.trim())
       ? el.value.trim()
       : 'TRƯỜNG THCS TÂN HẢI\nHOẠT ĐỘNG DẠY HỌC TÍCH CỰC';
     return raw.split('\n').map(s => esc(s.trim())).filter(Boolean).join('<br>');
+  }
+
+  function resolveRightNoteText(puzzle) {
+    if (puzzle && puzzle.printRightNote && String(puzzle.printRightNote).trim()) {
+      return String(puzzle.printRightNote).trim();
+    }
+    const genEl = document.getElementById('gmmGenPrintRightNoteInput');
+    if (genEl && genEl.value && genEl.value.trim()) {
+      return genEl.value.trim();
+    }
+    try {
+      const savedNote = localStorage.getItem('gmm_custom_print_right_note_v1');
+      if (savedNote && savedNote.trim()) {
+        return savedNote.trim();
+      }
+    } catch {
+      // ignore storage error
+    }
+    return '';
   }
 
   function buildStudentLegendItemsHtml(colorRules) {
@@ -123,7 +157,7 @@
   }
 
   function buildStudentPageHtml(opts) {
-    const { schoolHtml, logoUrl, puzzleTitle, teamHeading, legendHtml, uncoloredSvg, extraClass } = opts;
+    const { schoolHtml, logoUrl, puzzleTitle, teamHeading, legendHtml, uncoloredSvg, showFooterLegend, extraClass } = opts;
     return `
       <section class="bundle-page ${extraClass || ''}">
         <header class="doc-header">
@@ -141,10 +175,12 @@
           </div>
         </header>
 
+        ${!showFooterLegend ? `
         <div class="student-legend-bar">
           <span class="legend-lead">👉 QUY ƯỚC BÚT DẠ:</span>
           ${legendHtml}
         </div>
+        ` : ''}
 
         <div class="student-svg-frame">
           ${uncoloredSvg}
@@ -156,6 +192,13 @@
         </footer>
       </section>
     `;
+  }
+
+  function renderPrintMathHtml(str) {
+    if (window.GmmMathFormat && typeof window.GmmMathFormat.renderMathToStaticHtml === 'function') {
+      return window.GmmMathFormat.renderMathToStaticHtml(str, { forWord: false });
+    }
+    return esc(str);
   }
 
   function buildQuestionsGridHtml(questions, ruleRows, revealAnswers) {
@@ -177,7 +220,7 @@
             return `
               <div class="q-opt-item ${isCorrect ? 'correct' : ''}">
                 <span class="q-opt-box">${isCorrect ? '✔ ' + letter : letter + '.'}</span>
-                <span>${esc(optText)}</span>
+                <span>${renderPrintMathHtml(optText)}</span>
               </div>
             `;
           }).join('');
@@ -188,7 +231,7 @@
                 <span class="q-num-tag">CÂU ${qNum}</span>
                 ${badgeHtml}
               </div>
-              <div class="q-stem-text">${esc(q.question)}</div>
+              <div class="q-stem-text">${renderPrintMathHtml(q.question)}</div>
               <div class="q-opts-grid">${optsHtml}</div>
             </div>
           `;
@@ -230,25 +273,95 @@
       ? activePuzzle.targetCellIds.length
       : (activePuzzle.cells || []).filter(c => c.isTarget).length;
 
-    const schoolHtml = resolveSchoolHeaderLines();
+    const schoolHtml = resolveSchoolHeaderLines(activePuzzle);
+    const rightNoteText = resolveRightNoteText(activePuzzle);
     const logoUrl = resolveLogoUrl();
     const legendHtml = buildStudentLegendItemsHtml(activePuzzle.colorRules || {});
+    const showFooterLegend = activePuzzle.showFooterLegend !== false;
+    const strokeW = parseFloat(activePuzzle.strokeWidth) || 1.8;
+    const printHeaderText = String(activePuzzle.printHeader || '').trim();
     const { ruleRows, questions } = resolveJudgeAndQuizData(activePuzzle, snap);
 
     const uncoloredSvg = window.GiaiMaPuzzle.renderSvgMatrix('bundle_student', {}, {
       isPrint: true,
+      strokeWidth: strokeW,
+      showFooterLegend: showFooterLegend,
       puzzle: activePuzzle
     });
+
+    const activePoolDesc = (window.GmmQuestionSets && typeof window.GmmQuestionSets.getActivePoolDescriptor === 'function')
+      ? window.GmmQuestionSets.getActivePoolDescriptor()
+      : null;
+    const variantPoolQuestions = (activePoolDesc && Array.isArray(activePoolDesc.questions) && activePoolDesc.questions.length > 10)
+      ? activePoolDesc.questions
+      : questions;
+    const allTopicSets = (window.GmmQuestionSets && typeof window.GmmQuestionSets.getAllTopicSets === 'function')
+      ? window.GmmQuestionSets.getAllTopicSets()
+      : [];
+    const currentSetTitle = (activePoolDesc && activePoolDesc.title && activePoolDesc.questions && activePoolDesc.questions.length > 10)
+      ? activePoolDesc.title
+      : `Bộ đề hiện tại (${variantPoolQuestions.length} câu)`;
+    const combinedRawSets = [{
+      id: '__current__',
+      title: currentSetTitle,
+      topic: 'Đang dùng',
+      questions: variantPoolQuestions
+    }];
+    allTopicSets.forEach((ts) => {
+      if (ts && ts.id && Array.isArray(ts.questions) && ts.questions.length > 0 && (!activePoolDesc || ts.id !== activePoolDesc.id)) {
+        combinedRawSets.push(ts);
+      }
+    });
+    const sourceSetOptionsHtml = combinedRawSets.map((ts, idx) => (
+      `<option value="${esc(ts.id)}" ${idx === 0 ? 'selected' : ''}>${esc(ts.title)} (${ts.questions.length} câu)</option>`
+    )).join('');
+
+    const examVariantsHtml = (window.GmmExamVariantsPrint && typeof window.GmmExamVariantsPrint.buildVariantExamPagesHtml === 'function')
+      ? window.GmmExamVariantsPrint.buildVariantExamPagesHtml({
+          sourcePool: variantPoolQuestions,
+          fallbackQuestions: questions,
+          schoolHtml,
+          logoUrl,
+          puzzleTitle,
+          questionsPerVariant: 10,
+          renderMathFn: renderPrintMathHtml,
+          escFn: esc
+        })
+      : '';
+    const preRenderedVariantPool = (window.GmmExamVariantsPrint && typeof window.GmmExamVariantsPrint.buildPopupVariantClientPayload === 'function')
+      ? window.GmmExamVariantsPrint.buildPopupVariantClientPayload(variantPoolQuestions, questions, renderPrintMathHtml)
+      : [];
+    const preRenderedVariantSets = (window.GmmExamVariantsPrint && typeof window.GmmExamVariantsPrint.buildPopupVariantSetsPayload === 'function')
+      ? window.GmmExamVariantsPrint.buildPopupVariantSetsPayload(combinedRawSets, renderPrintMathHtml)
+      : [];
+    const popupVariantRebuildScript = (window.GmmExamVariantsPrint && typeof window.GmmExamVariantsPrint.getPopupRebuildScript === 'function')
+      ? window.GmmExamVariantsPrint.getPopupRebuildScript({
+          preRenderedPool: preRenderedVariantPool,
+          preRenderedSets: preRenderedVariantSets,
+          schoolHtml,
+          schoolName: printHeaderText || 'TRƯỜNG THCS TÂN HẢI',
+          logoUrl,
+          puzzleTitle
+        })
+      : '';
+    const variantPrintCss = (window.GmmExamVariantsPrint && window.GmmExamVariantsPrint.VARIANT_PRINT_CSS) || '';
+    const katexPrintCssHref = (window.GmmMathFormat && typeof window.GmmMathFormat.getKatexPrintCssUrl === 'function')
+      ? window.GmmMathFormat.getKatexPrintCssUrl()
+      : 'assets/vendor/katex/katex.min.css';
     const judgeSvgSeams = window.GiaiMaPuzzle.renderSvgMatrix('bundle_judge_seams', {}, {
       isPrint: true,
       isSolvedAnswerKey: true,
       seamlessStrokes: false,
+      strokeWidth: strokeW,
+      showFooterLegend: showFooterLegend,
       puzzle: activePuzzle
     });
     const judgeSvgSeamless = window.GiaiMaPuzzle.renderSvgMatrix('bundle_judge_seamless', {}, {
       isPrint: true,
       isSolvedAnswerKey: true,
       seamlessStrokes: true,
+      strokeWidth: strokeW,
+      showFooterLegend: showFooterLegend,
       puzzle: activePuzzle
     });
 
@@ -257,7 +370,15 @@
       const fs = c.fontSize || 9.5;
       return `<path class="c" d="${c.d}"/><text class="t" x="${c.labelPos[0]}" y="${c.labelPos[1]}" font-size="${fs}">${esc(c.code)}</text>`;
     }).join('');
-    const rawStageSvg = `<?xml version="1.0" encoding="UTF-8"?><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 520" width="841mm" height="594mm"><style>.c{fill:#fff;stroke:#000;stroke-width:1.8;stroke-linejoin:round}.t{font-family:Arial,sans-serif;font-weight:700;fill:#000;text-anchor:middle;dominant-baseline:central}</style><rect width="800" height="520" fill="#fff"/>${bannerSvgCells}</svg>`;
+    const bannerTopSvg = ((printHeaderText || rightNoteText) && window.GiaiMaPuzzle && typeof window.GiaiMaPuzzle.buildTopHeaderSvgGroup === 'function')
+      ? window.GiaiMaPuzzle.buildTopHeaderSvgGroup(activePuzzle, { printHeader: printHeaderText, printRightNote: rightNoteText })
+      : '';
+    const bannerFooterSvg = (showFooterLegend && window.GiaiMaPuzzle && typeof window.GiaiMaPuzzle.buildFooterLegendSvgGroup === 'function')
+      ? window.GiaiMaPuzzle.buildFooterLegendSvgGroup(activePuzzle, { isSolvedAnswerKey: false })
+      : '';
+    const stageMinY = bannerTopSvg ? -34 : 0;
+    const stageSvgH = (showFooterLegend ? 568 : 520) + (bannerTopSvg ? 34 : 0);
+    const rawStageSvg = `<?xml version="1.0" encoding="UTF-8"?><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 ${stageMinY} 800 ${stageSvgH}" width="841mm" height="594mm"><style>.c{fill:#fff;stroke:#000;stroke-width:${strokeW};stroke-linejoin:round}.t{font-family:Arial,sans-serif;font-weight:700;fill:#000;text-anchor:middle;dominant-baseline:central}</style><rect x="0" y="${stageMinY}" width="800" height="${stageSvgH}" fill="#fff"/>${bannerTopSvg}${bannerSvgCells}${bannerFooterSvg}</svg>`;
 
     const judgeRowsHtml = ruleRows.map(r => `
       <tr>
@@ -270,6 +391,8 @@
       </tr>
     `).join('');
 
+    const customBlankHeading = rightNoteText ? `<strong>${esc(rightNoteText)}</strong>` : 'ĐỘI THI: ...............................';
+
     const pageStudentTeamA = buildStudentPageHtml({
       schoolHtml,
       logoUrl,
@@ -277,6 +400,7 @@
       teamHeading: `ĐỘI 1: <strong>${esc(teamAName)}</strong>`,
       legendHtml,
       uncoloredSvg,
+      showFooterLegend,
       extraClass: 'sec-student sec-student-2teams'
     });
 
@@ -287,6 +411,7 @@
       teamHeading: `ĐỘI 2: <strong>${esc(teamBName)}</strong>`,
       legendHtml,
       uncoloredSvg,
+      showFooterLegend,
       extraClass: 'sec-student sec-student-2teams'
     });
 
@@ -294,9 +419,10 @@
       schoolHtml,
       logoUrl,
       puzzleTitle,
-      teamHeading: 'ĐỘI THI: ...............................',
+      teamHeading: customBlankHeading,
       legendHtml,
       uncoloredSvg,
+      showFooterLegend,
       extraClass: 'sec-student sec-student-single hidden-sec'
     });
 
@@ -654,7 +780,10 @@
         min-height: 0;
       }
     }
+    .katex { font-size: 1em; }
+    ${variantPrintCss}
   </style>
+  <link rel="stylesheet" href="${esc(katexPrintCssHref)}">
 </head>
 <body>
   <div class="bundle-dock no-print">
@@ -702,6 +831,40 @@
       <label class="dock-chk">
         <input type="checkbox" id="chkStudentQuizBackup" onchange="refreshSections()" />
         <span>📝 Đề Câu Hỏi Giấy Dự Phòng (Ẩn đáp án)</span>
+      </label>
+
+      <label class="dock-chk">
+        <input type="checkbox" id="chkAnswerBubbleSheet" onchange="refreshSections()" />
+        <span>🔘 Phiếu Tô Đáp Án A/B/C/D (A5 × 2)</span>
+      </label>
+
+      <label>
+        <strong>📚 Chọn bộ đề in:</strong>
+        <select id="selExamSourceSet" class="dock-select" style="max-width:210px;" onchange="onSourceSetChange()" title="Đổi bộ đề hoặc kho câu hỏi bất kỳ trực tiếp ngay trong cửa sổ in">
+          ${sourceSetOptionsHtml}
+        </select>
+      </label>
+
+      <label>
+        <strong>📋 Mã đề giấy:</strong>
+        <select id="selExamPaperVariants" class="dock-select" onchange="onVariantSelectChange()" title="Xuất 1 bản đề chung hoặc trộn 1–4 mã đề 101–104 từ kho câu hỏi kèm bảng đáp án đối chiếu">
+          <option value="1" selected>1 Bản đề chung / Mã 101</option>
+          <option value="2">🎲 Sinh 2 Mã Đề (101, 102 + Đáp án)</option>
+          <option value="3">🎲 Sinh 3 Mã Đề (101–103 + Đáp án)</option>
+          <option value="4">🎲 Sinh 4 Mã Đề (101–104 + Đáp án)</option>
+        </select>
+      </label>
+
+      <label>
+        <strong>🔢 Số câu / mã đề:</strong>
+        <select id="selExamQuestionCount" class="dock-select" onchange="onQuestionCountChange()" title="Tùy chỉnh số câu in cho mỗi mã đề (dùng làm đề 15p / 1 tiết từ kho lớn)">
+          <option value="10" selected>10 câu (Mặc định Game)</option>
+          <option value="15">15 câu (Kiểm tra 15p)</option>
+          <option value="20">20 câu</option>
+          <option value="all">Toàn bộ kho (${variantPoolQuestions.length} câu)</option>
+        </select>
+        <button type="button" class="dock-btn" style="padding:4px 9px;font-size:11px;" onclick="onQuestionCountChange()" title="Bốc &amp; xáo trộn lại thứ tự câu hỏi/đáp án mới cho các mã đề">🔀 Trộn Lại</button>
+        <button type="button" class="dock-btn" style="padding:4px 10px;font-size:11px;background:#0284c7;" onclick="exportVariantsWordDocx()" title="Tải file Word (.docx) chuẩn Times New Roman gồm đủ các mã đề + bảng đáp án chấm bài">📘 Xuất Word (.docx)</button>
       </label>
     </div>
   </div>
@@ -821,10 +984,69 @@
     </footer>
   </section>
 
+  <!-- 5. ĐỀ THI GIẤY NHIỀU MÃ ĐỀ TRỘN SẴN (MÃ 101–104) & BẢNG ĐÁP ÁN CHẤM BÀI -->
+  <div id="examVariantsDynamicRoot">${examVariantsHtml}</div>
+
   <script>
     var RAW_STAGE_SVG = ${JSON.stringify(rawStageSvg)};
     var SAFE_FILE = ${JSON.stringify(puzzleTitle.replace(/[^a-zA-Z0-9_-]/g, '_'))};
     var judgeSeamless = false;
+    ${popupVariantRebuildScript}
+
+    function onSourceSetChange() {
+      document.getElementById('chkStudentQuizBackup').checked = true;
+      if (typeof rebuildVariantDomFromControls === 'function') {
+        rebuildVariantDomFromControls();
+      }
+      refreshSections();
+    }
+
+    function onVariantSelectChange() {
+      var vCount = parseInt(document.getElementById('selExamPaperVariants').value, 10) || 1;
+      var qMode = document.getElementById('selExamQuestionCount').value || '10';
+      var srcSetId = (document.getElementById('selExamSourceSet') || {}).value || '__current__';
+      if (vCount >= 2 || qMode !== '10' || srcSetId !== '__current__') {
+        document.getElementById('chkStudentQuizBackup').checked = true;
+      }
+      if (!LATEST_BUILT_VARIANTS || !LATEST_BUILT_VARIANTS.length) {
+        if (typeof rebuildVariantDomFromControls === 'function') rebuildVariantDomFromControls();
+      } else {
+        LATEST_BUILT_VARIANTS = LATEST_BUILT_VARIANTS.slice(0, vCount);
+      }
+      refreshSections();
+    }
+
+    function onQuestionCountChange() {
+      document.getElementById('chkStudentQuizBackup').checked = true;
+      if (typeof rebuildVariantDomFromControls === 'function') {
+        rebuildVariantDomFromControls();
+      }
+      refreshSections();
+    }
+
+    function exportVariantsWordDocx() {
+      if (!LATEST_BUILT_VARIANTS || !LATEST_BUILT_VARIANTS.length) {
+        if (typeof rebuildVariantDomFromControls === 'function') {
+          rebuildVariantDomFromControls();
+        }
+      }
+      var exporter = window.opener && window.opener.GmmDocxVariantsExport;
+      if (!exporter || typeof exporter.exportVariantsToDocx !== 'function') {
+        alert('Không tìm thấy module xuất file Word (.docx) ở cửa sổ chính. Vui lòng giữ nguyên tab chính rồi thử lại.');
+        return;
+      }
+      var vCount = Math.max(1, Math.min(4, parseInt(document.getElementById('selExamPaperVariants').value, 10) || 1));
+      var variantsToExport = (LATEST_BUILT_VARIANTS || []).slice(0, vCount);
+      if (!variantsToExport.length) {
+        alert('Chưa có dữ liệu câu hỏi để xuất Word.');
+        return;
+      }
+      exporter.exportVariantsToDocx(variantsToExport, {
+        schoolName: VARIANT_SCHOOL_NAME || 'TRƯỜNG THCS TÂN HẢI',
+        examTitle: 'ĐỀ KIỂM TRA TRẮC NGHIỆM',
+        subjectTitle: LATEST_BUILT_SET_TITLE || VARIANT_PUZZLE_TITLE
+      });
+    }
 
     function refreshSections() {
       var sMode = document.getElementById('selStudentMode').value;
@@ -836,7 +1058,32 @@
       });
       document.getElementById('secJudgeKey').classList.toggle('hidden-sec', !document.getElementById('chkJudgeKey').checked);
       document.getElementById('secMcScript').classList.toggle('hidden-sec', !document.getElementById('chkMcScript').checked);
-      document.getElementById('secStudentQuizBackup').classList.toggle('hidden-sec', !document.getElementById('chkStudentQuizBackup').checked);
+
+      var backupOn = document.getElementById('chkStudentQuizBackup').checked;
+      var vCount = parseInt(document.getElementById('selExamPaperVariants').value, 10) || 1;
+      var qMode = document.getElementById('selExamQuestionCount').value || '10';
+      var srcSetId = (document.getElementById('selExamSourceSet') || {}).value || '__current__';
+      var showDefaultGameQuiz = backupOn && vCount === 1 && qMode === '10' && srcSetId === '__current__';
+      document.getElementById('secStudentQuizBackup').classList.toggle('hidden-sec', !showDefaultGameQuiz);
+
+      var showMulti = backupOn && !showDefaultGameQuiz;
+      document.querySelectorAll('.sec-exam-variant-page').forEach(function(el) {
+        var idx = parseInt(el.getAttribute('data-variant-index'), 10) || 0;
+        el.classList.toggle('hidden-sec', !(showMulti && idx < vCount));
+      });
+      var keyPage = document.getElementById('secExamVariantsKeyPage');
+      if (keyPage) {
+        keyPage.classList.toggle('hidden-sec', !showMulti);
+        keyPage.querySelectorAll('.variant-key-row, .variant-detail-box').forEach(function(item) {
+          var idx = parseInt(item.getAttribute('data-variant-index'), 10) || 0;
+          item.style.display = idx < vCount ? '' : 'none';
+        });
+      }
+      var bubblePage = document.getElementById('secBubbleSheetA5');
+      var bubbleChk = document.getElementById('chkAnswerBubbleSheet');
+      if (bubblePage && bubbleChk) {
+        bubblePage.classList.toggle('hidden-sec', !bubbleChk.checked);
+      }
 
       // Gán ngắt trang tự động từ trang hiển thị thứ 2 trở đi để không bao giờ sinh trang trắng đầu tiên
       var visiblePages = Array.prototype.slice.call(document.querySelectorAll('.bundle-page:not(.hidden-sec)'));

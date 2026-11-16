@@ -36,7 +36,7 @@ jobs:
 
       - name: 📦 Kiem tra tinh toan ven cua cac file goc quan trong
         run: |
-          for file in index.html remote.html server.js scripts/app.js partials/mat-thu-modal.html partials/giai-ma-bi-mat-modal.html assets/images/logo-truong-thcs-Tan-Hai.jpg assets/audio/thuong-lam-thay-co-oi.mp3; do
+          for file in index.html remote.html server.js scripts/app.js partials/mat-thu-modal.html partials/giai-ma-bi-mat-modal.html assets/images/logo-truong-thcs-Tan-Hai.jpg assets/audio/thuong-lam-thay-co-oi.mp3 assets/vendor/katex/katex.min.js assets/vendor/katex/katex.min.css server/routes/gmmQuestionSetsRoutes.js server/routes/gmmCustomPuzzlesRoutes.js server/utils/jsonSyncStore.js; do
             if [ ! -s "$file" ]; then
               echo "❌ File thieu hoac bi rong: $file"
               exit 1

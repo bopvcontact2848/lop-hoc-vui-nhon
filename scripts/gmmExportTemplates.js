@@ -16,9 +16,18 @@
 
   function getCleanPrintSvg(isSolvedAnswerKey = false) {
     if (window.GiaiMaPuzzle && typeof window.GiaiMaPuzzle.renderSvgMatrix === 'function') {
+      const activePuzzle = (typeof window.GiaiMaPuzzle.getActivePuzzle === 'function')
+        ? window.GiaiMaPuzzle.getActivePuzzle()
+        : null;
+      const footerChk = document.getElementById('gmmExportIncludeFooterLegend');
+      const includeFooterLegend = footerChk ? Boolean(footerChk.checked) : true;
+      const strokeWidth = (activePuzzle && parseFloat(activePuzzle.strokeWidth)) || 1.8;
       return window.GiaiMaPuzzle.renderSvgMatrix('print_sheet', {}, {
         isPrint: true,
-        isSolvedAnswerKey: isSolvedAnswerKey
+        isSolvedAnswerKey: isSolvedAnswerKey,
+        strokeWidth: strokeWidth,
+        showFooterLegend: !isSolvedAnswerKey && includeFooterLegend,
+        puzzle: activePuzzle || undefined
       });
     }
     return '';
@@ -27,10 +36,16 @@
   function buildAnswerKeyTableHtml(isForWord = false) {
     const list = (ctx.getQuestionsList() && ctx.getQuestionsList().length > 0) ? ctx.getQuestionsList() : ctx.DEFAULT_QUESTIONS;
     const letters = ['A', 'B', 'C', 'D'];
+    const mathApi = window.GmmMathFormat;
     const rows = list.map((q, idx) => {
       const char = letters[q.correct] || 'A';
-      const optText = (q.options && q.options[q.correct]) ? q.options[q.correct] : '';
-      const shortOpt = optText.length > 55 ? optText.substring(0, 55) + '...' : optText;
+      const optText = (q.options && q.options[q.correct]) ? String(q.options[q.correct]) : '';
+      const shortOpt = (mathApi && typeof mathApi.truncateMathSafe === 'function')
+        ? mathApi.truncateMathSafe(optText, 72)
+        : (optText.length > 55 ? optText.substring(0, 55) + '...' : optText);
+      const renderedOptHtml = (mathApi && typeof mathApi.renderMathToStaticHtml === 'function')
+        ? mathApi.renderMathToStaticHtml(shortOpt, { forWord: isForWord })
+        : shortOpt;
       const coord = q.coordinate ? q.coordinate.replace('Mã ', '') : `${idx + 1}${char}`;
       const colorDot = q.coordinate && q.coordinate.includes('Đỏ') ? '#dc2626'
                      : q.coordinate && q.coordinate.includes('cam') ? '#f59e0b'
@@ -45,7 +60,7 @@
           <td style="border: 1px solid #cbd5e1; padding: 2.5px 4px; font-weight: bold; width: 75px; white-space: nowrap;">
             <span style="display: inline-block; width: 9px; height: 9px; background: ${colorDot}; border-radius: 2px; margin-right: 3px;"></span>${coord}
           </td>
-          <td style="border: 1px solid #cbd5e1; padding: 2.5px 5px; font-size: ${isForWord ? '8.5pt' : '8.2pt'}; line-height: 1.25;">${shortOpt}</td>
+          <td style="border: 1px solid #cbd5e1; padding: 2.5px 5px; font-size: ${isForWord ? '8.5pt' : '8.2pt'}; line-height: 1.25;">${renderedOptHtml}</td>
         </tr>
       `;
     }).join('');
@@ -109,6 +124,7 @@
     const schoolInput = document.getElementById('gmmExportSchoolName');
     const titleInput = document.getElementById('gmmExportTitle');
     const teamInput = document.getElementById('gmmExportTeamLabel');
+    const footerChk = document.getElementById('gmmExportIncludeFooterLegend');
     const schoolLogo = getExportSchoolLogo();
 
     const activePuzzle = (window.GiaiMaPuzzle && typeof window.GiaiMaPuzzle.getActivePuzzle === 'function')
@@ -117,7 +133,7 @@
     const defaultTitle = activePuzzle && activePuzzle.title ? activePuzzle.title : 'TRI ÂN THẦY CÔ 20/11';
 
     const defaultSchool = 'TRƯỜNG THCS TÂN HẢI\nHOẠT ĐỘNG DẠY HỌC TÍCH CỰC';
-    const defaultTitleStr = 'PHIẾU THI ĐẤU: GIẢI MÃ BỨC TRANH BÍ ẨN\nCHỦ ĐỀ: KỸ NĂNG SỐNG & HỌC TẬP';
+    const defaultTitleStr = `PHIẾU THI ĐẤU: GIẢI MÃ BỨC TRANH BÍ ẨN\nCHỦ ĐỀ: ${defaultTitle}`;
     const defaultTeam = 'ĐỘI THI: .........................\nLỚP: .......... • THỜI GIAN: .....................';
 
     return {
@@ -127,6 +143,7 @@
       titleHtml: formatTextLines(titleInput ? titleInput.value : '', defaultTitleStr),
       teamLabel: teamInput ? teamInput.value : defaultTeam,
       teamLabelHtml: formatTextLines(teamInput ? teamInput.value : '', defaultTeam),
+      includeFooterLegend: footerChk ? Boolean(footerChk.checked) : true,
       schoolLogo: schoolLogo,
       safeTitle: defaultTitle.replace(/[^a-zA-Z0-9_\u00C0-\u1EF9]/g, '_')
     };
@@ -330,7 +347,9 @@
               margin: 0;
             }
           }
+          .katex { font-size: 1em; }
         </style>
+        <link rel="stylesheet" href="${(window.GmmMathFormat && typeof window.GmmMathFormat.getKatexPrintCssUrl === 'function') ? window.GmmMathFormat.getKatexPrintCssUrl() : 'assets/vendor/katex/katex.min.css'}">
       </head>
       <body>
         <div class="no-print">
@@ -363,12 +382,14 @@
             </div>
           </div>
 
+          ${data.includeFooterLegend ? '' : `
           <div class="legend-bar">
             <span style="font-weight: 900;">👉 BẢNG QUY ƯỚC MÃ MÀU TÔ TRANH:</span>
             ${buildDynamicLegendGroups().map(g => `<span class="legend-item"><span class="color-dot" style="background: ${g.color};"></span> Câu ${g.qNums.join(', ')}: ${g.name}</span>`).join('')}
           </div>
+          `}
 
-          <div class="matrix-canvas-box">
+          <div class="matrix-canvas-box" style="${data.includeFooterLegend ? 'aspect-ratio: 800 / 584; max-height: calc(100vh - 78px);' : ''}">
             ${printSvg}
           </div>
 
@@ -634,12 +655,14 @@
               </tr>
             </table>
 
+            ${data.includeFooterLegend ? '' : `
             <table class="legend-table">
               <tr>
                 <td style="font-weight: bold; background: #e2e8f0; width: 16%;">👉 MÃ MÀU TÔ:</td>
                 ${buildDynamicLegendGroups().map(g => `<td><strong style="color: ${g.color};">■ ${g.name}:</strong> C${g.qNums.join(', C')}</td>`).join('')}
               </tr>
             </table>
+            `}
 
             <div style="text-align: center; margin: 2pt 0;">
               ${imageHtmlPage1}

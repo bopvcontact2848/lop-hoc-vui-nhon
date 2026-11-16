@@ -8,6 +8,8 @@ const { closeAllSseClients } = require('./server/state/sseHub');
 const gmmState = require('./server/state/gmmState');
 const { handleRemoteRoutes } = require('./server/routes/remoteRoutes');
 const { createMatThuRouter } = require('./server/routes/matThuRoutes');
+const { createGmmQuestionSetsRouter } = require('./server/routes/gmmQuestionSetsRoutes');
+const { createGmmCustomPuzzlesRouter } = require('./server/routes/gmmCustomPuzzlesRoutes');
 const { handleGmmRoutes } = require('./server/routes/gmmRoutes');
 
 const parsedPortEnv = process.env.PORT !== undefined ? parseInt(process.env.PORT, 10) : 3000;
@@ -19,8 +21,16 @@ const ROOT_DIR = __dirname;
 const MAT_THU_FILE = process.env.MAT_THU_FILE
   ? path.resolve(process.env.MAT_THU_FILE)
   : path.join(ROOT_DIR, 'matthu_scores.json');
+const GMM_SETS_FILE = process.env.GMM_SETS_FILE
+  ? path.resolve(process.env.GMM_SETS_FILE)
+  : path.join(ROOT_DIR, 'server', 'data', 'gmm_question_sets.json');
+const GMM_PUZZLES_FILE = process.env.GMM_PUZZLES_FILE
+  ? path.resolve(process.env.GMM_PUZZLES_FILE)
+  : path.join(ROOT_DIR, 'server', 'data', 'gmm_custom_puzzles.json');
 
 const handleMatThuRoutes = createMatThuRouter(MAT_THU_FILE);
+const handleGmmQuestionSetsRoutes = createGmmQuestionSetsRouter(GMM_SETS_FILE);
+const handleGmmCustomPuzzlesRoutes = createGmmCustomPuzzlesRouter(GMM_PUZZLES_FILE);
 gmmState.startTeamWatchdog();
 
 const server = http.createServer(async (req, res) => {
@@ -39,6 +49,8 @@ const server = http.createServer(async (req, res) => {
 
   if (await handleRemoteRoutes(req, res, () => currentPort)) return;
   if (await handleMatThuRoutes(req, res)) return;
+  if (await handleGmmQuestionSetsRoutes(req, res)) return;
+  if (await handleGmmCustomPuzzlesRoutes(req, res)) return;
   if (await handleGmmRoutes(req, res)) return;
 
   serveStaticFile(req, res, ROOT_DIR);

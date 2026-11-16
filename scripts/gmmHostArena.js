@@ -340,6 +340,13 @@
       if (btn) btn.classList.toggle('primary', s === sec);
     });
     updateMatchTimerUI();
+    if (typeof ctx.updateSettingsSummaryBar === 'function') {
+      ctx.updateSettingsSummaryBar();
+    }
+    if (typeof window.showToast === 'function') {
+      const label = sec === 90 ? '1 phút 30 giây' : `${Math.round(sec / 60)} phút`;
+      window.showToast(`⏱️ Đã đặt thời lượng thi đấu 10 câu hỏi: ${label}!`, 'info');
+    }
   }
 
   // Chốt kết quả trận đấu 10 câu trắc nghiệm, tính điểm, phát âm thanh chiến thắng, pháo hoa
@@ -380,8 +387,8 @@
     // Thông báo Toast hoàn thành phần thi 10 câu trắc nghiệm
     if (typeof window.showToast === 'function') {
       const msg = isManualTrigger
-        ? '🔒 ĐÃ CHỐT KẾT QUẢ BÀI THI! 10 câu trắc nghiệm đã hoàn thành. Thầy/Cô mở Tab 4 (Tô Màu Giải Mã Tranh) khi sẵn sàng.'
-        : '⏰ HẾT GIỜ THI ĐẤU! Đã hoàn thành phần thi trắc nghiệm của 2 đội. Thầy/Cô mở Tab 4 (Tô Màu Giải Mã Tranh) khi sẵn sàng.';
+        ? '🔒 ĐÃ CHỐT KẾT QUẢ BÀI THI! 10 câu trắc nghiệm đã hoàn thành. Thầy/Cô mở Tab 3 (Tô Màu Giải Mã Tranh) khi sẵn sàng.'
+        : '⏰ HẾT GIỜ THI ĐẤU! Đã hoàn thành phần thi trắc nghiệm của 2 đội. Thầy/Cô mở Tab 3 (Tô Màu Giải Mã Tranh) khi sẵn sàng.';
       window.showToast(msg, 'success');
     }
 
@@ -583,10 +590,14 @@
           else if (isASelected || isBSelected) btn.classList.add('wrong');
         }
 
+        const safeOptHtml = String(opt)
+          .replace(/&/g, '&amp;')
+          .replace(/</g, '&lt;')
+          .replace(/>/g, '&gt;');
         btn.innerHTML = `
           <div class="gmm-opt-letter">${letters[idx]}</div>
           <div style="flex: 1; padding: 0 8px;">
-            <div>${opt}</div>
+            <div>${safeOptHtml}</div>
             ${gameState.isAnswerRevealed && idx === q.correct ? '<div style="font-size: 0.78rem; color: #34d399; font-weight: 800; margin-top: 3px;">✨ ĐÁP ÁN ĐÚNG ✨</div>' : ''}
           </div>
           <div style="display: flex; gap: 6px; align-items: center;" onclick="event.stopPropagation()">
@@ -613,6 +624,10 @@
 
         optionsGrid.appendChild(btn);
       });
+    }
+    if (window.GmmMathFormat && typeof window.GmmMathFormat.renderMathInContainer === 'function') {
+      if (qTextEl) window.GmmMathFormat.renderMathInContainer(qTextEl);
+      if (optionsGrid) window.GmmMathFormat.renderMathInContainer(optionsGrid);
     }
   }
 

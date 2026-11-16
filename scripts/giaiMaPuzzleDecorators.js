@@ -68,206 +68,94 @@
     return 'stars';
   }
 
-  // Vẽ hình ngôi sao 5 cánh dày dặn để không bị đứt cánh khi quy đổi sang lưới đa giác
-  function drawStar(ctx, cx, cy, outerR, innerR, fillStyle) {
-    ctx.save();
-    ctx.fillStyle = fillStyle;
-    ctx.beginPath();
-    for (let i = 0; i < 10; i++) {
-      const angle = -Math.PI / 2 + (i * Math.PI) / 5;
-      const r = (i % 2 === 0) ? outerR : innerR;
-      const x = cx + Math.cos(angle) * r;
-      const y = cy + Math.sin(angle) * r;
-      if (i === 0) ctx.moveTo(x, y);
-      else ctx.lineTo(x, y);
-    }
-    ctx.closePath();
-    ctx.fill();
-    ctx.restore();
-  }
+  // Bản mẫu Pixel-Art sắc nét 100% 4-connected cho dải biểu tượng chân trang & hai bên cánh (chuẩn như tranh 20/11)
+  const PIXEL_MOTIF_CENTER = {
+    hearts: [
+      '.1111..1111.',
+      '111111111111',
+      '111111111111',
+      '.1111111111.',
+      '..11111111..',
+      '...111111...',
+      '....1111....'
+    ],
+    stars: [
+      '.....11.....',
+      '....1111....',
+      '111111111111',
+      '.1111111111.',
+      '..11111111..',
+      '..11111111..',
+      '.111....111.'
+    ],
+    lotus: [
+      '.....11.....',
+      '..11111111..',
+      '.1111111111.',
+      '111111111111',
+      '.1111111111.',
+      '..22222222..',
+      '.2222222222.'
+    ],
+    bamboo: [
+      '.....11.....',
+      '....1111....',
+      '...111111...',
+      '....1111....',
+      '..11111111..',
+      '...111111...',
+      '.1111111111.'
+    ]
+  };
 
-  function drawHeart(ctx, cx, cy, size, fillStyle) {
-    ctx.save();
-    ctx.fillStyle = fillStyle;
-    const r = size * 0.29;
-    ctx.beginPath();
-    ctx.arc(cx - r * 0.88, cy - r * 0.35, r, 0, Math.PI * 2);
-    ctx.arc(cx + r * 0.88, cy - r * 0.35, r, 0, Math.PI * 2);
-    ctx.fill();
+  const PIXEL_MOTIF_SIDE = {
+    hearts: [
+      '.11..11.',
+      '11111111',
+      '11111111',
+      '.111111.',
+      '..1111..',
+      '...11...'
+    ],
+    stars: [
+      '...11...',
+      '..1111..',
+      '11111111',
+      '.111111.',
+      '..1111..',
+      '.11..11.'
+    ],
+    lotus: [
+      '...11...',
+      '.111111.',
+      '11111111',
+      '.111111.',
+      '..2222..'
+    ],
+    bamboo: [
+      '...22...',
+      '..2222..',
+      '22222222',
+      '.222222.',
+      '..2222..',
+      '.22..22.'
+    ]
+  };
 
-    ctx.beginPath();
-    ctx.moveTo(cx - size * 0.54, cy - r * 0.08);
-    ctx.lineTo(cx + size * 0.54, cy - r * 0.08);
-    ctx.lineTo(cx, cy + size * 0.52);
-    ctx.closePath();
-    ctx.fill();
-    ctx.restore();
-  }
-
-  function drawSparkleDiamond(ctx, cx, cy, rx, ry, fillStyle) {
-    ctx.save();
-    ctx.fillStyle = fillStyle;
-    ctx.beginPath();
-    ctx.moveTo(cx, cy - ry);
-    ctx.quadraticCurveTo(cx + rx * 0.28, cy - ry * 0.28, cx + rx, cy);
-    ctx.quadraticCurveTo(cx + rx * 0.28, cy + ry * 0.28, cx, cy + ry);
-    ctx.quadraticCurveTo(cx - rx * 0.28, cy + ry * 0.28, cx - rx, cy);
-    ctx.quadraticCurveTo(cx - rx * 0.28, cy - ry * 0.28, cx, cy - ry);
-    ctx.closePath();
-    ctx.fill();
-    ctx.restore();
-  }
-
-  function drawLaurelBranch(ctx, cx, cy, dir, fillStyle) {
-    // dir = 1 (góc trái hướng vào giữa) hoặc -1 (góc phải hướng vào giữa)
-    ctx.save();
-    ctx.fillStyle = fillStyle;
-    ctx.strokeStyle = fillStyle;
-    ctx.lineWidth = 13;
-    ctx.lineCap = 'round';
-
-    ctx.beginPath();
-    ctx.moveTo(cx - dir * 32, cy - 22);
-    ctx.quadraticCurveTo(cx - dir * 8, cy + 16, cx + dir * 48, cy + 20);
-    ctx.stroke();
-
-    const leaves = [
-      { ox: -dir * 26, oy: -22, rot: dir * 0.5 },
-      { ox: -dir * 6, oy: -4, rot: dir * 0.2 },
-      { ox: dir * 18, oy: 10, rot: -dir * 0.15 },
-      { ox: dir * 42, oy: 18, rot: -dir * 0.35 }
-    ];
-    leaves.forEach(lf => {
-      ctx.save();
-      ctx.translate(cx + lf.ox, cy + lf.oy);
-      ctx.rotate(lf.rot);
-      ctx.beginPath();
-      ctx.ellipse(0, 0, 16, 9.5, 0, 0, Math.PI * 2);
-      ctx.fill();
-      ctx.restore();
-    });
-    ctx.restore();
-  }
-
-  function drawBambooShoot(ctx, cx, baseY, fillStyle) {
-    ctx.save();
-    ctx.fillStyle = fillStyle;
-    // Thân măng non 3 tầng vươn cao vững chãi
-    const tiers = [
-      { topY: baseY - 76, botY: baseY - 40, topW: 4, botW: 34 },
-      { topY: baseY - 46, botY: baseY - 16, topW: 22, botW: 46 },
-      { topY: baseY - 22, botY: baseY + 6, topW: 32, botW: 56 }
-    ];
-    tiers.forEach(t => {
-      ctx.beginPath();
-      ctx.moveTo(cx - t.topW / 2, t.topY);
-      ctx.lineTo(cx + t.topW / 2, t.topY);
-      ctx.lineTo(cx + t.botW / 2, t.botY);
-      ctx.lineTo(cx - t.botW / 2, t.botY);
-      ctx.closePath();
-      ctx.fill();
-    });
-
-    // Hai phiến lá tre non ôm 2 bên gốc măng
-    [-1, 1].forEach(side => {
-      ctx.save();
-      ctx.translate(cx + side * 30, baseY - 12);
-      ctx.rotate(side * 0.65);
-      ctx.beginPath();
-      ctx.ellipse(0, 0, 20, 9.5, 0, 0, Math.PI * 2);
-      ctx.fill();
-      ctx.restore();
-    });
-    ctx.restore();
-  }
-
-  function drawLotusFlower(ctx, cx, cy, petalColor, leafColor) {
-    // Đài lá sen xanh nâng phía dưới
-    ctx.save();
-    ctx.fillStyle = leafColor;
-    [-1, 1].forEach(side => {
-      ctx.save();
-      ctx.translate(cx + side * 26, cy + 20);
-      ctx.rotate(side * 0.25);
-      ctx.beginPath();
-      ctx.ellipse(0, 0, 24, 10, 0, 0, Math.PI * 2);
-      ctx.fill();
-      ctx.restore();
-    });
-    ctx.restore();
-
-    // 5 cánh hoa sen bung nở cân xứng
-    ctx.save();
-    ctx.fillStyle = petalColor;
-    const petals = [
-      { dx: -28, dy: 4, rot: -0.78, rx: 12, ry: 24 },
-      { dx: 28, dy: 4, rot: 0.78, rx: 12, ry: 24 },
-      { dx: -15, dy: -6, rot: -0.38, rx: 13, ry: 28 },
-      { dx: 15, dy: -6, rot: 0.38, rx: 13, ry: 28 },
-      { dx: 0, dy: -11, rot: 0, rx: 14.5, ry: 32 }
-    ];
-    petals.forEach(p => {
-      ctx.save();
-      ctx.translate(cx + p.dx, cy + p.dy);
-      ctx.rotate(p.rot);
-      ctx.beginPath();
-      ctx.ellipse(0, 0, p.rx, p.ry, 0, 0, Math.PI * 2);
-      ctx.fill();
-      ctx.restore();
-    });
-    ctx.restore();
-  }
-
-  // Đóng dấu họa tiết lên lưới (rows x cols) với vành đai cách ly 2 ô bảo vệ dấu Tiếng Việt
+  // Đóng dấu họa tiết Pixel-Art trực tiếp lên lưới (rows x cols) với vành đai cách ly bảo vệ chữ Tiếng Việt
   function applyMotifToMask(inkMask, peakScore, rows, cols, rawText, requestedMotif) {
     const motifKey = resolveMotifByTheme(rawText, requestedMotif);
     if (!motifKey || motifKey === 'none' || !MOTIF_META[motifKey]) {
       return null;
     }
 
-    const SCALE = 10;
-    const hiW = cols * SCALE;
-    const hiH = rows * SCALE;
-    const canvas = document.createElement('canvas');
-    canvas.width = hiW;
-    canvas.height = hiH;
-    const ctx = canvas.getContext('2d');
-    if (!ctx) return null;
-
-    ctx.fillStyle = '#000000';
-    ctx.fillRect(0, 0, hiW, hiH);
-
-    // Kênh Đỏ (#ff0000) = Nhóm họa tiết chính (1); Kênh Xanh lá (#00ff00) = Nhóm họa tiết phụ (2)
-    const PRI = '#ff0000';
-    const SEC = '#00ff00';
-
-    if (motifKey === 'stars') {
-      drawStar(ctx, 56, 54, 40, 18.5, PRI);
-      drawStar(ctx, hiW - 56, 54, 40, 18.5, PRI);
-      drawLaurelBranch(ctx, 58, hiH - 46, 1, SEC);
-      drawLaurelBranch(ctx, hiW - 58, hiH - 46, -1, SEC);
-    } else if (motifKey === 'lotus') {
-      drawLotusFlower(ctx, 64, hiH - 52, PRI, SEC);
-      drawLotusFlower(ctx, hiW - 64, hiH - 52, PRI, SEC);
-      drawSparkleDiamond(ctx, 52, 48, 30, 30, PRI);
-      drawSparkleDiamond(ctx, hiW - 52, 48, 30, 30, PRI);
-    } else if (motifKey === 'hearts') {
-      drawHeart(ctx, 58, 54, 68, PRI);
-      drawHeart(ctx, hiW - 58, 54, 68, PRI);
-      drawSparkleDiamond(ctx, 56, hiH - 48, 32, 32, SEC);
-      drawSparkleDiamond(ctx, hiW - 56, hiH - 48, 32, 32, SEC);
-    } else if (motifKey === 'bamboo') {
-      drawBambooShoot(ctx, 56, hiH - 22, PRI);
-      drawBambooShoot(ctx, hiW - 56, hiH - 22, PRI);
-      drawStar(ctx, 54, 52, 36, 17, SEC);
-      drawStar(ctx, hiW - 54, 52, 36, 17, SEC);
-    }
-
     // Tạo vùng đệm an toàn 2 ô (Safety Halo) bao quanh toàn bộ chữ Tiếng Việt đã có
     const textHalo = Array.from({ length: rows }, () => Array(cols).fill(false));
+    let maxTextRow = 0;
     for (let r = 0; r < rows; r++) {
       for (let c = 0; c < cols; c++) {
         if (!inkMask[r][c]) continue;
+        if (r > maxTextRow) maxTextRow = r;
         for (let dr = -2; dr <= 2; dr++) {
           for (let dc = -2; dc <= 2; dc++) {
             const nr = r + dr, nc = c + dc;
@@ -279,38 +167,99 @@
       }
     }
 
-    const raw = ctx.getImageData(0, 0, hiW, hiH).data;
     const motifRoleGrid = Array.from({ length: rows }, () => Array(cols).fill(0));
     let countPrimary = 0;
     let countSecondary = 0;
 
-    for (let r = 0; r < rows; r++) {
-      for (let c = 0; c < cols; c++) {
-        if (textHalo[r][c]) continue;
-        let sumR = 0, sumG = 0;
-        for (let dy = 0; dy < SCALE; dy++) {
-          const py = r * SCALE + dy;
-          for (let dx = 0; dx < SCALE; dx++) {
-            const px = c * SCALE + dx;
-            const idx = (py * hiW + px) * 4;
-            sumR += raw[idx];
-            sumG += raw[idx + 1];
-          }
-        }
-        const meanR = sumR / (SCALE * SCALE);
-        const meanG = sumG / (SCALE * SCALE);
-        if (meanR >= 82 || meanG >= 82) {
-          inkMask[r][c] = true;
-          peakScore[r][c] = Math.max(meanR, meanG);
-          if (meanR >= meanG) {
-            motifRoleGrid[r][c] = 1;
-            countPrimary++;
-          } else {
-            motifRoleGrid[r][c] = 2;
-            countSecondary++;
+    const stampCell = (r, c, role) => {
+      if (r < 1 || r >= rows - 1 || c < 1 || c >= cols - 1) return;
+      if (textHalo[r][c] || inkMask[r][c]) return;
+      inkMask[r][c] = true;
+      peakScore[r][c] = 255;
+      motifRoleGrid[r][c] = role;
+      if (role === 1) countPrimary++;
+      else if (role === 2) countSecondary++;
+    };
+
+    const stampPattern = (r0, c0, pat, defaultRole) => {
+      if (!pat || !pat.length) return;
+      const h = pat.length;
+      const w = pat[0].length;
+      // Kiểm tra toàn bộ vùng đóng dấu không vi phạm textHalo để không bao giờ cắt cụt biểu tượng
+      for (let dr = 0; dr < h; dr++) {
+        for (let dc = 0; dc < w; dc++) {
+          if (pat[dr][dc] === '.') continue;
+          const r = r0 + dr, c = c0 + dc;
+          if (r < 1 || r >= rows - 1 || c < 1 || c >= cols - 1 || textHalo[r][c]) {
+            return;
           }
         }
       }
+      for (let dr = 0; dr < h; dr++) {
+        for (let dc = 0; dc < w; dc++) {
+          const ch = pat[dr][dc];
+          if (ch === '.') continue;
+          const role = ch === '2' ? 2 : (ch === '1' ? 1 : defaultRole);
+          stampCell(r0 + dr, c0 + dc, role);
+        }
+      }
+    };
+
+    const midC = Math.floor(cols / 2);
+    const centerPat = PIXEL_MOTIF_CENTER[motifKey] || PIXEL_MOTIF_CENTER.stars;
+    const sidePat = PIXEL_MOTIF_SIDE[motifKey] || PIXEL_MOTIF_SIDE.stars;
+
+    // Nếu phía dưới bức tranh còn dải trống >= 9 hàng (bố cục 1 hoặc 2 dòng chữ chuẩn):
+    // Vẽ dải biểu tượng trung tâm + đôi cánh nguyệt quế/tia nắng cân xứng y hệt tranh mẫu 20/11
+    if (rows - 1 - maxTextRow >= 9) {
+      const bandTop = rows - 9;
+      const centerW = centerPat[0].length;
+      const centerLeft = midC - Math.floor(centerW / 2);
+      stampPattern(bandTop, centerLeft, centerPat, 1);
+
+      // Vẽ hai nhành nguyệt quế / tia nắng (role = 2) trải rộng hai bên biểu tượng trung tâm
+      const wingInnerOffset = Math.floor(centerW / 2) + 3;
+      const wingOuterMargin = 8;
+      const wingRowRibbon = bandTop + 5;
+      for (let c = wingOuterMargin; c <= midC - wingInnerOffset; c++) {
+        stampCell(wingRowRibbon, c, 2);
+        stampCell(wingRowRibbon + 1, c, 2);
+      }
+      for (let c = midC + wingInnerOffset; c < cols - wingOuterMargin; c++) {
+        stampCell(wingRowRibbon, c, 2);
+        stampCell(wingRowRibbon + 1, c, 2);
+      }
+
+      // Các phiến lá nguyệt quế / tia sáng gắn liền khối (4-connected) phía trên dải ruy-băng
+      for (let step = 0; step < 3; step++) {
+        const lc = wingOuterMargin + 2 + step * 6;
+        if (lc + 3 <= midC - wingInnerOffset) {
+          stampCell(wingRowRibbon - 2, lc + 1, 2);
+          stampCell(wingRowRibbon - 2, lc + 2, 2);
+          stampCell(wingRowRibbon - 1, lc, 2);
+          stampCell(wingRowRibbon - 1, lc + 1, 2);
+          stampCell(wingRowRibbon - 1, lc + 2, 2);
+          stampCell(wingRowRibbon - 1, lc + 3, 2);
+        }
+        const rc = cols - 1 - wingOuterMargin - 2 - step * 6;
+        if (rc - 3 >= midC + wingInnerOffset) {
+          stampCell(wingRowRibbon - 2, rc - 1, 2);
+          stampCell(wingRowRibbon - 2, rc - 2, 2);
+          stampCell(wingRowRibbon - 1, rc, 2);
+          stampCell(wingRowRibbon - 1, rc - 1, 2);
+          stampCell(wingRowRibbon - 1, rc - 2, 2);
+          stampCell(wingRowRibbon - 1, rc - 3, 2);
+        }
+      }
+    } else {
+      // Nếu thông điệp dài 3 dòng: đóng dấu biểu tượng nhỏ gọn vào hai bên sườn dòng ngắn hơn
+      const sideW = sidePat[0].length;
+      const topR = 3;
+      const botR = Math.max(3, rows - sidePat.length - 3);
+      stampPattern(topR, 2, sidePat, 1);
+      stampPattern(topR, cols - sideW - 2, sidePat, 1);
+      stampPattern(botR, 2, sidePat, 2);
+      stampPattern(botR, cols - sideW - 2, sidePat, 2);
     }
 
     return {
@@ -341,7 +290,7 @@
     document.body.appendChild(dl);
   }
 
-  function renderInlineColorEditor(containerId, puzzleObj, onRuleChanged) {
+  function renderInlineColorEditor(containerId, puzzleObj, onRuleChanged, onToggleLock) {
     const container = document.getElementById(containerId);
     if (!container || !puzzleObj || !puzzleObj.colorRules) return;
     ensureMarkerDatalist();
@@ -355,8 +304,10 @@
       const qNum = rule.qNum || '';
       const colorHex = rule.color || '#dc2626';
       const colorName = rule.name || 'Màu bút dạ';
+      const partLabel = rule.part ? ` (${rule.part})` : '';
+      const isLocked = Boolean(rule.locked);
       return `
-        <div class="gmm-marker-chip" title="Bấm ô vuông để đổi sắc độ màu • Bấm vào tên màu để gõ tên bút dạ thực tế của lớp">
+        <div class="gmm-marker-chip ${isLocked ? 'is-locked-chip' : ''}" data-code="${escapeAttr(codeKey)}" data-qnum="${escapeAttr(qNum)}" style="${isLocked ? 'border-color: rgba(250, 204, 21, 0.72) !important; background: rgba(234, 179, 8, 0.14) !important;' : ''}" title="Câu ${qNum}${escapeAttr(partLabel)} • Bấm ô vuông để đổi sắc độ màu • Bấm vào tên màu để gõ tên bút dạ • Bấm ổ khóa 🔒 để giữ cố định màu này khi đổi bảng màu tự động">
           <input type="color"
                  class="gmm-marker-color-input"
                  value="${escapeAttr(colorHex)}"
@@ -370,6 +321,13 @@
                  data-code="${escapeAttr(codeKey)}"
                  placeholder="Tên màu bút..."
                  aria-label="Tên màu bút dạ Câu ${qNum}" />
+          <button type="button"
+                  class="gmm-marker-lock-btn ${isLocked ? 'locked' : ''}"
+                  data-code="${escapeAttr(codeKey)}"
+                  style="background: ${isLocked ? 'rgba(250, 204, 21, 0.25)' : 'rgba(255, 255, 255, 0.06)'}; border: 1px solid ${isLocked ? '#facc15' : 'rgba(255, 255, 255, 0.15)'}; border-radius: 5px; padding: 1px 5px; font-size: 0.72rem; cursor: pointer; line-height: 1.2; flex-shrink: 0; color: ${isLocked ? '#fde047' : '#94a3b8'};"
+                  title="${isLocked ? '🔒 Đang KHÓA màu C' + qNum + ' (Không bị thay đổi khi bấm Đổi 10 màu hoặc Tạo lại tranh) — Bấm để mở khóa' : '🔓 Bấm để KHÓA cố định màu C' + qNum + ' khi đổi bảng màu tự động'}">
+            ${isLocked ? '🔒' : '🔓'}
+          </button>
         </div>
       `;
     }).join('');
@@ -398,6 +356,17 @@
         const newName = String(e.target.value || '').trim();
         if (code && newName && typeof onRuleChanged === 'function') {
           onRuleChanged(code, newName, null);
+        }
+      });
+    });
+
+    container.querySelectorAll('.gmm-marker-lock-btn').forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        const code = e.currentTarget.getAttribute('data-code');
+        if (code && typeof onToggleLock === 'function') {
+          onToggleLock(code);
         }
       });
     });

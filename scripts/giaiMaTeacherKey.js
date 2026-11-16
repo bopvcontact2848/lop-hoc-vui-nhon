@@ -258,6 +258,9 @@
         <div class="gmm-live-q-footer">${footerHtml}</div>
       </div>
     `;
+    if (window.GmmMathFormat && typeof window.GmmMathFormat.renderMathInContainer === 'function') {
+      window.GmmMathFormat.renderMathInContainer(stageEl);
+    }
   }
 
   function renderLiveQuizCards() {

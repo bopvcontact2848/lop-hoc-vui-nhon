@@ -95,12 +95,16 @@ function openSseClient(url) {
 
 async function startTestServer(tempDir) {
   const matThuPath = path.join(tempDir, 'matthu_scores.test.json');
+  const gmmSetsPath = path.join(tempDir, 'gmm_question_sets.test.json');
+  const gmmPuzzlesPath = path.join(tempDir, 'gmm_custom_puzzles.test.json');
   const child = spawn(process.execPath, [path.join(ROOT_DIR, 'server.js')], {
     cwd: ROOT_DIR,
     env: {
       ...process.env,
       PORT: '0',
-      MAT_THU_FILE: matThuPath
+      MAT_THU_FILE: matThuPath,
+      GMM_SETS_FILE: gmmSetsPath,
+      GMM_PUZZLES_FILE: gmmPuzzlesPath
     },
     stdio: ['ignore', 'pipe', 'pipe']
   });
@@ -501,5 +505,189 @@ test('API & SSE Integration Suite', async (t) => {
     } finally {
       sse.close();
     }
+  });
+
+  await t.test('Đồng bộ Kho Bộ Đề lên Server JSON (/api/gmm/question-sets*): sync, merge, history, delete & SSE', async () => {
+    const sse = openSseClient(`${baseUrl}/api/sync/events?role=host`);
+    try {
+      await sse.waitForEvent((e) => e.type === 'connected');
+
+      const initRes = await fetch(`${baseUrl}/api/gmm/question-sets`);
+      assert.equal(initRes.status, 200);
+      const initJson = await initRes.json();
+      assert.equal(initJson.success, true);
+      assert.equal(initJson.serverSyncAvailable, true);
+      assert.deepEqual(initJson.sets, []);
+
+      // Chrome đẩy 1 bộ đề tự tạo lên server JSON
+      const setA = {
+        id: 'custom_sync_test_1',
+        title: 'Đề Toán 9 Đồng Bộ',
+        topic: 'Toán 9',
+        updatedAt: Date.now(),
+        questions: [
+          { question: 'Tính $2^3$', options: ['6', '8', '9', '12'], correct: 1, time: 30 }
+        ]
+      };
+      const syncRes = await fetch(`${baseUrl}/api/gmm/question-sets/sync`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          mode: 'merge',
+          clientOriginId: 'chrome_tab_1',
+          sets: [setA]
+        })
+      });
+      assert.equal(syncRes.status, 200);
+      const syncJson = await syncRes.json();
+      assert.equal(syncJson.success, true);
+      assert.equal(syncJson.totalSets, 1);
+      assert.equal(syncJson.sets[0].id, setA.id);
+
+      const sseEvt = await sse.waitForEvent((e) => e.type === 'gmm_question_sets_updated' && e.clientOriginId === 'chrome_tab_1');
+      assert.equal(sseEvt.totalSets, 1);
+
+      // Edge đọc lại và hợp nhất thêm bộ đề thứ 2
+      const setB = {
+        id: 'custom_sync_test_2',
+        title: 'Đề Ngữ Văn 8',
+        topic: 'Ngữ Văn',
+        updatedAt: Date.now() + 100,
+        questions: [
+          { question: 'Tác giả Lão Hạc?', options: ['Nam Cao', 'Ngô Tất Tố', 'Vũ Trọng Phụng', 'Tô Hoài'], correct: 0, time: 25 }
+        ]
+      };
+      const mergeRes = await fetch(`${baseUrl}/api/gmm/question-sets/sync`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ mode: 'merge', clientOriginId: 'edge_tab_1', sets: [setB] })
+      });
+      assert.equal(mergeRes.status, 200);
+      const mergeJson = await mergeRes.json();
+      assert.equal(mergeJson.totalSets, 2);
+
+      // Cập nhật và reset lịch sử bốc ngẫu nhiên trên server
+      const histRes = await fetch(`${baseUrl}/api/gmm/question-sets/history`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ setId: setA.id, seenIndices: [0], clientOriginId: 'chrome_tab_1' })
+      });
+      assert.equal(histRes.status, 200);
+      const histJson = await histRes.json();
+      assert.deepEqual(histJson.poolHistory[setA.id], [0]);
+
+      const histResetRes = await fetch(`${baseUrl}/api/gmm/question-sets/history`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ setId: setA.id, action: 'reset', clientOriginId: 'edge_tab_1' })
+      });
+      assert.equal(histResetRes.status, 200);
+      const histResetJson = await histResetRes.json();
+      assert.equal(histResetJson.poolHistory[setA.id], undefined);
+
+      // Xóa setA -> xác nhận tombstone ngăn merge cũ làm sống lại setA
+      const delRes = await fetch(`${baseUrl}/api/gmm/question-sets/delete`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id: setA.id, clientOriginId: 'edge_tab_1' })
+      });
+      assert.equal(delRes.status, 200);
+      const delJson = await delRes.json();
+      assert.equal(delJson.totalSets, 1);
+
+      const staleRes = await fetch(`${baseUrl}/api/gmm/question-sets/sync`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ mode: 'merge', sets: [setA] })
+      });
+      const staleJson = await staleRes.json();
+      assert.equal(staleJson.totalSets, 1);
+      assert.equal(staleJson.sets[0].id, setB.id);
+
+      // Kiểm tra 400 khi gửi dữ liệu sai định dạng
+      const badRes = await fetch(`${baseUrl}/api/gmm/question-sets/sync`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ sets: 'invalid' })
+      });
+      assert.equal(badRes.status, 400);
+    } finally {
+      sse.close();
+    }
+  });
+
+  await t.test('Đồng bộ Bộ Sưu Tập Tranh Tự Tạo lên Server JSON (/api/gmm/custom-puzzles*): sync, merge, delete & SSE', async () => {
+    const sse = openSseClient(`${baseUrl}/api/sync/events?role=host`);
+    try {
+      await sse.waitForEvent((e) => e.type === 'connected');
+
+      const initRes = await fetch(`${baseUrl}/api/gmm/custom-puzzles`);
+      assert.equal(initRes.status, 200);
+      const initJson = await initRes.json();
+      assert.equal(initJson.success, true);
+      assert.equal(initJson.serverSyncAvailable, true);
+      assert.deepEqual(initJson.puzzles, []);
+
+      const puzzleA = {
+        id: 'custom_puzzle_1',
+        title: 'BẢO VỆ MÔI TRƯỜNG XANH',
+        questionCount: 10,
+        meshStyle: 'polygon',
+        difficulty: 'normal',
+        strokeWidth: 1.8,
+        updatedAt: Date.now(),
+        matrixData: { id: 'custom_puzzle_1', title: 'BẢO VỆ MÔI TRƯỜNG XANH', cells: [{ id: 1, isTarget: true }] }
+      };
+      const syncRes = await fetch(`${baseUrl}/api/gmm/custom-puzzles/sync`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ mode: 'merge', clientOriginId: 'chrome_p1', puzzles: [puzzleA] })
+      });
+      assert.equal(syncRes.status, 200);
+      const syncJson = await syncRes.json();
+      assert.equal(syncJson.totalPuzzles, 1);
+      assert.equal(syncJson.puzzles[0].id, puzzleA.id);
+
+      const sseEvt = await sse.waitForEvent((e) => e.type === 'gmm_custom_puzzles_updated' && e.clientOriginId === 'chrome_p1');
+      assert.equal(sseEvt.totalPuzzles, 1);
+
+      const delRes = await fetch(`${baseUrl}/api/gmm/custom-puzzles/delete`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id: puzzleA.id, clientOriginId: 'edge_p1' })
+      });
+      assert.equal(delRes.status, 200);
+      const delJson = await delRes.json();
+      assert.equal(delJson.totalPuzzles, 0);
+
+      const badRes = await fetch(`${baseUrl}/api/gmm/custom-puzzles/sync`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ puzzles: 'invalid' })
+      });
+      assert.equal(badRes.status, 400);
+    } finally {
+      sse.close();
+    }
+  });
+
+  await t.test('Bảo mật HTTP Static & 404: chặn .git/, .agent/, server/data/, trả 404 cho tệp thiếu & 200 cho KaTeX', async () => {
+    for (const blockedPath of ['/.git/config', '/.agent/ARCHITECTURE.md', '/server/data/gmm_question_sets.json', '/matthu_scores.json']) {
+      const res = await fetch(`${baseUrl}${blockedPath}`);
+      assert.equal(res.status, 403, `Kỳ vọng 403 khi truy cập ${blockedPath}, thực tế nhận ${res.status}`);
+    }
+
+    for (const missingPath of ['/scripts/khong-ton-tai.js', '/assets/vendor/katex/fonts/missing.woff']) {
+      const res = await fetch(`${baseUrl}${missingPath}`);
+      assert.equal(res.status, 404, `Kỳ vọng 404 khi tệp không tồn tại: ${missingPath}`);
+    }
+
+    const katexJsRes = await fetch(`${baseUrl}/assets/vendor/katex/katex.min.js`);
+    assert.equal(katexJsRes.status, 200);
+    assert.match(katexJsRes.headers.get('content-type') || '', /javascript/);
+
+    const katexFontRes = await fetch(`${baseUrl}/assets/vendor/katex/fonts/KaTeX_Main-Regular.woff2`);
+    assert.equal(katexFontRes.status, 200);
+    assert.match(katexFontRes.headers.get('content-type') || '', /font\/woff2/);
   });
 });

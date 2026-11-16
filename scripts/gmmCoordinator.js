@@ -38,7 +38,7 @@
   function openAsRole(role) {
     if (role === 'admin') {
       setRoleFocus('all');
-      switchTab('lobby');
+      switchTab(gameState.isDecryptPhase ? 'decrypt' : 'quiz');
     } else if (role === 'teamA') {
       setRoleFocus('teamA');
       switchTab(gameState.isDecryptPhase ? 'decrypt' : 'quiz');
@@ -110,6 +110,7 @@
   async function resetGame(targetTab = null) {
     if (confirm('Thầy/Cô có chắc chắn muốn đặt lại toàn bộ điểm số, mở khóa lại bài thi trên điện thoại học sinh và bắt đầu ván mới không?')) {
       const savedMatchDuration = gameState.totalMatchSeconds || 120;
+      const savedDecryptDuration = gameState.decryptTimeTotal || 300;
       const newSessionId = Math.max(Date.now(), (Number(gameState.sessionId) || 0) + 1);
       gameState.sessionId = newSessionId;
       gameState.newlyUnlocked = { teamA: [], teamB: [] };
@@ -224,18 +225,18 @@
       gameState.isQuestionLocked = false;
       gameState.isAnswerRevealed = false;
       gameState.isDecryptPhase = false;
-      gameState.decryptTimeTotal = 300;
-      gameState.decryptTimeLeft = 300;
+      gameState.decryptTimeTotal = savedDecryptDuration;
+      gameState.decryptTimeLeft = savedDecryptDuration;
       gameState.isDecryptTimerRunning = false;
       closeDecryptTimerFullscreen();
       updateDecryptTimerUI();
       const btnStartDec = document.getElementById('gmmBtnStartDecrypt');
-      if (btnStartDec) btnStartDec.textContent = '🚀 Bắt Đầu (5p)';
+      if (btnStartDec) btnStartDec.textContent = `🚀 Bắt Đầu (${Math.round(savedDecryptDuration / 60)}p)`;
       [180, 300, 420].forEach(s => {
         const btn = document.getElementById(`gmmDecTimeBtn_${s}`);
-        if (btn) btn.classList.toggle('primary', s === 300);
+        if (btn) btn.classList.toggle('primary', s === savedDecryptDuration);
         const fsBtn = document.getElementById(`gmmFsPresetBtn_${s}`);
-        if (fsBtn) fsBtn.classList.toggle('active', s === 300);
+        if (fsBtn) fsBtn.classList.toggle('active', s === savedDecryptDuration);
       });
       stopBattleMusicUI(0.8);
       clearInterval(gameState.timerInterval);

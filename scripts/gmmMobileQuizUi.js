@@ -421,9 +421,13 @@
           else if (isChosen) btn.classList.add('wrong');
         }
 
+        const safeOptHtml = String(opt)
+          .replace(/&/g, '&amp;')
+          .replace(/</g, '&lt;')
+          .replace(/>/g, '&gt;');
         btn.innerHTML = `
           <div class="gmm-mob-opt-letter">${letters[idx]}</div>
-          <div style="flex: 1;">${opt}</div>
+          <div style="flex: 1;">${safeOptHtml}</div>
         `;
 
         btn.onclick = () => {
@@ -450,6 +454,10 @@
 
         grid.appendChild(btn);
       });
+    }
+    if (window.GmmMathFormat && typeof window.GmmMathFormat.renderMathInContainer === 'function') {
+      if (qText) window.GmmMathFormat.renderMathInContainer(qText);
+      if (grid) window.GmmMathFormat.renderMathInContainer(grid);
     }
 
     if (banner) {

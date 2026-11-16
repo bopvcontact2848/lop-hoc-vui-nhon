@@ -32,5 +32,6 @@ desktop.ini
 .Agent/
 .system_generated/
 
-# Dữ liệu điểm phát sinh khi chạy máy chủ cục bộ
+# Dữ liệu phát sinh khi chạy máy chủ cục bộ
 matthu_scores.json
+server/data/

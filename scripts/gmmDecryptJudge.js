@@ -43,6 +43,9 @@
     }
 
     updateDecryptTimerUI();
+    if (typeof ctx.updateSettingsSummaryBar === 'function') {
+      ctx.updateSettingsSummaryBar();
+    }
     broadcastHostStateToServer();
     fetch('/api/gmm/decrypt-timer', {
       method: 'POST',
@@ -184,6 +187,9 @@
       window.showToast('⏸️ Đã tạm dừng đồng hồ tô tranh!', 'info');
     }
     updateDecryptTimerUI();
+    if (typeof ctx.updateSettingsSummaryBar === 'function') {
+      ctx.updateSettingsSummaryBar();
+    }
     broadcastHostStateToServer();
     fetch('/api/gmm/decrypt-timer', {
       method: 'POST',
@@ -232,6 +238,9 @@
     }, 1000);
 
     updateDecryptTimerUI();
+    if (typeof ctx.updateSettingsSummaryBar === 'function') {
+      ctx.updateSettingsSummaryBar();
+    }
     broadcastHostStateToServer();
     fetch('/api/gmm/decrypt-timer', {
       method: 'POST',

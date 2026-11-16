@@ -679,6 +679,9 @@
     if (window.GiaiMaTeacherKey && typeof window.GiaiMaTeacherKey.renderTeacherAnswerKeyTab === 'function') {
       window.GiaiMaTeacherKey.renderTeacherAnswerKeyTab();
     }
+    if (window.GiaiMaBiMat && typeof window.GiaiMaBiMat.updateSettingsSummaryBar === 'function') {
+      window.GiaiMaBiMat.updateSettingsSummaryBar();
+    }
   }
 
   function resetDefaultColorOverrides() {
@@ -702,6 +705,9 @@
     }
     if (window.GiaiMaTeacherKey && typeof window.GiaiMaTeacherKey.renderTeacherAnswerKeyTab === 'function') {
       window.GiaiMaTeacherKey.renderTeacherAnswerKeyTab();
+    }
+    if (window.GiaiMaBiMat && typeof window.GiaiMaBiMat.updateSettingsSummaryBar === 'function') {
+      window.GiaiMaBiMat.updateSettingsSummaryBar();
     }
   }
 
@@ -810,6 +816,9 @@
     if (window.GiaiMaTeacherKey && typeof window.GiaiMaTeacherKey.renderTeacherAnswerKeyTab === 'function') {
       window.GiaiMaTeacherKey.renderTeacherAnswerKeyTab();
     }
+    if (window.GiaiMaBiMat && typeof window.GiaiMaBiMat.updateSettingsSummaryBar === 'function') {
+      window.GiaiMaBiMat.updateSettingsSummaryBar();
+    }
   }
 
   function toggleDateSeparatorStyle() {
@@ -857,6 +866,9 @@
     if (window.GiaiMaTeacherKey && typeof window.GiaiMaTeacherKey.renderTeacherAnswerKeyTab === 'function') {
       window.GiaiMaTeacherKey.renderTeacherAnswerKeyTab();
     }
+    if (window.GiaiMaBiMat && typeof window.GiaiMaBiMat.updateSettingsSummaryBar === 'function') {
+      window.GiaiMaBiMat.updateSettingsSummaryBar();
+    }
   }
 
   function getActivePuzzle() {
@@ -870,11 +882,141 @@
     };
   }
 
+  function escSvgText(str) {
+    return String(str == null ? '' : str)
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;');
+  }
+
+  // 2B. DẢI TIÊU ĐỀ TRƯỜNG / LỚP & GHI CHÚ GÓC PHẢI TRÊN ĐẦU BẠT A1 & TRANH VECTOR (y = -34..0)
+  function buildTopHeaderSvgGroup(puzzleData, options = {}) {
+    const rawHeader = String(
+      options.printHeader !== undefined
+        ? options.printHeader
+        : ((puzzleData && puzzleData.printHeader) ? puzzleData.printHeader : '')
+    ).trim();
+    const rawRightNote = String(
+      options.printRightNote !== undefined
+        ? options.printRightNote
+        : ((puzzleData && puzzleData.printRightNote !== undefined) ? puzzleData.printRightNote : '')
+    ).trim();
+    if (!rawHeader && !rawRightNote) return '';
+
+    const upperHeader = (rawHeader || 'TRƯỜNG THCS TÂN HẢI').toUpperCase();
+    const rightText = rawRightNote
+      ? rawRightNote.toUpperCase()
+      : 'ĐỘI THI: .............................';
+    const isCustomRight = Boolean(rawRightNote && !/^ĐỘI THI:\s*\.+$/i.test(rawRightNote));
+    const rightColor = isCustomRight ? '#b91c1c' : '#334155';
+
+    return `
+      <g class="gmm-top-header-strip">
+        <rect x="0" y="-34" width="800" height="34" fill="#ffffff" style="fill: #ffffff !important;" />
+        <rect x="2" y="-31.5" width="796" height="29" rx="4.5" fill="#f8fafc" stroke="#0f172a" stroke-width="1.5"
+              style="fill: #f8fafc !important; stroke: #0f172a !important; stroke-width: 1.5px !important;" />
+        <text x="12" y="-17" fill="#0f172a" font-family="Arial, system-ui, -apple-system, sans-serif"
+              font-size="10.2" font-weight="900" dominant-baseline="central"
+              style="fill: #0f172a !important; font-weight: 900 !important;">
+          🏫 ${escSvgText(upperHeader)}
+        </text>
+        <text x="425" y="-17" fill="#0369a1" font-family="Arial, system-ui, -apple-system, sans-serif"
+              font-size="9.5" font-weight="900" text-anchor="middle" dominant-baseline="central"
+              style="fill: #0369a1 !important; font-weight: 900 !important;">
+          ★ GIẢI MÃ BỨC TRANH BÍ ẨN ★
+        </text>
+        <text x="788" y="-17" fill="${rightColor}" font-family="Arial, system-ui, -apple-system, sans-serif"
+              font-size="9.4" font-weight="900" text-anchor="end" dominant-baseline="central"
+              style="fill: ${rightColor} !important; font-weight: 900 !important;">
+          ${escSvgText(rightText)}
+        </text>
+      </g>
+    `;
+  }
+
+  // 2C. DẢI CHÚ GIẢI 10 MÀU BÚT DẠ NẰM GỌN DƯỚI CHÂN TRANH IN A4/A1 (y = 520..568)
+  function buildFooterLegendSvgGroup(puzzleData, options = {}) {
+    const isSolvedKey = Boolean(options.isSolvedAnswerKey);
+    const rulesObj = (puzzleData && puzzleData.colorRules) ? puzzleData.colorRules : COLOR_RULES;
+    const sortedEntries = Object.keys(rulesObj || {})
+      .map(codeKey => {
+        const r = rulesObj[codeKey] || {};
+        return {
+          codeKey,
+          qNum: r.qNum || parseInt(codeKey, 10) || 1,
+          color: r.color || '#dc2626',
+          name: r.name || 'Màu bút dạ'
+        };
+      })
+      .sort((a, b) => a.qNum - b.qNum);
+
+    if (sortedEntries.length === 0) return '';
+
+    const count = sortedEntries.length;
+    const rows = count <= 5 ? 1 : 2;
+    const cols = rows === 1 ? count : Math.ceil(count / 2);
+    const startX = 104;
+    const availW = 690;
+    const colW = availW / Math.max(1, cols);
+
+    let itemsSvg = '';
+    sortedEntries.forEach((entry, idx) => {
+      const col = idx % cols;
+      const row = Math.floor(idx / cols);
+      const itemX = Number((startX + col * colW).toFixed(1));
+      const itemY = rows === 1 ? 527 : (row === 0 ? 525.5 : 544.5);
+      const itemH = rows === 1 ? 34 : 17.5;
+      const swatchY = Number((itemY + (itemH - 12.5) / 2).toFixed(1));
+      const textY = Number((itemY + itemH / 2).toFixed(1));
+      const labelText = isSolvedKey
+        ? `C${entry.qNum}(${entry.codeKey}): ${entry.name}`
+        : `C${entry.qNum}: ${entry.name}`;
+      const fontSize = cols >= 6 ? 8.4 : (isSolvedKey ? 8.6 : 9.4);
+
+      itemsSvg += `
+        <g class="gmm-footer-legend-item" data-code="${escSvgText(entry.codeKey)}" style="cursor: pointer;">
+          <title>👆 Bấm để đổi màu bút dạ Câu ${entry.qNum} (${escSvgText(entry.name)})</title>
+          <rect x="${itemX + 3}" y="${swatchY}" width="16" height="12.5" rx="2.5"
+                fill="${escSvgText(entry.color)}" stroke="#0f172a" stroke-width="1.15"
+                style="fill: ${escSvgText(entry.color)} !important; stroke: #0f172a !important;" />
+          <text x="${itemX + 23}" y="${textY}"
+                fill="#0f172a" font-family="Arial, system-ui, -apple-system, sans-serif"
+                font-size="${fontSize}" font-weight="800" dominant-baseline="central"
+                style="fill: #0f172a !important; font-weight: 800 !important; font-size: ${fontSize}px !important;">
+            ${escSvgText(labelText)}
+          </text>
+        </g>`;
+    });
+
+    return `
+      <g class="gmm-footer-legend-strip">
+        <rect x="0" y="520" width="800" height="48" fill="#ffffff" style="fill: #ffffff !important;" />
+        <rect x="2" y="522.5" width="796" height="43" rx="5" fill="#f8fafc" stroke="#0f172a" stroke-width="1.5"
+              style="fill: #f8fafc !important; stroke: #0f172a !important; stroke-width: 1.5px !important;" />
+        <rect x="5.5" y="526" width="93" height="36" rx="4" fill="#0f172a"
+              style="fill: #0f172a !important;" />
+        <text x="52" y="538.5" fill="#fde047" font-family="Arial, system-ui, sans-serif"
+              font-size="8.6" font-weight="900" text-anchor="middle" dominant-baseline="central"
+              style="fill: #fde047 !important; font-weight: 900 !important;">
+          🖍️ MÀU BÚT DẠ
+        </text>
+        <text x="52" y="551.5" fill="#ffffff" font-family="Arial, system-ui, sans-serif"
+              font-size="7.6" font-weight="800" text-anchor="middle" dominant-baseline="central"
+              style="fill: #ffffff !important; font-weight: 800 !important;">
+          CHÚ GIẢI ${count} CÂU
+        </text>
+        ${itemsSvg}
+      </g>
+    `;
+  }
+
   // 3. HÀM TẠO SVG MA TRẬN BỨC TRANH BÍ MẬT
   function renderSvgMatrix(teamKey, teamData, options = {}) {
     const isPrintMode = Boolean(options.isPrint);
     const isSolvedAnswerKey = Boolean(options.isSolvedAnswerKey);
     const isSeamlessStrokes = Boolean(options.seamlessStrokes);
+    const isInteractivePreview = Boolean(options.interactivePreview);
     const coloredRegions = (teamData && teamData.coloredRegions) ? teamData.coloredRegions : {};
     const unlockedRegions = (teamData && teamData.unlockedRegions) ? teamData.unlockedRegions : [];
     const newlyUnlocked = (options.newlyUnlocked)
@@ -884,17 +1026,35 @@
     const isStealthMode = Boolean(options.isStealthMode);
     const puzzle = options.puzzle || getActivePuzzle();
     const cellsToRender = (puzzle && puzzle.cells) ? puzzle.cells : activeCells;
+    const customStrokeW = parseFloat(options.strokeWidth || (puzzle && puzzle.strokeWidth) || 0);
+    const showFooterLegend = options.showFooterLegend !== undefined
+      ? Boolean(options.showFooterLegend)
+      : (isPrintMode && (!puzzle || puzzle.showFooterLegend !== false));
+    const printHeaderText = String(
+      options.printHeader !== undefined
+        ? options.printHeader
+        : ((puzzle && puzzle.printHeader) ? puzzle.printHeader : '')
+    ).trim();
+    const printRightNoteText = String(
+      options.printRightNote !== undefined
+        ? options.printRightNote
+        : ((puzzle && puzzle.printRightNote !== undefined) ? puzzle.printRightNote : '')
+    ).trim();
+    const showTopHeaderSvg = Boolean(options.showTopHeaderSvg && (printHeaderText || printRightNoteText));
+    const viewMinY = showTopHeaderSvg ? -34 : 0;
+    const baseAndFooterH = showFooterLegend ? 568 : 520;
+    const totalSvgHeight = baseAndFooterH + (showTopHeaderSvg ? 34 : 0);
 
     // Chế độ Nền Giấy A1 Tương Phản Cao Chuyên Dụng Cho Chiếu Tivi & Máy Chiếu Lớp Học
     const isPaperTheme = isPrintMode || Boolean(options.isPaperTheme || (options.canvasTheme === 'paper'));
 
     const bgFill = isPaperTheme ? '#ffffff' : '#0f172a';
-    const borderStroke = isPaperTheme ? '#334155' : 'rgba(255, 255, 255, 0.45)';
+    const borderStroke = isPaperTheme ? (customStrokeW >= 2.2 ? '#0f172a' : '#334155') : 'rgba(255, 255, 255, 0.45)';
     const cellDefaultFill = isPaperTheme ? '#ffffff' : '#1e293b';
 
     let svg = `
-      <svg viewBox="0 0 800 520" xmlns="http://www.w3.org/2000/svg"
-           class="gmm-tri-an-matrix-svg ${isPrintMode ? 'print-mode' : ''} ${isPaperTheme ? 'paper-theme' : 'dark-theme'} ${isStealthMode ? 'stealth-mode' : ''} ${isSeamlessStrokes ? 'seamless-mode' : ''}"
+      <svg viewBox="0 ${viewMinY} 800 ${totalSvgHeight}" xmlns="http://www.w3.org/2000/svg"
+           class="gmm-tri-an-matrix-svg ${isPrintMode ? 'print-mode' : ''} ${isPaperTheme ? 'paper-theme' : 'dark-theme'} ${isStealthMode ? 'stealth-mode' : ''} ${isSeamlessStrokes ? 'seamless-mode' : ''} ${isInteractivePreview ? 'interactive-preview' : ''}"
            style="width: 100%; height: 100%; display: block; border-radius: 8px; background: ${bgFill} !important; user-select: none;">
         <defs>
           <filter id="glow_${teamKey}" x="-20%" y="-20%" width="140%" height="140%">
@@ -911,7 +1071,8 @@
             </feMerge>
           </filter>
         </defs>
-        <rect width="800" height="520" fill="${bgFill}" rx="6"/>
+        <rect x="0" y="${viewMinY}" width="800" height="${totalSvgHeight}" fill="${bgFill}" rx="6"/>
+        ${showTopHeaderSvg ? buildTopHeaderSvgGroup(puzzle, { printHeader: printHeaderText, printRightNote: printRightNoteText }) : ''}
     `;
 
     function buildSingleCellSvg(cell) {
@@ -925,7 +1086,7 @@
 
       let fillColor = cellDefaultFill;
       let strokeColor = borderStroke;
-      let strokeWidth = isPaperTheme ? '1.8' : '1.5';
+      let strokeWidth = customStrokeW > 0 ? String(customStrokeW) : (isPaperTheme ? '1.8' : '1.5');
       let textColor = isPaperTheme ? '#0f172a' : '#f1f5f9';
       let textWeight = isPaperTheme ? '800' : '700';
 
@@ -938,8 +1099,8 @@
             strokeColor = fillColor;
             strokeWidth = '1.35';
           } else {
-            strokeColor = isPaperTheme ? '#0f172a' : '#000000';
-            strokeWidth = '2';
+            strokeColor = isPaperTheme ? 'rgba(15, 23, 42, 0.55)' : 'rgba(0, 0, 0, 0.55)';
+            strokeWidth = customStrokeW > 0 ? String(Number((customStrokeW * 0.72).toFixed(2))) : '1.25';
           }
         } else {
           fillColor = isPaperTheme ? '#f8fafc' : '#1e293b';
@@ -947,8 +1108,10 @@
           textWeight = '600';
           strokeColor = isSeamlessStrokes
             ? (isPaperTheme ? '#e2e8f0' : 'rgba(255, 255, 255, 0.08)')
-            : (isPaperTheme ? '#cbd5e1' : 'rgba(255, 255, 255, 0.25)');
-          strokeWidth = isSeamlessStrokes ? '0.9' : '1.2';
+            : (isPaperTheme ? '#cbd5e1' : 'rgba(255, 255, 255, 0.22)');
+          strokeWidth = isSeamlessStrokes
+            ? '0.9'
+            : (customStrokeW > 0 ? String(Number((customStrokeW * 0.65).toFixed(2))) : '1.1');
         }
       } else if (isColored) {
         fillColor = coloredRegions[cell.id] || cell.targetColor || '#ef4444';
@@ -958,8 +1121,8 @@
           strokeColor = fillColor;
           strokeWidth = '1.35';
         } else {
-          strokeColor = isPaperTheme ? '#0f172a' : 'rgba(255, 255, 255, 0.7)';
-          strokeWidth = '2';
+          strokeColor = isPaperTheme ? 'rgba(15, 23, 42, 0.55)' : 'rgba(255, 255, 255, 0.65)';
+          strokeWidth = '1.3';
         }
       } else if (isUnlocked && !isPrintMode) {
         if (isPaperTheme) {
@@ -978,7 +1141,9 @@
 
       let cursorStyle = 'default';
       let onclickAttr = '';
-      if (!isPrintMode && !isSolvedAnswerKey) {
+      if (isInteractivePreview) {
+        cursorStyle = 'pointer';
+      } else if (!isPrintMode && !isSolvedAnswerKey) {
         if (isDecryptPhase || isUnlocked) {
           cursorStyle = 'pointer';
           onclickAttr = `onclick="if(window.GiaiMaBiMat&amp;&amp;typeof window.GiaiMaBiMat.handleCellClick==='function')window.GiaiMaBiMat.handleCellClick('${teamKey}','${cell.id}')"`;
@@ -987,26 +1152,34 @@
 
       const pathStyle = `fill: ${fillColor} !important; stroke: ${strokeColor} !important; stroke-width: ${strokeWidth}px !important; cursor: ${cursorStyle}; transition: fill 0.25s ease, stroke 0.25s ease;`;
 
-      // Tối ưu kích thước chữ mã tọa độ: đậm nét, rõ ràng, học sinh ngồi xa trên Tivi vẫn thấy rõ mồn một
-      let baseFontSize = cell.fontSize || 9;
-      if (isPaperTheme) {
-        // Tăng cỡ chữ lên 1.35x (tối thiểu 10.5px, tối đa 12px) để mã ô nổi bật trên nền giấy A1
-        baseFontSize = Math.max(Math.round(baseFontSize * 1.35 * 10) / 10, 10.5);
+      // Tối ưu kích thước chữ mã tọa độ theo tỷ lệ mảnh ghép: vừa vặn trong ô, không tràn viền làm che khuất nét chữ màu
+      const rawFont = cell.fontSize || 8.5;
+      let baseFontSize = rawFont;
+      if (isColored) {
+        baseFontSize = Math.min(9.0, Math.max(7.2, Math.round(rawFont * 1.05 * 10) / 10));
         if (cell.code && cell.code.length >= 3) {
-          baseFontSize = Math.min(baseFontSize, 10.2);
+          baseFontSize = Math.min(baseFontSize, 8.3);
+        }
+      } else if (isPaperTheme) {
+        baseFontSize = Math.min(10.5, Math.max(7.8, Math.round(rawFont * 1.24 * 10) / 10));
+        if (cell.code && cell.code.length >= 3) {
+          baseFontSize = Math.min(baseFontSize, 9.6);
         }
       } else {
-        baseFontSize = Math.max(Math.round(baseFontSize * 1.2 * 10) / 10, 9.5);
+        baseFontSize = Math.min(9.8, Math.max(7.5, Math.round(rawFont * 1.15 * 10) / 10));
       }
 
       const textShadowStyle = isColored
-        ? 'text-shadow: 0 1px 3px rgba(0,0,0,0.9), 0 0 3px rgba(0,0,0,0.8);'
+        ? 'text-shadow: 0 1px 2px rgba(0,0,0,0.85);'
         : (isPaperTheme ? 'text-shadow: none;' : 'text-shadow: 0 1px 2px rgba(0,0,0,0.7);');
 
       const textStyle = `fill: ${textColor} !important; font-weight: ${textWeight} !important; font-size: ${baseFontSize}px !important; font-family: system-ui, -apple-system, BlinkMacSystemFont, Arial, sans-serif !important; ${textShadowStyle}`;
 
       // Bổ sung mã ô lên tranh: luôn hiện mã chữ số trên tranh để học sinh định vị tọa độ tô màu
       const isShowLabel = isPrintMode || isPaperTheme || isSolvedAnswerKey || !isStealthMode || isUnlocked || isColored;
+      const cellTitle = isInteractivePreview
+        ? `👆 Bấm trực tiếp vào mảnh này để đổi màu bút dạ (Mã ${cell.code})`
+        : `Mã: ${cell.code}`;
 
       return {
         isTargetColored: Boolean(isSolvedAnswerKey ? cell.isTarget : isColored),
@@ -1023,7 +1196,7 @@
                 ${onclickAttr}
                 data-cell-id="${cell.id}"
                 data-code="${cell.code}">
-            <title>Mã: ${cell.code}</title>
+            <title>${cellTitle}</title>
           </path>`,
         textOnly: isShowLabel ? `
           <text x="${cell.labelPos[0]}" y="${cell.labelPos[1]}"
@@ -1041,45 +1214,40 @@
       };
     }
 
-    if (isSolvedAnswerKey) {
-      // Vẽ lớp ô bẫy nền trước, lớp mảng màu mục tiêu lên trên để đường viền sắc nét tuyệt đối
-      const bgItems = [];
-      const fgItems = [];
-      cellsToRender.forEach(cell => {
-        const rendered = buildSingleCellSvg(cell);
-        if (rendered.isTargetColored) {
-          fgItems.push(rendered);
-        } else {
-          bgItems.push(rendered);
-        }
-      });
+    const bgItems = [];
+    const fgItems = [];
+    cellsToRender.forEach(cell => {
+      const rendered = buildSingleCellSvg(cell);
+      if (rendered.isTargetColored) {
+        fgItems.push(rendered);
+      } else {
+        bgItems.push(rendered);
+      }
+    });
 
+    if (fgItems.length > 0) {
       svg += '<g class="gmm-layer-bg-cells">';
       bgItems.forEach(item => {
         svg += `<g class="${item.groupClass}">${item.pathOnly}${item.textOnly}</g>`;
       });
       svg += '</g>';
 
-      if (isSeamlessStrokes) {
-        // Khi bật Liền Khối Nghệ Thuật: gom toàn bộ path màu vào 1 nhóm có viền bao ngoài mượt mà
-        svg += `<g class="gmm-layer-target-seamless" filter="url(#seamless_outline_${teamKey})">`;
-        fgItems.forEach(item => { svg += item.pathOnly; });
-        svg += '</g>';
-        svg += '<g class="gmm-layer-target-labels">';
-        fgItems.forEach(item => { svg += item.textOnly; });
-        svg += '</g>';
-      } else {
-        svg += '<g class="gmm-layer-target-cells">';
-        fgItems.forEach(item => {
-          svg += `<g class="${item.groupClass}">${item.pathOnly}${item.textOnly}</g>`;
-        });
-        svg += '</g>';
-      }
+      // Luôn bọc đường viền bao ngoài sắc nét (#seamless_outline) quanh khối chữ đã tô màu để nổi bật 100% như tranh 20/11
+      svg += `<g class="${isSeamlessStrokes ? 'gmm-layer-target-seamless' : 'gmm-layer-target-cells'}" filter="url(#seamless_outline_${teamKey})">`;
+      fgItems.forEach(item => { svg += item.pathOnly; });
+      svg += '</g>';
+      svg += '<g class="gmm-layer-target-labels">';
+      fgItems.forEach(item => { svg += item.textOnly; });
+      svg += '</g>';
     } else {
       cellsToRender.forEach(cell => {
         const item = buildSingleCellSvg(cell);
         svg += `<g class="${item.groupClass}">${item.pathOnly}${item.textOnly}</g>`;
       });
+    }
+
+    if (showFooterLegend) {
+      svg += buildFooterLegendSvgGroup(puzzle, { isSolvedAnswerKey });
     }
 
     svg += '</svg>';
@@ -1229,6 +1397,8 @@
     toggleDateSeparatorStyle,
     updateActiveColorRule,
     resetDefaultColorOverrides,
+    buildTopHeaderSvgGroup,
+    buildFooterLegendSvgGroup,
     renderSvgMatrix,
     autoColorTargetCells,
     calculateProgress,

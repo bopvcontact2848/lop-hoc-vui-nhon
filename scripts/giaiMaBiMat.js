@@ -336,6 +336,9 @@
 
   // 10. CHUYỂN TAB VÀ MODAL BAN GIÁM KHẢO
   function switchTab(tabId, force = false, skipBroadcast = false) {
+    if (tabId === 'lobby') {
+      tabId = 'home';
+    }
     // Cảnh báo an toàn khi click chuyển tab trong lúc trận đấu 10 câu hỏi đang đếm ngược
     if (!force && gameState.activeTab === 'quiz' && tabId !== 'quiz') {
       const isMatchRunning = gameState.isMatchStarted && gameState.isTimerRunning && (gameState.timerSeconds || 0) > 0;
@@ -368,7 +371,7 @@
     const activePanel = document.getElementById(`gmmPanel_${tabId}`);
     if (activePanel) activePanel.classList.add('active');
 
-    if (tabId === 'lobby') renderQrCodes();
+    if (tabId === 'home') renderQrCodes();
     if (tabId === 'quiz') renderDualArena();
     if (tabId === 'decrypt') {
       renderDecryptUI();
@@ -386,6 +389,12 @@
       }
     }
     if (tabId === 'result') renderResultUI();
+    if (tabId === 'settings' && gmmStageTeamUiMod) {
+      gmmStageTeamUiMod.updateStealthButtonUI();
+      gmmStageTeamUiMod.updateCanvasThemeButtonUI();
+      gmmStageTeamUiMod.updateBattleMusicUI();
+      gmmStageTeamUiMod.updateSettingsSummaryBar();
+    }
 
     if (!skipBroadcast) {
       broadcastHostStateToServer();
@@ -468,6 +477,7 @@
       updateStealthButtonUI: (...a) => gmmStageTeamUiMod.updateStealthButtonUI(...a),
       updateStageFloatPauseBtn: (...a) => gmmStageTeamUiMod.updateStageFloatPauseBtn(...a),
       updateCanvasThemeButtonUI: (...a) => gmmStageTeamUiMod.updateCanvasThemeButtonUI(...a),
+      updateSettingsSummaryBar: (...a) => gmmStageTeamUiMod.updateSettingsSummaryBar(...a),
       getTeamName: (...a) => gmmStageTeamUiMod.getTeamName(...a),
       updateAllTeamNamesUI: (...a) => gmmStageTeamUiMod.updateAllTeamNamesUI(...a),
       stopBattleMusicUI: (...a) => gmmStageTeamUiMod.stopBattleMusicUI(...a),
@@ -583,6 +593,9 @@
 
   initSubModules();
   gmmQuestionBankMod.loadQuestionsFromStorage();
+  if (gmmStageTeamUiMod && typeof gmmStageTeamUiMod.loadSavedDefaultSettings === 'function') {
+    gmmStageTeamUiMod.loadSavedDefaultSettings();
+  }
 
 
   // Kiểm tra tham số URL khi trang tải (nếu học sinh quét mã QR truy cập thẳng)

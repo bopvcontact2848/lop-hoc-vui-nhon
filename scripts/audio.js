@@ -540,10 +540,13 @@ class SoundFX {
       }
 
       const isChill = (this._battleBgmGenre === 'chill');
+      const volRatio = (typeof this._battleBgmVolume === 'number') ? this._battleBgmVolume : 0.7;
+      const basePeak = isChill ? 0.25 : 0.30;
+      const targetGain = Math.max(0.01, basePeak * volRatio);
       this._battleBgmPlaying = true;
       this._battleBgmMasterGain = this.ctx.createGain();
       this._battleBgmMasterGain.gain.setValueAtTime(0.001, this.ctx.currentTime);
-      this._battleBgmMasterGain.gain.linearRampToValueAtTime(isChill ? 0.18 : 0.22, this.ctx.currentTime + 0.6); // Fade-in êm ái
+      this._battleBgmMasterGain.gain.linearRampToValueAtTime(targetGain, this.ctx.currentTime + 0.6); // Fade-in êm ái
       this._battleBgmMasterGain.connect(this.ctx.destination);
 
       let step = 0;
@@ -769,6 +772,26 @@ class SoundFX {
 
   getBattleMusicGenre() {
     return this._battleBgmGenre || 'epic';
+  }
+
+  setBattleMusicVolume(percent) {
+    const clamped = Math.min(100, Math.max(10, Number(percent) || 70));
+    this._battleBgmVolume = clamped / 100;
+    if (this._battleBgmPlaying && this._battleBgmMasterGain && this.ctx) {
+      const isChill = (this._battleBgmGenre === 'chill');
+      const basePeak = isChill ? 0.25 : 0.30;
+      const targetGain = Math.max(0.01, basePeak * this._battleBgmVolume);
+      try {
+        const now = this.ctx.currentTime;
+        this._battleBgmMasterGain.gain.setValueAtTime(this._battleBgmMasterGain.gain.value, now);
+        this._battleBgmMasterGain.gain.linearRampToValueAtTime(targetGain, now + 0.08);
+      } catch (_e) {}
+    }
+  }
+
+  getBattleMusicVolume() {
+    const ratio = (typeof this._battleBgmVolume === 'number') ? this._battleBgmVolume : 0.7;
+    return Math.round(ratio * 100);
   }
 
   stopBattleMusic(fadeTime = 0.5) {

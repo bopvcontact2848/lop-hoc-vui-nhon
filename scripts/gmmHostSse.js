@@ -51,15 +51,26 @@
       if (!gameState.sessionId) {
         gameState.sessionId = Date.now();
       }
-      const isLobby = (gameState.activeTab === 'home' || gameState.activeTab === 'lobby');
+      const isLobby = (
+        gameState.activeTab === 'home' ||
+        gameState.activeTab === 'lobby' ||
+        (gameState.activeTab === 'settings' && !gameState.isMatchStarted && !gameState.isDecryptPhase)
+      );
       const isQuizWaiting = (gameState.activeTab === 'quiz' && !gameState.isMatchStarted);
+      const effectiveStatus = isLobby
+        ? 'lobby'
+        : (isQuizWaiting
+          ? 'quiz_waiting'
+          : (gameState.activeTab === 'settings'
+            ? (gameState.isDecryptPhase ? 'decrypt' : 'quiz')
+            : gameState.activeTab));
       const curQ = ctx.getQuestionsList()[gameState.currentQIndex];
       const payload = {
         sessionId: gameState.sessionId,
         resetForNewMatch: Boolean(options.resetForNewMatch),
         forceTeamOverwrite: Boolean(options.forceTeamOverwrite || options.resetForNewMatch),
         roomCode: gameState.roomCode,
-        status: isLobby ? 'lobby' : (isQuizWaiting ? 'quiz_waiting' : gameState.activeTab),
+        status: effectiveStatus,
         isMatchStarted: Boolean(gameState.isMatchStarted),
         currentQIndex: gameState.currentQIndex,
         totalQuestions: ctx.getQuestionsList().length,
@@ -221,7 +232,7 @@
 
     if (!hostConnSyncInterval && !ctx.isStudentMobile()) {
       hostConnSyncInterval = setInterval(() => {
-        if (gameState.activeTab === 'lobby' || gameState.activeTab === 'quiz') {
+        if (gameState.activeTab === 'home' || gameState.activeTab === 'lobby' || gameState.activeTab === 'quiz') {
           syncHostInitialConnectionState();
         }
       }, 4500);
@@ -235,6 +246,14 @@
       sseEventSource.onmessage = function (event) {
         try {
           const data = JSON.parse(event.data);
+
+          if (data.type === 'gmm_question_sets_updated' && window.GmmServerSetsSync && typeof window.GmmServerSetsSync.pullAndMerge === 'function') {
+            window.GmmServerSetsSync.pullAndMerge({ silent: true, clientOriginId: data.clientOriginId });
+          }
+
+          if (data.type === 'gmm_custom_puzzles_updated' && window.GmmServerPuzzlesSync && typeof window.GmmServerPuzzlesSync.pullAndMerge === 'function') {
+            window.GmmServerPuzzlesSync.pullAndMerge({ silent: true, clientOriginId: data.clientOriginId });
+          }
 
           // Học sinh quét mã và vào phòng thi từ điện thoại
           if (data.type === 'gmm_team_joined') {

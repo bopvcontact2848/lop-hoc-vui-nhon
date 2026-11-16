@@ -443,6 +443,7 @@
       serverState.status === 'home' ||
       serverState.status === 'quiz_waiting' ||
       (serverState.status === 'quiz' && !serverState.isMatchStarted) ||
+      (serverState.status === 'settings' && !serverState.isMatchStarted && !serverState.isDecryptPhase) ||
       (serverState.status === 'answer_key' && !serverState.isMatchStarted && !serverState.isDecryptPhase)
     );
     if (isLobby) {
